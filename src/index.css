@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-/* ---------------------------------------------------------------------------
-   Design tokens, ported 1:1 from the Claude Design prototype (v0.2).
-   Tailwind v4 is CSS-first: this @theme block replaces the prototype's
-   tailwind.config.js. Never hardcode these values in components.
---------------------------------------------------------------------------- */
 @theme {
   /* Ground + ink */
   --color-bg: #f2f2f3;

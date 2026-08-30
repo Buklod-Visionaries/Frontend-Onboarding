@@ -2,17 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { AppContext } from './AppContext';
 import { SESSION_PROFILES } from '../data/accounts';
 
-/**
- * In-memory store for the prototype.
- *
- * Step 4 scope: session and toast only — enough for routing, the role guard and
- * the layout shell. Step 3 adds employees, staff users, notifications, activity
- * and the mutators, calling `services/` rather than fixtures directly.
- *
- * `employees` and `notifications` are already exposed as empty arrays so the
- * layout can derive its badge counts today and keep working unchanged once the
- * real data lands.
- */
+
 export default function AppProvider({ children }) {
   const [session, setSession] = useState(null);
   const [toast, setToast] = useState('');
