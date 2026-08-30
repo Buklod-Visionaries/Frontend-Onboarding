@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens, ported 1:1 from the Claude Design prototype (v0.2).
+   Tailwind v4 is CSS-first: this @theme block replaces the prototype's
+   tailwind.config.js. Never hardcode these values in components.
+--------------------------------------------------------------------------- */
+@theme {
+  /* Ground + ink */
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-ink: #1d1f20;
+  --color-divider: rgba(29, 31, 32, 0.16);
+
+  /* Accent ramp */
+  --color-accent: #a65f59;
+  --color-accent-100: #fff1ef;
+  --color-accent-200: #ffdedb;
+  --color-accent-300: #fdc3bc;
+  --color-accent-400: #e8a096;
+  --color-accent-500: #c98279;
+  --color-accent-600: #a3625a;
+  --color-accent-700: #804842;
+  --color-accent-800: #5d302c;
+  --color-accent-900: #3d1e1b;
+
+  /* Neutral ramp (overrides Tailwind's default neutral 100-900) */
+  --color-neutral-100: #f7f7f8;
+  --color-neutral-200: #e4e4e6;
+  --color-neutral-300: #d8d8da;
+  --color-neutral-400: #b4b4b7;
+  --color-neutral-500: #909093;
+  --color-neutral-600: #6d6d70;
+  --color-neutral-700: #4f4f52;
+  --color-neutral-800: #2b2b2d;
+  --color-neutral-900: #1d1f20;
+
+  /* Type */
+  --font-heading: "Barlow Condensed", sans-serif;
+  --font-body: Barlow, sans-serif;
+
+  --text-micro: 10px;
+  --text-micro--line-height: 1.3;
+  --text-micro--letter-spacing: 0.14em;
+  --text-kicker: 11px;
+  --text-kicker--line-height: 1.3;
+  --text-kicker--letter-spacing: 0.18em;
+  --text-meta: 12px;
+  --text-meta--line-height: 1.45;
+  --text-cell: 13px;
+  --text-cell--line-height: 1.5;
+  --text-field: 14px;
+  --text-field--line-height: 1.5;
+  --text-base: 15px;
+  --text-base--line-height: 1.55;
+
+  /* 0.85x density scale from the prototype. Integer steps keep their
+     default values; only these six half-steps are re-pitched. */
+  --spacing-1\.5: 3.4px;
+  --spacing-2\.5: 6.8px;
+  --spacing-3\.5: 10.2px;
+  --spacing-4\.5: 13.6px;
+  --spacing-7\.5: 20.4px;
+  --spacing-9\.5: 27.2px;
+  --spacing-sidebar: 236px;
+
+  /* rounded-control is the only radius in the system (controls only) */
+  --radius-control: 4px;
+
+  --shadow-sm: 0 1px 2px rgba(29, 31, 32, 0.06);
+  --shadow-md: 0 2px 8px rgba(29, 31, 32, 0.10);
+  --shadow-lg: 0 8px 28px rgba(29, 31, 32, 0.18);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-bg text-ink font-body text-base;
+    margin: 0;
+  }
+  h1, h2, h3, h4, h5 {
+    @apply font-heading font-semibold;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  *:focus-visible {
+    outline: 2px solid #a65f59;
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: #ffdedb;
+  }
+  input[type="file"] {
+    display: none;
+  }
+}
+
+@utility scroll-thin {
+  &::-webkit-scrollbar { width: 10px; height: 10px; }
+  &::-webkit-scrollbar-thumb { background: #d8d8da; }
+}
