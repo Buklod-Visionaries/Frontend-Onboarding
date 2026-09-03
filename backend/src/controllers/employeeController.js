@@ -36,7 +36,7 @@ export async function getDepartmentEmployees(req, res) {
   //find all employees in the same department
   const allDepEmployee = await Employee.find({
     department: currentDepRep.department,
-  });
+  }).populate("user");
 
   res.send(allDepEmployee);
 }
@@ -105,11 +105,24 @@ export async function addEmployee(req, res) {
   res.send(newEmployee);
 }
 
+//dep specific emp
+export async function getDepSpecificEmployees(req, res) {
+  const { id: paramsId } = req.params;
+
+  const emp = await Employee.findOne({ _id: paramsId }).populate("user");
+
+  if (!emp) {
+    return res.send({ message: "employee doesnt exist" });
+  }
+
+  res.send(emp);
+}
+
 export async function getSpecificEmployee(req, res) {
   const { id } = req.params;
   const employee = await Employee.findOne({
     _id: id,
-  });
+  }).populate("user");
   //if employee doesnt exist
   if (!employee) {
     return res.status(404).send({ message: "Employee doesn't exist" });

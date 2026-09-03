@@ -3,7 +3,19 @@ import User from "../models/userModel.js";
 import Employee from "../models/employeeModel.js";
 
 export async function getAllEmpReq(req, res) {
-  const allEmpReq = await EmployeeRequirement.find().populate("requirement");
+  const allEmpReq = await EmployeeRequirement.find()
+    .populate({
+      path: "requirement",
+      match: { type: "task" },
+    })
+    .populate({
+      //populate 1st level
+      path: "employee",
+      populate: {
+        // populate 2nd level
+        path: "user",
+      },
+    });
   res.send(allEmpReq);
 }
 
@@ -23,7 +35,19 @@ export async function getOwnEmpReq(req, res) {
   //get the specific emprequirements from employee id
   const myEmpReq = await EmployeeRequirement.find({
     employee: myEmployee._id,
-  }).populate("requirement"); // populate replace objectId with the actual documents :D
+  })
+    .populate({
+      path: "requirement",
+      match: { type: "task" },
+    })
+    .populate({
+      //populate 1st level
+      path: "employee",
+      populate: {
+        // populate 2nd level
+        path: "user",
+      },
+    }); // populate replace objectId with the actual documents :D
 
   res.send(myEmpReq);
 }
@@ -32,7 +56,19 @@ export async function getSpecificEmpReq(req, res) {
   const { id } = req.params;
   const empReq = await EmployeeRequirement.find({
     _id: id,
-  });
+  })
+    .populate({
+      path: "requirement",
+      match: { type: "task" },
+    })
+    .populate({
+      //populate 1st level
+      path: "employee",
+      populate: {
+        // populate 2nd level
+        path: "user",
+      },
+    });
 
   res.send(empReq);
 }
@@ -79,7 +115,19 @@ export async function getSpecificDepEmpReq(req, res) {
 
   const depEmpReq = await EmployeeRequirement.findOne({
     _id: id,
-  });
+  })
+    .populate({
+      path: "requirement",
+      match: { type: "task" },
+    })
+    .populate({
+      //populate 1st level
+      path: "employee",
+      populate: {
+        // populate 2nd level
+        path: "user",
+      },
+    });
 
   if (!depEmpReq) {
     return res.send("Employee Requirement doesnt exist");

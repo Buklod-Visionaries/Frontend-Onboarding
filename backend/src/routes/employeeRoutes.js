@@ -5,6 +5,7 @@ import {
   getAllEmployees,
   getOwnEmployee,
   getDepartmentEmployees,
+  getDepSpecificEmployees,
   getSpecificEmployee,
   deleteSpecificEmployee,
   addEmployee,
@@ -39,6 +40,13 @@ router.get(
   verifyToken,
   authorizeRoles("dept-rep"),
   asyncHandler(getDepartmentEmployees),
+);
+//department specific emp
+router.get(
+  "/department/:id",
+  verifyToken,
+  authorizeRoles("dept-rep"),
+  asyncHandler(getDepSpecificEmployees),
 );
 
 //for HR and depHead get specific employee
