@@ -6,6 +6,7 @@ import {
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
+import { upload } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router.post(
   "/",
   verifyToken,
   authorizeRoles("employee"),
+  upload.single("file"),
   asyncHandler(submitDocument),
 );
 
