@@ -25,7 +25,9 @@ export default function Modal({ open, onClose, kicker, title, subtitle, actions,
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
         className={cx(
-          'flex max-h-full w-full flex-col gap-4 overflow-y-auto border border-divider bg-bg p-[22px] shadow-lg scroll-thin',
+          // text-ink is set explicitly: a dialog can be mounted from anywhere,
+          // including the accent-900 sidebar, and must not inherit its colour.
+          'flex max-h-full w-full flex-col gap-4 overflow-y-auto border border-divider bg-bg text-ink p-[22px] shadow-lg scroll-thin',
           width || 'max-w-[560px]'
         )}
       >

@@ -9,14 +9,7 @@ import {
   Users
 } from 'lucide-react';
 
-/**
- * Role-based navigation. This map is the single source of truth for the sidebar
- * and for which routes each role may reach.
- *
- * `icon` is a lucide-react component rendered at the head of the row.
- * `badge` names a count the layout supplies: 'unread' (notifications for the
- * signed-in role) or 'verify' (submissions awaiting HR verification).
- */
+
 export const NAV = {
   HR: [
     { to: '/hr/dashboard', label: 'Dashboard', icon: LayoutDashboard },

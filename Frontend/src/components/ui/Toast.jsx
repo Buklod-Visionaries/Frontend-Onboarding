@@ -1,8 +1,3 @@
-/**
- * Single global confirmation toast, bottom-right.
- * Presentational only — the store subscription lives in a ToastHost inside the
- * layout, so this primitive stays free of app state.
- */
 export default function Toast({ message }) {
   if (!message) return null;
   return (
