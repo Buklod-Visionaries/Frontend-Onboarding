@@ -1,15 +1,24 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarItem from './SidebarItem';
 import Button from '../ui/Button';
+import SignOutDialog from '../feature/accounts/SignOutDialog';
 import { NAV, ROLE_LABEL } from './navigation';
 import { useApp } from '../../hooks/useApp';
 
 export default function Sidebar({ unreadCount, verifyCount }) {
   const app = useApp();
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const role = app.session.role;
   const items = NAV[role];
   const counts = { unread: unreadCount, verify: verifyCount };
+
+  const signOut = () => {
+    setConfirmOpen(false);
+    app.logout();
+    navigate('/login');
+  };
 
   return (
     <aside className="flex flex-col bg-accent-900 text-bg lg:sticky lg:top-0 lg:h-screen">
@@ -33,20 +42,27 @@ export default function Sidebar({ unreadCount, verifyCount }) {
         })}
       </nav>
 
-      <div className="hidden border-t border-bg/[0.14] px-5 py-4 lg:block">
-        <div className="text-cell">{app.session.name}</div>
-        <div className="mb-2.5 text-[11px] opacity-55">{app.session.title}</div>
+      {/* Sits inline on the accent field at every width — below lg the sidebar is a
+          stacked block, so this row keeps sign-out reachable on small screens. */}
+      <div className="flex flex-wrap items-center gap-3 border-t border-bg/[0.14] px-5 py-4 lg:block">
+        <div className="min-w-0 flex-1 lg:flex-none">
+          <div className="text-cell">{app.session.name}</div>
+          <div className="text-[11px] opacity-55 lg:mb-2.5">{app.session.title}</div>
+        </div>
         <Button
-          block
-          className="border-bg/30! text-bg! hover:bg-bg/10!"
-          onClick={() => {
-            app.logout();
-            navigate('/login');
-          }}
+          className="border-bg/30! text-bg! hover:bg-bg/10! lg:w-full"
+          onClick={() => setConfirmOpen(true)}
         >
           Sign out
         </Button>
       </div>
+
+      <SignOutDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={signOut}
+        name={app.session.name}
+      />
     </aside>
   );
 }

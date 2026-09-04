@@ -32,18 +32,3 @@ export function SectionHeading({ step, children }) {
     </div>
   );
 }
-
-/** Label / value pairs used by both profile screens. */
-export function InfoGroup({ title, rows }) {
-  return (
-    <div className="flex flex-col gap-2.5">
-      <div className="border-b border-divider pb-1.5 text-micro uppercase text-accent-700">{title}</div>
-      {rows.map((row) => (
-        <div key={row.label} className="grid gap-2.5 text-field" style={{ gridTemplateColumns: '130px 1fr' }}>
-          <span className="text-ink/50">{row.label}</span>
-          <span>{row.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
