@@ -5,10 +5,10 @@ import User from "../models/userModel.js";
 
 export async function register(req, res) {
   //takes the destructured value from json
-  const { username, email, password, role, department, isFirstLogin } =
+  const { username, email, tempPass, role, department, isFirstLogin } =
     req.body;
   // set the password as hashed also adds 10 as the random data added to password to add security
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // const hashedPassword = await bcrypt.hash(password, 10);
 
   //
   const existingUser = await User.findOne({
@@ -41,7 +41,7 @@ export async function register(req, res) {
   const newUser = new User({
     username,
     email,
-    password: hashedPassword,
+    password: tempPass, //unhashed
     role,
     department,
     isFirstLogin,
