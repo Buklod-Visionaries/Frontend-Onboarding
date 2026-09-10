@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { AppContext } from "./AppContext";
 import { loadEmployees } from "../services/employeeService";
 import {
@@ -19,6 +19,8 @@ function workEmailFor(name, email) {
 
 export default function AppProvider({ children }) {
   const [session, setSession] = useState(null);
+  //
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [employees] = useState(loadEmployees);
   const [staffUsers, setStaffUsers] = useState(loadStaffUsers);
   const [employeeAccounts, setEmployeeAccounts] = useState(
@@ -74,7 +76,7 @@ export default function AppProvider({ children }) {
     console.log("login:", newSession);
 
     return newSession;
-  });
+  }, []);
 
   // const logout = useCallback(() => setSession(null), []);
   const logout = useCallback(async () => {
@@ -182,6 +184,7 @@ export default function AppProvider({ children }) {
   const value = useMemo(
     () => ({
       session,
+      sessionLoading,
       login,
       logout,
       employees,
@@ -207,6 +210,7 @@ export default function AppProvider({ children }) {
     }),
     [
       session,
+      sessionLoading,
       login,
       logout,
       employees,
@@ -230,6 +234,32 @@ export default function AppProvider({ children }) {
       getEmployee,
     ],
   );
+
+  //save the users refreshtoken on site refresh
+  useEffect(() => {
+    async function refreshAuth() {
+      try {
+        //activate
+        const res = await api.post("/auth/refresh");
+        //create another access token based on refresh
+        const { accessToken, user } = res.data;
+        const updatedSession = {
+          accessToken,
+          ...user,
+        };
+        //activate
+        setSession(updatedSession);
+        console.log("from refresh", updatedSession);
+      } catch (error) {
+        setSession(null);
+        console.log("On Refresh:", error.response.data.message);
+      } finally {
+        setSessionLoading(false);
+      }
+    }
+    //call refresh
+    refreshAuth();
+  }, []);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

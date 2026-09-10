@@ -13,6 +13,12 @@ import { Outlet } from "react-router-dom";
  */
 export default function RoleGuard({ role }) {
   const app = useApp();
+
+  //this is important to not get into timing bugs
+  if (app.sessionLoading) {
+    return <p>Loading...</p>;
+  }
+  console.log("roleguard:", app.session);
   if (!app.session) return <Navigate to="/login" replace />;
   if (app.session.role !== role)
     return <Navigate to={ROLE_HOME[app.session.role]} replace />;
