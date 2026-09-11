@@ -1,23 +1,49 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import AutoGrid from '../../components/ui/AutoGrid';
-import { Segmented } from '../../components/ui/Field';
-import { EmptyState } from '../../components/ui/Notice';
-import RequirementCard from '../../components/feature/requirements/RequirementCard';
-import { useCurrentEmployee } from '../../hooks/useCurrentEmployee';
-import { STATUSES } from '../../domain/constants';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Card from "../../components/ui/Card";
+import AutoGrid from "../../components/ui/AutoGrid";
+import { Segmented } from "../../components/ui/Field";
+import { EmptyState } from "../../components/ui/Notice";
+import RequirementCard from "../../components/feature/requirements/RequirementCard";
+import { useCurrentEmployee } from "../../hooks/useCurrentEmployee";
+import { STATUSES } from "../../domain/constants";
+//
+import { useApp } from "../../hooks/useApp";
+import api from "../../lib/axios";
 
-const FILTERS = ['All', ...STATUSES];
+const FILTERS = ["All", ...STATUSES];
 
 export default function MyRequirements() {
+  const app = useApp();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState("All");
   const me = useCurrentEmployee();
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const rows = me.requirements.filter(
-    (requirement) => filter === 'All' || requirement.status === filter
+  const rows = requirements.filter(
+    (requirement) => filter === "All" || requirement.status === filter,
   );
+
+  useEffect(() => {
+    async function getMyRequirements() {
+      try {
+        setLoading(true);
+        const res = await api.get("/employee-requirements/me", {
+          headers: {
+            Authorization: `Bearer ${app.session.accessToken}`,
+          },
+        });
+        setRequirements(res.data);
+      } catch (error) {
+        console.log(error.response.data.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    getMyRequirements();
+  }, []);
 
   return (
     <Card className="gap-4">
@@ -26,9 +52,11 @@ export default function MyRequirements() {
         <AutoGrid min={280} gap="gap-4">
           {rows.map((requirement) => (
             <RequirementCard
-              key={requirement.id}
+              key={requirement._id}
               requirement={requirement}
-              onOpen={() => navigate(`/employee/requirements/${requirement.id}`)}
+              onOpen={() =>
+                navigate(`/employee/requirements/${requirement._id}`)
+              }
             />
           ))}
         </AutoGrid>

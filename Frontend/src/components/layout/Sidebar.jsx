@@ -33,9 +33,9 @@ export default function Sidebar({ unreadCount, verifyCount }) {
           },
         });
 
-        if (res.data.role === "hr") {
-          setPosition("HR Admin");
-        }
+        // if (res.data.role === "hr") {
+        //   setPosition("HR Admin");
+        // }
         setUsername(res.data.username);
       } catch (error) {
         console.log(error.response.data);

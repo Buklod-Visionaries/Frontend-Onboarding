@@ -6,7 +6,6 @@ export async function getAllEmpReq(req, res) {
   const allEmpReq = await EmployeeRequirement.find()
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -38,7 +37,6 @@ export async function getOwnEmpReq(req, res) {
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -51,15 +49,38 @@ export async function getOwnEmpReq(req, res) {
 
   res.send(myEmpReq);
 }
-
-export async function getSpecificEmpReq(req, res) {
+//for employee access
+export async function getOwnSpecificEmpReq(req, res) {
   const { id } = req.params;
-  const empReq = await EmployeeRequirement.find({
+  const empReq = await EmployeeRequirement.findOne({
     _id: id,
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
+    })
+    .populate({
+      //populate 1st level
+      path: "employee",
+      populate: {
+        // populate 2nd level
+        path: "user",
+      },
+    });
+  if (!empReq) {
+    return res.send(`employee requirements doesnt exist with id ${id}`);
+  }
+
+  res.send(empReq);
+}
+
+//for hr access
+export async function getSpecificEmpReq(req, res) {
+  const { id } = req.params;
+  const empReq = await EmployeeRequirement.findOne({
+    _id: id,
+  })
+    .populate({
+      path: "requirement",
     })
     .populate({
       //populate 1st level

@@ -87,8 +87,6 @@ export default function UserManagement() {
     fetchAllUsers();
   }, []);
 
-  console.log("USERS FROM DB:", users);
-
   return (
     <>
       {loading ? (
@@ -186,7 +184,7 @@ export default function UserManagement() {
                         )}
                       </TCell>
                       <TCell>{user.lastLogin}</TCell>
-                      {app.session._id !== user._id && (
+                      {app.session.id !== user._id && (
                         <TCell align="right">
                           <Button onClick={() => setManage(user)}>
                             Manage access

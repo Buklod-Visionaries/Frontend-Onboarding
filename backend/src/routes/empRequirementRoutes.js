@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAllEmpReq,
   getOwnEmpReq,
+  getOwnSpecificEmpReq,
   getSpecificEmpReq,
   getDepEmpReq,
   getSpecificDepEmpReq,
@@ -21,6 +22,13 @@ router.get(
   verifyToken,
   authorizeRoles("employee"),
   asyncHandler(getOwnEmpReq),
+);
+//get users own specific requirements
+router.get(
+  "/me/:id",
+  verifyToken,
+  authorizeRoles("employee"),
+  asyncHandler(getOwnSpecificEmpReq),
 );
 //get dep reps all employee requirements
 router.get(
