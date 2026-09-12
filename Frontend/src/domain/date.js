@@ -5,11 +5,15 @@ const EM_DASH = '—';
 /** The prototype is pinned to a fixed 'today' so the seeded data reads consistently. */
 export const TODAY = '2026-08-16';
 
-/** '2026-08-03' -> 'Aug 3, 2026'. Blank and em-dash values pass through. */
+/** '2026-09-08T15:47:04.696Z' -> 'Sep 8, 2026'. Blank and em-dash values pass through. */
 export function formatDate(iso) {
   if (!iso || iso === EM_DASH) return EM_DASH;
-  const [year, month, day] = iso.split('-');
-  return `${MONTHS[Number(month) - 1]} ${Number(day)}, ${year}`;
+
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime())) return EM_DASH;
+
+  return `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
 /** Offsets an ISO date by whole days and returns an ISO date. */
