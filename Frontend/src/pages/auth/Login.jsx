@@ -45,6 +45,9 @@ export default function Login() {
       if (!session) {
         return alert("User cannot be fetched");
       }
+      if (session.role === "dept-rep") {
+        return navigate(`/dept/dashboard`);
+      }
       navigate(`/${session.role}/dashboard`);
       console.log("SESSION:", session);
       console.log("ROLE:", session?.role);

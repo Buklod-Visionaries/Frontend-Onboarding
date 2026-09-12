@@ -65,12 +65,14 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="/dept" element={<RoleGuard role="department" />}>
-        <Route index element={<Navigate to="/dept/dashboard" replace />} />
-        <Route path="dashboard" element={<DeptDashboard />} />
-        <Route path="requirements" element={<DeptRequirements />} />
-        <Route path="notifications" element={<Notifications />} />
-        <Route path="*" element={<Navigate to="/dept/dashboard" replace />} />
+      <Route path="/dept" element={<RoleGuard role="dept-rep" />}>
+        <Route element={<AppShell />}>
+          <Route index element={<Navigate to="/dept/dashboard" replace />} />
+          <Route path="dashboard" element={<DeptDashboard />} />
+          <Route path="requirements" element={<DeptRequirements />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="*" element={<Navigate to="/dept/dashboard" replace />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

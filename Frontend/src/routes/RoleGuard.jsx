@@ -18,7 +18,7 @@ export default function RoleGuard({ role }) {
   if (app.sessionLoading) {
     return <p>Loading...</p>;
   }
-  console.log("roleguard:", app.session);
+
   if (!app.session) return <Navigate to="/login" replace />;
   if (app.session.role !== role)
     return <Navigate to={ROLE_HOME[app.session.role]} replace />;
