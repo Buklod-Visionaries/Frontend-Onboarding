@@ -23,7 +23,7 @@ const ROLES = [
 
 /** Sign in. There is no public registration — accounts are created by HR. */
 export default function Login() {
-  const { login } = useApp();
+  const { login, showToast } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,10 +49,15 @@ export default function Login() {
         return navigate(`/dept/dashboard`);
       }
       navigate(`/${session.role}/dashboard`);
-      console.log("SESSION:", session);
-      console.log("ROLE:", session?.role);
+      showToast(`Welcome back, ${session.username}!`);
     } catch (error) {
-      alert(error.response.data.message);
+      if (
+        error.response.data.message ===
+        "First-time login user needs to setup new password"
+      ) {
+        return navigate("/first-login");
+      }
+      showToast(error.response.data.message);
     } finally {
       setLoading(false);
     }

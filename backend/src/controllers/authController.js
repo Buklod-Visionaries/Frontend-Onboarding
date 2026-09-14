@@ -143,10 +143,9 @@ export async function firstLogin(req, res) {
     return res.send({ message: "First-time login not applicable" });
   }
   //if password do not match
-  const userMatch = await bcrypt.compare(tempPass, user.password);
-  if (!userMatch) {
+  if (tempPass !== user.password) {
     console.log(`Invalid credentials`);
-    return res.status(404).send({ message: `Password do not match` });
+    return res.status(404).send({ message: `Invalid temporary password` });
   }
 
   //hashed the new password typed in form
@@ -157,8 +156,8 @@ export async function firstLogin(req, res) {
   //saves to DB
   await user.save();
 
-  // creates a token for the user
-  const token = jwt.sign(
+  // creates a quick expiry token for the user
+  const accessToken = jwt.sign(
     {
       id: user._id,
       username: user.username,
@@ -170,8 +169,37 @@ export async function firstLogin(req, res) {
       expiresIn: "1h",
     },
   );
+
+  //creates another token but longer
+  const refreshToken = jwt.sign(
+    {
+      id: user._id,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  // put the refreshToken on cookies
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true, //cant be access by javascript
+    //secure: process.env.NODE_ENV === "production",
+    secure: false,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, //
+  });
+
   console.log(`Successfully activated account of: ${user.username}`);
-  res.send({ token });
+  res.status(200).send({
+    accessToken: accessToken,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  });
 }
 
 export async function refresh(req, res) {

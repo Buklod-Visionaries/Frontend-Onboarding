@@ -60,18 +60,45 @@ export default function AppProvider({ children }) {
   // }, []);
 
   const login = useCallback(async (email, password) => {
+    //calls the login api
     const res = await api.post("/auth/login", {
       email,
       password,
     });
 
+    //destructure data
     const { accessToken, user } = res.data;
 
+    //store data in variable
     const newSession = {
       accessToken,
       ...user,
     };
 
+    //set new session
+    setSession(newSession);
+    console.log("login:", newSession);
+
+    return newSession;
+  }, []);
+
+  const firstLogin = useCallback(async (email, tempPass, newPass) => {
+    //calls the first login api
+    const res = await api.post("/auth/first-login", {
+      email,
+      tempPass,
+      newPass,
+    });
+    //destructure accessToken and user
+    const { accessToken, user } = res.data;
+
+    //store accessToken and user values in a variable
+    const newSession = {
+      accessToken,
+      ...user,
+    };
+
+    //set new session
     setSession(newSession);
     console.log("login:", newSession);
 
@@ -81,8 +108,10 @@ export default function AppProvider({ children }) {
   // const logout = useCallback(() => setSession(null), []);
   const logout = useCallback(async () => {
     try {
+      //call logout api
       await api.post("/auth/logout");
     } finally {
+      //set session to empty
       setSession(null);
     }
   }, []);
@@ -105,20 +134,23 @@ export default function AppProvider({ children }) {
     [showToast],
   );
 
+  //specific for department reps
   const confirmActivity = useCallback(
     //
     async (empReq, setDepRequirements, setConfirmLoading) => {
       try {
         setConfirmLoading(true);
+        //call the edit employee requirement api
         const res = await api.put(
           `/employee-requirements/${empReq._id}`,
-          { status: "completed" },
+          { status: "completed" }, //they can only mark complete
           {
             headers: {
-              Authorization: `Bearer ${session.accessToken}`,
+              Authorization: `Bearer ${session.accessToken}`, //set token for authorization
             },
           },
         );
+        //only update the changed req
         setDepRequirements((prevDepReq) =>
           prevDepReq.map((req) =>
             req._id === empReq._id ? { ...req, status: res.data.status } : req,
@@ -213,6 +245,7 @@ export default function AppProvider({ children }) {
       session,
       sessionLoading,
       login,
+      firstLogin,
       logout,
       employees,
       staffUsers,
@@ -239,6 +272,7 @@ export default function AppProvider({ children }) {
       session,
       sessionLoading,
       login,
+      firstLogin,
       logout,
       employees,
       staffUsers,
