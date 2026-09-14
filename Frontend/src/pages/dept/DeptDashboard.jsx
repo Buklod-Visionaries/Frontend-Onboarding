@@ -107,86 +107,99 @@ export default function DeptDashboard() {
 
   return (
     <>
-      <AutoGrid min={190} gap="gap-4">
-        <StatCard
-          label="Employees in department"
-          value={depEmployees.length}
-          note={scope.department}
-        />
-        <StatCard
-          label="Pending confirmations"
-          value={pending.length}
-          note="Activities awaiting you"
-        />
-        <StatCard
-          label="Orientation done"
-          value={`${depRequirements.filter((e) => e.requirement.activity === "orientation" && e.status === "completed").length}/${depRequirements.filter((e) => e.requirement.activity === "orientation").length}`}
-          note="Company orientation"
-        />
-        <StatCard
-          label="Training done"
-          value={`${done("training")}/${depRequirements.filter((e) => e.requirement.activity === "dept-training").length}`}
-          note="One-month training"
-        />
-      </AutoGrid>
-
-      <Card className="gap-3.5">
-        <div className="flex flex-wrap items-center gap-3">
-          <h4 className="text-[20px]">Activities awaiting your confirmation</h4>
-          <Button
-            className="ml-auto"
-            onClick={() => navigate("/dept/requirements")}
-          >
-            Department requirements
-          </Button>
-        </div>
-
-        {depEmployees.length ? (
-          <Table>
-            <THead
-              columns={[
-                "Employee",
-                "Position",
-                "Activity",
-                "Target date",
-                "Status",
-                { label: "", align: "right" },
-              ]}
+      {loading ? (
+        "Loading..."
+      ) : (
+        <>
+          <AutoGrid min={190} gap="gap-4">
+            <StatCard
+              label="Employees in department"
+              value={depEmployees.length}
+              note={scope.department}
             />
-            <tbody>
-              {confirmLoading ? "Loading..." : (depRequirements.map((req) => (
-                <TRow key={req._id}>
-                  <TCell strong>{req.employee.user.username}</TCell>
-                  <TCell>{req.employee.position}</TCell>
-                  <TCell>{req.requirement.name}</TCell>
-                  <TCell>{formatDate(req.dueDate)}</TCell>
-                  <TCell>
-                    <Badge>{req.status}</Badge>
-                  </TCell>
-                  <TCell align="right">
-                    {req.status !== "completed" && (
-                      <Button variant="primary" onClick={() => setConfirm(req)}>
-                        Confirm
-                      </Button>
-                    )}
-                  </TCell>
-                </TRow>
-              )))}
-            </tbody>
-          </Table>
-        ) : (
-          <EmptyState>
-            Nothing is waiting for confirmation in {scope.department}.
-          </EmptyState>
-        )}
-      </Card>
+            <StatCard
+              label="Pending confirmations"
+              value={pending.length}
+              note="Activities awaiting you"
+            />
+            <StatCard
+              label="Orientation done"
+              value={`${depRequirements.filter((e) => e.requirement.activity === "orientation" && e.status === "completed").length}/${depRequirements.filter((e) => e.requirement.activity === "orientation").length}`}
+              note="Company orientation"
+            />
+            <StatCard
+              label="Training done"
+              value={`${depRequirements.filter((e) => e.requirement.activity === "dept-training" && e.status === "completed").length}/${depRequirements.filter((e) => e.requirement.activity === "dept-training").length}`}
+              note="One-month training"
+            />
+          </AutoGrid>
 
-      <ConfirmActivityDialog
-        target={confirm}
-        setConfirmLoading={setConfirmLoading}
-        setDepRequirements={setDepRequirements}
-        onClose={() => setConfirm(null)}
-      />
+          <Card className="gap-3.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <h4 className="text-[20px]">
+                Activities awaiting your confirmation
+              </h4>
+              <Button
+                className="ml-auto"
+                onClick={() => navigate("/dept/requirements")}
+              >
+                Department requirements
+              </Button>
+            </div>
+
+            {depEmployees.length ? (
+              <Table>
+                <THead
+                  columns={[
+                    "Employee",
+                    "Position",
+                    "Activity",
+                    "Target date",
+                    "Status",
+                    { label: "", align: "right" },
+                  ]}
+                />
+                <tbody>
+                  {confirmLoading
+                    ? "Loading..."
+                    : depRequirements.map((req) => (
+                        <TRow key={req._id}>
+                          <TCell strong>{req.employee.user.username}</TCell>
+                          <TCell>{req.employee.position}</TCell>
+                          <TCell>{req.requirement.name}</TCell>
+                          <TCell>{formatDate(req.dueDate)}</TCell>
+                          <TCell>
+                            <Badge>{req.status}</Badge>
+                          </TCell>
+                          <TCell align="right">
+                            {req.status !== "completed" && (
+                              <Button
+                                variant="primary"
+                                onClick={() => setConfirm(req)}
+                              >
+                                Confirm
+                              </Button>
+                            )}
+                          </TCell>
+                        </TRow>
+                      ))}
+                </tbody>
+              </Table>
+            ) : (
+              <EmptyState>
+                Nothing is waiting for confirmation in {scope.department}.
+              </EmptyState>
+            )}
+          </Card>
+
+          <ConfirmActivityDialog
+            target={confirm}
+            setConfirmLoading={setConfirmLoading}
+            setDepRequirements={setDepRequirements}
+            onClose={() => setConfirm(null)}
+          />
+        </>
+      )}
     </>
   );
 }
