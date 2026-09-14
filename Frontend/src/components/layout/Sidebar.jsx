@@ -17,6 +17,7 @@ export default function Sidebar({ unreadCount, verifyCount }) {
   const counts = { unread: unreadCount, verify: verifyCount };
   const [username, setUsername] = useState("");
   const [position, setPosition] = useState("");
+  const [roleLabel, setRoleLabel] = useState("");
 
   const signOut = () => {
     setConfirmOpen(false);
@@ -32,17 +33,39 @@ export default function Sidebar({ unreadCount, verifyCount }) {
             Authorization: `Bearer ${app.session.accessToken}`,
           },
         });
-
-        // if (res.data.role === "hr") {
-        //   setPosition("HR Admin");
-        // }
         setUsername(res.data.username);
+        if (res.data.role === "hr") {
+          setPosition("HR Staff");
+          setRoleLabel("Administration");
+          return;
+        }
+
+        setRoleLabel(res.data.department);
+        if (res.data.role === "dept-rep") {
+          setPosition(`Department Representative`);
+          return;
+        }
+      } catch (error) {
+        console.log(error.response.data);
+      }
+    }
+
+    //just to set position of employees
+    async function getCurrentEmployeeUser() {
+      try {
+        const res = await api.get("/employees/me", {
+          headers: {
+            Authorization: `Bearer ${app.session.accessToken}`,
+          },
+        });
+        setPosition(res.data.position);
       } catch (error) {
         console.log(error.response.data);
       }
     }
 
     getCurrentUser();
+    getCurrentEmployeeUser();
   }, []);
 
   return (
@@ -52,7 +75,7 @@ export default function Sidebar({ unreadCount, verifyCount }) {
           PMCL &middot; Onboarding
         </div>
         <div className="mt-0.5 text-micro uppercase opacity-55">
-          {ROLE_LABEL[role]}
+          {roleLabel}
         </div>
       </div>
 

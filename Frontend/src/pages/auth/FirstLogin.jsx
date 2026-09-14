@@ -36,7 +36,7 @@ export default function FirstLogin() {
       return;
     }
     if (newPass !== confirmNewPass) {
-      app.showToast("The two passwords do not match.");
+      app.showToast("Confirm password do not match");
       return;
     }
     try {

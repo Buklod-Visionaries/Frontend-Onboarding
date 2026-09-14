@@ -62,5 +62,5 @@ export const NAV = {
 export const ROLE_LABEL = {
   hr: "HR Staff",
   employee: "Employee",
-  department: "Department Representative",
+  "dept-rep": "Department Representative",
 };
