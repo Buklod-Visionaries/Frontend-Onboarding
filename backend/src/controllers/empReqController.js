@@ -114,7 +114,6 @@ export async function getDepEmpReq(req, res) {
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -126,7 +125,9 @@ export async function getDepEmpReq(req, res) {
     });
 
   //filter only show task not documents
-  const taskEmpReq = allEmpReq.filter((req) => req.requirement !== null);
+  const taskEmpReq = allEmpReq.filter(
+    (req) => req.requirement.type === "activity",
+  );
 
   res.send(taskEmpReq);
 }

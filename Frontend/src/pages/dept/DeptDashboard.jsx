@@ -76,6 +76,8 @@ export default function DeptDashboard() {
     getDepEmpReq();
   }, []);
 
+  console.log("depEmployees", depRequirements);
+
   return (
     <>
       <AutoGrid min={190} gap="gap-4">
