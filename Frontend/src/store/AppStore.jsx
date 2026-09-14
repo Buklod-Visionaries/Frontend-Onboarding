@@ -106,9 +106,34 @@ export default function AppProvider({ children }) {
   );
 
   const confirmActivity = useCallback(
-    (employee, requirement) =>
-      showToast(`${requirement.name} confirmed for ${employee.name}`),
-    [showToast],
+    //
+    async (id, setDepRequirements, setConfirmLoading) => {
+      try {
+        setConfirmLoading(true);
+        const res = await api.put(
+          `/employee-requirements/${id}`,
+          { status: "completed" },
+          {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          },
+        );
+        setDepRequirements((prevDepReq) =>
+          prevDepReq.map((req) =>
+            req._id === id ? { ...req, status: res.data.status } : req,
+          ),
+        );
+        alert("success");
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setConfirmLoading(false);
+      }
+    },
+    // (employee, requirement) =>
+    //   showToast(`${requirement.name} confirmed for ${employee.name}`),
+    // [showToast],
   );
 
   const sendReminder = useCallback(

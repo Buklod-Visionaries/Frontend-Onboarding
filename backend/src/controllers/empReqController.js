@@ -140,7 +140,6 @@ export async function getSpecificDepEmpReq(req, res) {
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -169,6 +168,10 @@ export async function editEmpReq(req, res) {
     return res.status(400).send({
       message: "resubmission reason is required",
     });
+  }
+
+  if (status === "in-progress") {
+    
   }
 
   const editedReq = await EmployeeRequirement.findByIdAndUpdate(

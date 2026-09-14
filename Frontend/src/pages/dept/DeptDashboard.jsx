@@ -23,10 +23,37 @@ export default function DeptDashboard() {
   const [depEmployees, setDepEmployees] = useState([]);
   const [depRequirements, setDepRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const pending = depRequirements.filter((row) => row.status !== "completed");
   const done = (key) =>
     scope.employees.filter((employee) => employee.milestones[key]).length;
+
+  //
+  // async function confirmRequirement(id) {
+  //   try {
+  //     setConfirmLoading(true);
+  //     const res = await api.put(
+  //       `/employee-requirements/${id}`,
+  //       { status: "completed" },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       },
+  //     );
+  //     setDepRequirements((prevDepReq) =>
+  //       prevDepReq.map((req) =>
+  //         req._id === id ? { ...req, status: res.data.status } : req,
+  //       ),
+  //     );
+  //     alert("success");
+  //   } catch (error) {
+  //     console.log(error.response.data.message);
+  //   } finally {
+  //     setConfirmLoading(false);
+  //   }
+  // }
 
   useEffect(() => {
     async function getCurrentUser() {
@@ -93,12 +120,12 @@ export default function DeptDashboard() {
         />
         <StatCard
           label="Orientation done"
-          value={`${done("orientation")}/${depRequirements.filter((e) => e.requirement.type === "orientation").length}`}
+          value={`${depRequirements.filter((e) => e.requirement.activity === "orientation" && e.status === "completed").length}/${depRequirements.filter((e) => e.requirement.activity === "orientation").length}`}
           note="Company orientation"
         />
         <StatCard
           label="Training done"
-          value={`${done("training")}/${depRequirements.filter((e) => e.requirement.type === "training").length}`}
+          value={`${done("training")}/${depRequirements.filter((e) => e.requirement.activity === "dept-training").length}`}
           note="One-month training"
         />
       </AutoGrid>
@@ -127,19 +154,21 @@ export default function DeptDashboard() {
               ]}
             />
             <tbody>
-              {depRequirements.map((emp) => (
-                <TRow key={emp._id}>
-                  <TCell strong>{emp.employee.user.username}</TCell>
-                  <TCell>{emp.employee.position}</TCell>
-                  <TCell>{emp.requirement.name}</TCell>
-                  <TCell>{formatDate(emp.dueDate)}</TCell>
+              {depRequirements.map((req) => (
+                <TRow key={req._id}>
+                  <TCell strong>{req.employee.user.username}</TCell>
+                  <TCell>{req.employee.position}</TCell>
+                  <TCell>{req.requirement.name}</TCell>
+                  <TCell>{formatDate(req.dueDate)}</TCell>
                   <TCell>
-                    <Badge>{emp.status}</Badge>
+                    <Badge>{req.status}</Badge>
                   </TCell>
                   <TCell align="right">
-                    <Button variant="primary" onClick={() => setConfirm(row)}>
-                      Confirm
-                    </Button>
+                    {req.status !== "completed" && (
+                      <Button variant="primary" onClick={() => setConfirm(req)}>
+                        Confirm
+                      </Button>
+                    )}
                   </TCell>
                 </TRow>
               ))}
@@ -154,6 +183,8 @@ export default function DeptDashboard() {
 
       <ConfirmActivityDialog
         target={confirm}
+        setConfirmLoading={setConfirmLoading}
+        setDepRequirements={setDepRequirements}
         onClose={() => setConfirm(null)}
       />
     </>

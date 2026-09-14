@@ -2,12 +2,12 @@ import { cx } from '../../lib/cx';
 
 /** Requirement + account status badges. One component, one variant map. */
 const VARIANTS = {
-  Completed: 'bg-accent-200 text-accent-800',
-  'In Progress': 'border border-accent text-accent-700',
-  Pending: 'bg-neutral-200 text-neutral-800',
-  Active: 'bg-accent-200 text-accent-800',
+  completed: 'bg-accent-200 text-accent-800',
+  'in-progress': 'border border-accent text-accent-700',
+  pending: 'bg-neutral-200 text-neutral-800',
+  active: 'bg-accent-200 text-accent-800',
   'Pending first login': 'border border-accent text-accent-700',
-  Deactivated: 'bg-neutral-200 text-neutral-800',
+  deactivated: 'bg-neutral-200 text-neutral-800',
   overdue: 'bg-accent-900 text-bg uppercase tracking-[0.1em] text-micro'
 };
 
