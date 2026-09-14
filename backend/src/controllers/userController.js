@@ -28,7 +28,7 @@ export async function deleteUser(req, res) {
 
   const selectedUser = await User.findOne({ _id: id });
   if (!selectedUser) {
-    return res.send("User doesn't exist");
+    return res.send({ message: "User doesn't exist" });
   }
 
   //also delete related data if Employee role
@@ -45,7 +45,7 @@ export async function deleteUser(req, res) {
     console.log("Also deleted Employee Data and EmployeeReq data");
   }
   await User.deleteOne({ _id: id });
-  res.send("Successfully deleted user");
+  res.send({ message: "Successfully deleted user with id", id: id });
 }
 
 export async function getSpecificUser(req, res) {
@@ -63,4 +63,31 @@ export async function getSpecificUser(req, res) {
   //sends the user with matching ID
   console.log(user);
   res.status(200).send(user);
+}
+
+export async function updateUser(req, res) {
+  const { id: paramsId } = req.params;
+  const { username, email, password, role, department, isFirstLogin } =
+    req.body;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    paramsId,
+    {
+      username,
+      email,
+      password,
+      role,
+      department,
+      isFirstLogin,
+    },
+    {
+      returnDocument: "after",
+    },
+  );
+
+  if (!updatedUser) {
+    return res.send({ message: "user doesnt exist" });
+  }
+
+  res.send(updatedUser);
 }

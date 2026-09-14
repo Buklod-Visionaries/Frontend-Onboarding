@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      enum: ["laboratory", "cardiovascular", "admin"],
+      enum: ["laboratory", "imaging", "cardiovascular", "administration"],
       required: function () {
         // not required if role is hr
         return this.role !== "hr";
@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema(
     isFirstLogin: {
       type: Boolean,
       default: true, // true on production
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+      required: true,
     },
   },
   { timestamps: true },

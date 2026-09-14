@@ -13,7 +13,7 @@ const employeeSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    enum: ["laboratory", "cardiovascular", "admin"],
+    enum: ["laboratory", "imaging", "cardiovascular", "administration"],
     required: true,
   },
   onboardingStatus: {

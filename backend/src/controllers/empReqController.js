@@ -160,14 +160,21 @@ export async function getSpecificDepEmpReq(req, res) {
 export async function editEmpReq(req, res) {
   const { id: userId } = req.user;
   const { id: paramsId } = req.params;
-  const { status } = req.body;
+  const { status, resubmissionReason } = req.body;
 
   const currentDate = new Date();
+
+  if (status === "resubmission-required" && !resubmissionReason) {
+    return res.status(400).send({
+      message: "resubmission reason is required",
+    });
+  }
 
   const editedReq = await EmployeeRequirement.findByIdAndUpdate(
     paramsId,
     {
       status,
+      resubmissionReason,
       verifiedBy: userId,
       verifiedAt: currentDate,
     },
@@ -175,4 +182,16 @@ export async function editEmpReq(req, res) {
   );
 
   res.send(editedReq);
+}
+
+export async function deleteSpecificEmpReq(req, res) {
+  const { id: paramsId } = req.params;
+
+  const delEmpReq = await EmployeeRequirement.findByIdAndDelete(paramsId);
+
+  if (!delEmpReq) {
+    return res.send("Can't delete employee requirement it might not exist");
+  }
+
+  res.send(delEmpReq);
 }

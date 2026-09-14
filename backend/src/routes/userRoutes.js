@@ -5,6 +5,7 @@ import {
   getAllUser,
   getOwnUser,
   getSpecificUser,
+  updateUser,
   deleteUser,
 } from "../controllers/userController.js";
 //
@@ -24,6 +25,8 @@ router.get(
   authorizeRoles("hr"),
   asyncHandler(getSpecificUser),
 );
+//
+router.put("/:id", verifyToken, authorizeRoles("hr"), asyncHandler(updateUser));
 
 //change user pass
 

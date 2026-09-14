@@ -87,6 +87,54 @@ export async function submitDocument(req, res) {
 
   //set status in progress
   currentEmpReq.status = "in-progress";
-  await currentEmpReq.save();
+  await currentEmpReq.save(); 
   res.send({ message: "Document uploaded successfully", document: docs });
+}
+
+export async function getSpecificDocument(req, res) {
+  const { id } = req.params;
+
+  const doc = await Document.findOne({ _id: id });
+  if (!doc) {
+    return res.send("document doesn't exist");
+  }
+  res.send(doc);
+}
+
+export async function deleteSpecificDocument(req, res) {
+  const { id: paramsId } = req.params;
+
+  const doc = await Document.findOne({ _id: paramsId })
+    .populate({
+      path: "employee",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "employeeRequirement",
+      populate: {
+        path: "requirement",
+      },
+    });
+  if (!doc) {
+    return res.send("document doesn't exist");
+  }
+
+  //delete file from supabase
+  const { error: uploadError } = await supabase.storage
+    .from("employee-files") //supabase bucket name
+    .remove([doc.fileUrl]);
+
+  if (uploadError) {
+    console.log(uploadError);
+    return res.send({ message: "Failed to delete file" });
+  }
+
+  //delete the document file after
+  const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
+  if (!deletedDocs) {
+    return res.send("Failed deleting document");
+  }
+  res.send(`successfully deleted document with id: ${doc._id}`);
 }
