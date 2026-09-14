@@ -2,6 +2,8 @@ import express from "express";
 import {
   getAllDocuments,
   submitDocument,
+  getSpecificDocument,
+  deleteSpecificDocument,
 } from "../controllers/documentController.js";
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
@@ -18,6 +20,20 @@ router.post(
   authorizeRoles("employee"),
   upload.single("file"),
   asyncHandler(submitDocument),
+);
+//get specific doc
+router.get(
+  "/:id",
+  verifyToken,
+  authorizeRoles("hr", "employee"),
+  asyncHandler(getSpecificDocument),
+);
+//delete specific doc
+router.delete(
+  "/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(deleteSpecificDocument),
 );
 
 export default router;

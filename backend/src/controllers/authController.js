@@ -64,15 +64,14 @@ export async function login(req, res) {
       .status(404)
       .send({ message: `User with email ${email} not found` });
   }
-  //compares the hashed password to the requested user password
-  const userMatch = await bcrypt.compare(password, user.password);
-
   //doesnt allow users with temporaryPassword
   if (user.isFirstLogin) {
     return res
       .status(404)
       .send({ message: "First-time login user needs to setup new password" });
   }
+  //compares the hashed password to the requested user password
+  const userMatch = await bcrypt.compare(password, user.password);
 
   //when the password does not match
   if (!userMatch) {
