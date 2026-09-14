@@ -27,7 +27,7 @@ function ConfirmActivityDialogBody({
             variant="primary"
             onClick={() => {
               app.confirmActivity(
-                empReq._id,
+                empReq,
                 setDepRequirements,
                 setConfirmLoading,
               );

@@ -107,11 +107,11 @@ export default function AppProvider({ children }) {
 
   const confirmActivity = useCallback(
     //
-    async (id, setDepRequirements, setConfirmLoading) => {
+    async (empReq, setDepRequirements, setConfirmLoading) => {
       try {
         setConfirmLoading(true);
         const res = await api.put(
-          `/employee-requirements/${id}`,
+          `/employee-requirements/${empReq._id}`,
           { status: "completed" },
           {
             headers: {
@@ -121,10 +121,12 @@ export default function AppProvider({ children }) {
         );
         setDepRequirements((prevDepReq) =>
           prevDepReq.map((req) =>
-            req._id === id ? { ...req, status: res.data.status } : req,
+            req._id === empReq._id ? { ...req, status: res.data.status } : req,
           ),
         );
-        alert("success");
+        showToast(
+          `${empReq.requirement.name} confirmed for ${empReq.employee.user.username}`,
+        );
       } catch (error) {
         console.log(error);
       } finally {

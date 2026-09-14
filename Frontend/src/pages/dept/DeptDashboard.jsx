@@ -154,7 +154,7 @@ export default function DeptDashboard() {
               ]}
             />
             <tbody>
-              {depRequirements.map((req) => (
+              {confirmLoading ? "Loading..." : (depRequirements.map((req) => (
                 <TRow key={req._id}>
                   <TCell strong>{req.employee.user.username}</TCell>
                   <TCell>{req.employee.position}</TCell>
@@ -171,7 +171,7 @@ export default function DeptDashboard() {
                     )}
                   </TCell>
                 </TRow>
-              ))}
+              )))}
             </tbody>
           </Table>
         ) : (
