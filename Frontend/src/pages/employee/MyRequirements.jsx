@@ -45,9 +45,22 @@ export default function MyRequirements() {
     getMyRequirements();
   }, []);
 
+  if (loading || !requirements) {
+    return <p>Loading...</p>;
+  }
+
   return (
     <Card className="gap-4">
-      <Segmented value={filter} onChange={setFilter} options={FILTERS} />
+      <Segmented
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { value: "All", label: "All" },
+          { value: "in-progress", label: "In Progress" },
+          { value: "completed", label: "Completed" },
+          { value: "resubmission-required", label: "Resubmission Required" },
+        ]}
+      />
       {rows.length ? (
         <AutoGrid min={280} gap="gap-4">
           {rows.map((requirement) => (

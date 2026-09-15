@@ -98,7 +98,8 @@ export default function EmployeeDashboard() {
             <div className="font-heading text-[56px] leading-none">
               {requirements.length
                 ? Math.round(
-                    ((requirements.status === "completed") /
+                    (requirements.filter((req) => req.status === "completed")
+                      .length /
                       requirements.length) *
                       100,
                   )
@@ -110,7 +111,8 @@ export default function EmployeeDashboard() {
             value={
               requirements.length
                 ? Math.round(
-                    ((requirements.status === "completed") /
+                    (requirements.filter((req) => req.status === "completed")
+                      .length /
                       requirements.length) *
                       100,
                   )
