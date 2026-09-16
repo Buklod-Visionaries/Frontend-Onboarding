@@ -11,13 +11,13 @@ export const STATUSES = ['Pending', 'In Progress', 'Completed'];
 
 export const ACCOUNT_STATUSES = ['Active', 'Pending first login', 'Deactivated'];
 
-export const SUB_LABELS = {
-  notSubmitted: 'Not yet submitted',
-  awaitingHr: 'Awaiting HR verification',
-  resubmission: 'Resubmission requested',
-  verified: 'Verified by HR',
-  confirmed: 'Confirmed by department'
-};
+export const SUB_LABELS = [
+  {notSubmitted: 'Not yet submitted'},
+  {awaitingHr: 'Awaiting HR verification'},
+  {resubmission: 'Resubmission requested'},
+ { verified: 'Verified by HR'},
+  {confirmed: 'Confirmed by department'}
+];
 
 export const TEMP_PASSWORD = 'PMCL-Temp-4471';
 

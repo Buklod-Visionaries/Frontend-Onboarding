@@ -57,6 +57,7 @@ export default function MyRequirements() {
         options={[
           { value: "All", label: "All" },
           { value: "in-progress", label: "In Progress" },
+          { value: "pending", label: "Pending" },
           { value: "completed", label: "Completed" },
           { value: "resubmission-required", label: "Resubmission Required" },
         ]}

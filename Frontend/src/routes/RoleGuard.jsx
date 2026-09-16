@@ -21,7 +21,12 @@ export default function RoleGuard({ role }) {
 
   if (!app.session) return <Navigate to="/login" replace />;
   if (app.session.role !== role)
-    return <Navigate to={ROLE_HOME[app.session.role]} replace />;
+    return (
+      <Navigate
+        to={app.session.role === "dept-rep" ? `/dept` : `/${app.session.role}`}
+        replace
+      />
+    );
   //THIS IS A BUG it render another dashboard inside another dashbaord
   // return <AppShell />;
   return <Outlet />;

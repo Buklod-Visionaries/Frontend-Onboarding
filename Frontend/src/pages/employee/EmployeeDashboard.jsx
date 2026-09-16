@@ -14,6 +14,7 @@ import { countRequirements } from "../../domain/requirements";
 import { formatDate } from "../../domain/date";
 //
 import { useState, useEffect } from "react";
+import { SUB_LABELS } from "../../domain/constants.js";
 import api from "../../lib/axios.js";
 
 export default function EmployeeDashboard() {
@@ -65,10 +66,7 @@ export default function EmployeeDashboard() {
 
   console.log("requiremens:", requirements);
   const actionable = requirements
-    .filter(
-      (requirement) =>
-        requirement.status !== "Completed" && requirement.owner === "Employee",
-    )
+    .filter((requirement) => requirement.status !== "completed")
     .slice(0, 5);
 
   const notifications = app.notifications
@@ -120,58 +118,98 @@ export default function EmployeeDashboard() {
             }
             height="lg"
           />
-          <StatStrip
-            min={140}
-            items={[
-              { label: "Completed", value: requirements.completed },
-              { label: "In progress", value: requirements.progress },
-              { label: "Pending", value: requirements.pending },
-              { label: "Overdue", value: requirements.overdue },
-            ]}
-          />
+          {reqLoading ? (
+            "Loading..."
+          ) : (
+            <StatStrip
+              min={140}
+              items={[
+                {
+                  label: "Completed",
+                  value: requirements.filter(
+                    (requirements) => requirements.status === "completed",
+                  ).length,
+                },
+                {
+                  label: "In progress",
+                  value: requirements.filter(
+                    (requirements) => requirements.status === "in-progress",
+                  ).length,
+                },
+                {
+                  label: "Pending",
+                  value: requirements.filter(
+                    (requirements) => requirements.status === "pending",
+                  ).length,
+                },
+                {
+                  label: "Overdue",
+                  value: requirements.filter(
+                    (requirements) => requirements.status === "overdue",
+                  ).length,
+                },
+              ]}
+            />
+          )}
         </Card>
 
         <AutoGrid min={320}>
-          <Card className="gap-3">
-            <div className="flex items-baseline">
-              <h4 className="text-[20px]">Needs your action</h4>
-              <Button
-                variant="ghost"
-                className="ml-auto"
-                onClick={() => navigate("/employee/requirements")}
-              >
-                All requirements
-              </Button>
-            </div>
-            {actionable.length ? (
-              <DividerList>
-                {actionable.map((requirement) => (
-                  <DividerRow
-                    key={requirement.id}
-                    as="button"
-                    type="button"
-                    onClick={() =>
-                      navigate(`/employee/requirements/${requirement.id}`)
-                    }
-                    className="flex items-center gap-3 px-3.5 py-3 text-left hover:bg-accent-100"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-field font-medium">
-                        {requirement.name}
+          {reqLoading ? (
+            "Loading..."
+          ) : (
+            <Card className="gap-3">
+              <div className="flex items-baseline">
+                <h4 className="text-[20px]">Needs your action</h4>
+                <Button
+                  variant="ghost"
+                  className="ml-auto"
+                  onClick={() => navigate("/employee/requirements")}
+                >
+                  All requirements
+                </Button>
+              </div>
+              {actionable.length ? (
+                <DividerList>
+                  {actionable.map((requirement) => (
+                    <DividerRow
+                      key={requirement.id}
+                      as="button"
+                      type="button"
+                      onClick={() =>
+                        navigate(`/employee/requirements/${requirement._id}`)
+                      }
+                      className="flex items-center gap-3 px-3.5 py-3 text-left hover:bg-accent-100"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-field font-medium">
+                          {requirement.requirement.name}
+                        </span>
+                        <span className="block text-meta text-ink/55">
+                          {SUB_LABELS.map((label) => {
+                            if (
+                              requirement.status === //continue implementing this one it should display the status of requirements
+                              "in-progress"
+                            ) {
+                              return <p>{label.notSubmitted}</p>;
+                            }
+                            if (
+                              requirement.status === "resubmission-required"
+                            ) {
+                              return <p>{label.resubmission}</p>;
+                            }
+                          })}{" "}
+                          &middot; due {formatDate(requirement.dueDate)}
+                        </span>
                       </span>
-                      <span className="block text-meta text-ink/55">
-                        {requirement.subLabel} &middot; due{" "}
-                        {formatDate(requirement.deadline)}
-                      </span>
-                    </span>
-                    <Badge>{requirement.status}</Badge>
-                  </DividerRow>
-                ))}
-              </DividerList>
-            ) : (
-              <EmptyState>Nothing needs your action right now.</EmptyState>
-            )}
-          </Card>
+                      <Badge>{requirement.status}</Badge>
+                    </DividerRow>
+                  ))}
+                </DividerList>
+              ) : (
+                <EmptyState>Nothing needs your action right now.</EmptyState>
+              )}
+            </Card>
+          )}
 
           <Card className="gap-3">
             <div className="flex items-baseline">

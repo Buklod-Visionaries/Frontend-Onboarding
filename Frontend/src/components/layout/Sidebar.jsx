@@ -50,6 +50,8 @@ export default function Sidebar({ unreadCount, verifyCount }) {
       }
     }
 
+    console.log("Dep", roleLabel);
+
     //just to set position of employees
     async function getCurrentEmployeeUser() {
       try {
