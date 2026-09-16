@@ -26,6 +26,8 @@ export default function RequirementDetail() {
   const [requirement, setRequirement] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
+  const [fetchingDocument, setFetchingDocument] = useState(false);
+  const [documentPreview, setDocumentPreview] = useState(null);
 
   // const me = useCurrentEmployee();
   // const requirement = me.requirements.find((row) => row.id === params.id);
@@ -65,7 +67,27 @@ export default function RequirementDetail() {
       }
     }
 
+    async function getExistingDocument() {
+      try {
+        setFetchingDocument(true);
+        const res = await api.get(
+          `/documents/employee-requirements/${params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${app.session.accessToken}`,
+            },
+          },
+        );
+        setDocumentPreview(res.data);
+      } catch (error) {
+        console.log(error.response.data.message);
+      } finally {
+        setFetchingDocument(false);
+      }
+    }
+
     getMySpecificRequirement();
+    getExistingDocument();
   }, []);
 
   if (loading) {
@@ -134,43 +156,52 @@ export default function RequirementDetail() {
 
         <div className="flex flex-col gap-2.5">
           <span className="text-micro uppercase text-ink/50">Submission</span>
-          <div
-            className={cx(
-              "flex flex-col items-center gap-1.5 border border-dashed p-6 text-center",
-              uploadable ? "border-ink/30" : "border-ink/[0.18] opacity-55",
-            )}
-          >
-            <Upload size={26} strokeWidth={1.5} className="text-accent" />
-            <div className="text-field">{uploadLabel}</div>
-            <div className="text-meta text-ink/50">
-              PDF, JPG or PNG &middot; max 10 MB
-            </div>
-            <input
-              ref={fileInput}
-              type="file"
-              onChange={(e) => {
-                const file = e.target.files && e.target.files[0];
-                if (file) setPendingFile(e.target.files[0]);
-              }}
-            />
-            <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
-              <Button
-                disabled={!uploadable}
-                onClick={() => fileInput.current?.click()}
-              >
-                Choose file
-              </Button>
-              {requirement.status !== "pending" && (
-                <Button
-                  variant="primary"
-                  disabled={!uploadable || !pendingFile}
-                  onClick={(e) => uploadFile({ e, id: requirement._id })}
-                >
-                  {requirement.file ? "Resubmit document" : "Submit document"}
-                </Button>
+          {requirement.status === "in-progress" ||
+          requirement.status === "resubmission-required" ? (
+            <div
+              className={cx(
+                "flex flex-col items-center gap-1.5 border border-dashed p-6 text-center",
+                uploadable ? "border-ink/30" : "border-ink/[0.18] opacity-55",
               )}
+            >
+              <Upload size={26} strokeWidth={1.5} className="text-accent" />
+              <div className="text-field">{uploadLabel}</div>
+              <div className="text-meta text-ink/50">
+                PDF, JPG or PNG &middot; max 10 MB
+              </div>
+              <input
+                ref={fileInput}
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  if (file) setPendingFile(e.target.files[0]);
+                }}
+              />
+              <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
+                <Button
+                  disabled={!uploadable}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  Choose file
+                </Button>
+                {requirement.status !== "pending" && (
+                  <Button
+                    variant="primary"
+                    disabled={!uploadable || !pendingFile}
+                    onClick={(e) => uploadFile({ e, id: requirement._id })}
+                  >
+                    {requirement.file ? "Resubmit document" : "Submit document"}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          ) : !documentPreview ? (
+            "Loading..."
+          ) : (
+            <div class="w-full max-w-lg aspect-[1/1.2941] mx-auto">
+              <iframe src={documentPreview.fileUrl} class="w-full h-full" />
+            </div>
+          )}
         </div>
 
         <Button

@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAllDocuments,
   submitDocument,
+  getEmpReqSpecificDocument,
   getSpecificDocument,
   deleteSpecificDocument,
 } from "../controllers/documentController.js";
@@ -20,6 +21,13 @@ router.post(
   authorizeRoles("employee"),
   upload.single("file"),
   asyncHandler(submitDocument),
+);
+//get documents of specific empReq
+router.get(
+  "/employee-requirements/:id",
+  verifyToken,
+  authorizeRoles("hr", "employee"),
+  asyncHandler(getEmpReqSpecificDocument),
 );
 //get specific doc
 router.get(

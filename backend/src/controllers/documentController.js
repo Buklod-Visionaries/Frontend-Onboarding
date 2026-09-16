@@ -91,10 +91,69 @@ export async function submitDocument(req, res) {
   res.send({ message: "Document uploaded successfully", document: docs });
 }
 
+export async function getEmpReqSpecificDocument(req, res) {
+  const { id } = req.params;
+  const empReq = await EmployeeRequirement.findOne({ _id: id }).populate(
+    "requirement",
+  );
+  if (!empReq) {
+    return res.send(`empReq doesn't exist with id ${id}`);
+  }
+
+  const empReqDocument = await Document.findOne({
+    employeeRequirement: empReq._id,
+  })
+    .populate({
+      path: "employee",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "employeeRequirement",
+      populate: {
+        path: "requirement",
+      },
+    });
+
+  if (!empReqDocument) {
+    return res.send(`documents doesn't exist with empReq id ${id}`);
+  }
+
+  //create a signed URL to be viewable since its stored in a private bucket
+  const { data, error } = await supabase.storage
+    .from("employee-files")
+    .createSignedUrl(empReqDocument.fileUrl, 60 * 10);
+
+  if (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+
+  //return a json where the fileUrl is signed so its viewable
+  res.json({
+    ...empReqDocument.toObject(),
+    fileUrl: data.signedUrl,
+  });
+}
+
 export async function getSpecificDocument(req, res) {
   const { id } = req.params;
 
-  const doc = await Document.findOne({ _id: id });
+  const doc = await Document.findOne({ _id: id })
+    .populate({
+      path: "employee",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "employeeRequirement",
+      populate: {
+        path: "requirement",
+      },
+    });
   if (!doc) {
     return res.send("document doesn't exist");
   }
