@@ -25,9 +25,27 @@ export default function RequirementDetail() {
   const [pendingFile, setPendingFile] = useState("");
   const [requirement, setRequirement] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
 
   // const me = useCurrentEmployee();
   // const requirement = me.requirements.find((row) => row.id === params.id);
+
+  async function uploadFile({ e, id }) {
+    e.preventDefault();
+    try {
+      setFileUploading(true);
+      if (!pendingFile) return;
+      //sends the file and target requirement
+      await app.submitDocument(pendingFile, id);
+      // console.log(`${id} ${pendingFile}`);
+      // setPendingFile("");
+    } catch (error) {
+      app.showToast(`Failed uploading File: ${error?.response?.data?.message}`);
+      console.log(error);
+    } finally {
+      setFileUploading(false);
+    }
+  }
 
   useEffect(() => {
     async function getMySpecificRequirement() {
@@ -53,7 +71,7 @@ export default function RequirementDetail() {
   if (loading) {
     return <p>Loading...</p>;
   }
-  
+
   if (!requirement) {
     return (
       <Card>
@@ -68,26 +86,19 @@ export default function RequirementDetail() {
     );
   }
 
-  const uploadable =
-    requirement.owner === "Employee" && requirement.status !== "Completed";
+  const uploadable = requirement.status !== "completed";
 
   const uploadLabel = pendingFile
-    ? `Selected: ${pendingFile}`
-    : requirement.status === "Completed"
+    ? `Selected: ${pendingFile.name}`
+    : requirement.status === "completed"
       ? requirement.file
         ? `${requirement.file} — verified`
         : "Confirmed — no upload required"
-      : requirement.owner !== "Employee"
+      : requirement.owner !== "employee"
         ? "Confirmed by your department representative"
         : requirement.file
           ? `Last upload: ${requirement.file}`
           : "Choose a file to submit";
-
-  const submit = () => {
-    if (!pendingFile) return;
-    app.submitDocument(requirement);
-    setPendingFile("");
-  };
 
   return (
     <AutoGrid min={320} className="items-start">
@@ -113,9 +124,13 @@ export default function RequirementDetail() {
             "Submit this requirement to the HR Department for verification."}
         </p>
 
-        {requirement.note && requirement.status !== "Completed" && (
-          <Notice title="Resubmission requested">{requirement.note}</Notice>
-        )}
+        {requirement.resubmissionReason &&
+          requirement.status !== "completed" && (
+            <Notice title="Resubmission requested">
+              {requirement.resubmissionReason} -{" "}
+              {requirement.verifiedBy.username}
+            </Notice>
+          )}
 
         <div className="flex flex-col gap-2.5">
           <span className="text-micro uppercase text-ink/50">Submission</span>
@@ -135,7 +150,7 @@ export default function RequirementDetail() {
               type="file"
               onChange={(e) => {
                 const file = e.target.files && e.target.files[0];
-                if (file) setPendingFile(file.name);
+                if (file) setPendingFile(e.target.files[0]);
               }}
             />
             <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
@@ -145,13 +160,15 @@ export default function RequirementDetail() {
               >
                 Choose file
               </Button>
-              <Button
-                variant="primary"
-                disabled={!uploadable || !pendingFile}
-                onClick={submit}
-              >
-                {requirement.file ? "Resubmit document" : "Submit document"}
-              </Button>
+              {requirement.status !== "pending" && (
+                <Button
+                  variant="primary"
+                  disabled={!uploadable || !pendingFile}
+                  onClick={(e) => uploadFile({ e, id: requirement._id })}
+                >
+                  {requirement.file ? "Resubmit document" : "Submit document"}
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -86,8 +86,8 @@ export async function submitDocument(req, res) {
   await docs.save();
 
   //set status in progress
-  currentEmpReq.status = "in-progress";
-  await currentEmpReq.save(); 
+  currentEmpReq.status = "pending";
+  await currentEmpReq.save();
   res.send({ message: "Document uploaded successfully", document: docs });
 }
 

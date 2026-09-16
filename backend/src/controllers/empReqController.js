@@ -14,7 +14,8 @@ export async function getAllEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
   res.send(allEmpReq);
 }
 
@@ -45,7 +46,8 @@ export async function getOwnEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    }); // populate replace objectId with the actual documents :D
+    })
+    .populate("verifiedBy"); // populate replace objectId with the actual documents :D
 
   res.send(myEmpReq);
 }
@@ -65,7 +67,8 @@ export async function getOwnSpecificEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
   if (!empReq) {
     return res.send(`employee requirements doesnt exist with id ${id}`);
   }
@@ -89,7 +92,8 @@ export async function getSpecificEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
 
   res.send(empReq);
 }
@@ -122,7 +126,8 @@ export async function getDepEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
 
   //filter only show task not documents
   const taskEmpReq = allEmpReq.filter(
@@ -148,7 +153,8 @@ export async function getSpecificDepEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
 
   if (!depEmpReq) {
     return res.send("Employee Requirement doesnt exist");
@@ -171,7 +177,6 @@ export async function editEmpReq(req, res) {
   }
 
   if (status === "in-progress") {
-    
   }
 
   const editedReq = await EmployeeRequirement.findByIdAndUpdate(

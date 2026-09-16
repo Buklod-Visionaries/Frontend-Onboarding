@@ -17,7 +17,7 @@ const employeeRequirementSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["in-progress", "completed", "resubmission-required"],
+      enum: ["in-progress", "pending", "completed", "resubmission-required"],
       default: "in-progress",
       required: true,
     },

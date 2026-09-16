@@ -118,10 +118,28 @@ export default function AppProvider({ children }) {
 
   // --- Onboarding actions: UI feedback only, no records changed --------------
 
+  //working document upload
   const submitDocument = useCallback(
-    (requirement) =>
-      showToast(`${requirement.name} submitted — awaiting HR verification`),
-    [showToast],
+    async (pendingFile, id) => {
+      //create a structure to upload file
+      const formData = new FormData();
+      //set the target requirements id for file upload
+      formData.append("employeeRequirementId", id);
+      //set the actual file
+      formData.append("file", pendingFile);
+
+      //upload the file and link it to the requirements to the DB
+      const res = await api.post("/documents", formData, {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+      console.log(res.data);
+      showToast(`${pendingFile.name} submitted - awaiting HR Verification`);
+    },
+    // (requirement) =>
+    //   showToast(`${requirement.name} submitted — awaiting HR verification`),
+    // [showToast],
   );
 
   const approveRequirement = useCallback(

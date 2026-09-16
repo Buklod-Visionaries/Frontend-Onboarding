@@ -13,7 +13,7 @@ export default function RequirementCard({ requirement, onOpen }) {
     requirement.status === "completed"
       ? "View details"
       : ownedByEmployee
-        ? requirement.status === "pending"
+        ? requirement.status === "in-progress"
           ? "Upload document"
           : "View / resubmit"
         : "View details";
