@@ -11,7 +11,7 @@ import { cx } from "../../lib/cx";
 import { useApp } from "../../hooks/useApp";
 import { useCurrentEmployee } from "../../hooks/useCurrentEmployee";
 import { countRequirements } from "../../domain/requirements";
-import { formatDate } from "../../domain/date";
+import { formatDate, isOverdue } from "../../domain/date";
 //
 import { useState, useEffect } from "react";
 import { SUB_LABELS } from "../../domain/constants.js";
@@ -172,40 +172,46 @@ export default function EmployeeDashboard() {
               </div>
               {actionable.length ? (
                 <DividerList>
-                  {actionable.map((requirement) => (
-                    <DividerRow
-                      key={requirement.id}
-                      as="button"
-                      type="button"
-                      onClick={() =>
-                        navigate(`/employee/requirements/${requirement._id}`)
-                      }
-                      className="flex items-center gap-3 px-3.5 py-3 text-left hover:bg-accent-100"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-field font-medium">
-                          {requirement.requirement.name}
+                  {actionable
+                    .filter(
+                      (requirement) =>
+                        requirement.status !== "completed" &&
+                        requirement.status !== "pending",
+                    )
+                    .map((requirement) => (
+                      <DividerRow
+                        key={requirement.id}
+                        as="button"
+                        type="button"
+                        onClick={() =>
+                          navigate(`/employee/requirements/${requirement._id}`)
+                        }
+                        className="flex items-center gap-3 px-3.5 py-3 text-left hover:bg-accent-100"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-field font-medium">
+                            {requirement.requirement.name}
+                          </span>
+                          <span className="block text-meta text-ink/55">
+                            {SUB_LABELS.map((label) => {
+                              if (
+                                requirement.status === //continue implementing this one it should display the status of requirements
+                                "in-progress"
+                              ) {
+                                return <p>{label.notSubmitted}</p>;
+                              }
+                              if (
+                                requirement.status === "resubmission-required"
+                              ) {
+                                return <p>{label.resubmission}</p>;
+                              }
+                            })}{" "}
+                            &middot; due {formatDate(requirement.dueDate)}
+                          </span>
                         </span>
-                        <span className="block text-meta text-ink/55">
-                          {SUB_LABELS.map((label) => {
-                            if (
-                              requirement.status === //continue implementing this one it should display the status of requirements
-                              "in-progress"
-                            ) {
-                              return <p>{label.notSubmitted}</p>;
-                            }
-                            if (
-                              requirement.status === "resubmission-required"
-                            ) {
-                              return <p>{label.resubmission}</p>;
-                            }
-                          })}{" "}
-                          &middot; due {formatDate(requirement.dueDate)}
-                        </span>
-                      </span>
-                      <Badge>{requirement.status}</Badge>
-                    </DividerRow>
-                  ))}
+                        <Badge>{requirement.status}</Badge>
+                      </DividerRow>
+                    ))}
                 </DividerList>
               ) : (
                 <EmptyState>Nothing needs your action right now.</EmptyState>

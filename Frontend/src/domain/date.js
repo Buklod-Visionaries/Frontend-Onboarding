@@ -1,9 +1,22 @@
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
-const EM_DASH = '—';
+const EM_DASH = "—";
 
 /** The prototype is pinned to a fixed 'today' so the seeded data reads consistently. */
-export const TODAY = '2026-08-16';
+export const TODAY = "2026-08-16";
 
 /** '2026-09-08T15:47:04.696Z' -> 'Sep 8, 2026'. Blank and em-dash values pass through. */
 export function formatDate(iso) {
@@ -21,4 +34,15 @@ export function addDays(iso, days) {
   const date = new Date(`${iso}T00:00:00`);
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+//check if date is overdue
+export function isOverdue(iso) {
+  if (!iso || iso === EM_DASH) return false;
+
+  const dueDate = new Date(iso);
+
+  if (Number.isNaN(dueDate.getTime())) return false;
+
+  return dueDate < new Date();
 }
