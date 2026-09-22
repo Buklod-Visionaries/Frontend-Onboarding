@@ -16,6 +16,7 @@ import { formatDate } from "../../domain/date";
 import { useState, useEffect } from "react";
 import { SUB_LABELS } from "../../domain/constants.js";
 import api from "../../lib/axios.js";
+import { capitalize } from "../../lib/capitalize.js";
 
 export default function EmployeeDashboard() {
   const app = useApp();
@@ -89,7 +90,8 @@ export default function EmployeeDashboard() {
               </div>
               <h2 className="mt-1.5 text-[34px]">{user.user.username}</h2>
               <div className="text-cell text-ink/55">
-                {user.position} &middot; {user.department} &middot; Started{" "}
+                {capitalize(user.position)} &middot;{" "}
+                {capitalize(user.department)} &middot; Started{" "}
                 {formatDate(user.user.createdAt)}
               </div>
             </div>
