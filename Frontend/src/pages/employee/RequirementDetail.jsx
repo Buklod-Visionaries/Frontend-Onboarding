@@ -137,6 +137,15 @@ export default function RequirementDetail() {
             <span className="text-meta text-ink/55">
               Deadline {formatDate(requirement.dueDate)}
             </span>
+            {requirement.status === "pending" && (
+              <>
+                {" "}
+                |
+                <span className="text-meta text-ink/55">
+                  Submitted at {formatDate(requirement.updatedAt)}
+                </span>
+              </>
+            )}
             <OverdueBadge when={isOverdue(requirement)} />
           </div>
         </div>

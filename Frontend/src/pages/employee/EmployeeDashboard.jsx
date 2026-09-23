@@ -147,7 +147,10 @@ export default function EmployeeDashboard() {
                 {
                   label: "Overdue",
                   value: requirements.filter(
-                    (requirements) => requirements.status === "overdue",
+                    (requirements) =>
+                      (requirements.status === "in-progress" ||
+                        requirements.status === "resubmission-required") &&
+                      isOverdue(formatDate(requirements.dueDate)),
                   ).length,
                 },
               ]}
