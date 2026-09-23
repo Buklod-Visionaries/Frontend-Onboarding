@@ -22,7 +22,7 @@ export default function RequirementDetail() {
   const params = useParams();
   const navigate = useNavigate();
   const fileInput = useRef(null);
-  const [pendingFile, setPendingFile] = useState("");
+  const [pendingFile, setPendingFile] = useState(null);
   const [requirement, setRequirement] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
@@ -33,14 +33,17 @@ export default function RequirementDetail() {
   // const requirement = me.requirements.find((row) => row.id === params.id);
 
   async function uploadFile({ e, id }) {
-    e.preventDefault();
+    // e.preventDefault();
     try {
       setFileUploading(true);
       if (!pendingFile) return;
       //sends the file and target requirement
       await app.submitDocument(pendingFile, id);
       // console.log(`${id} ${pendingFile}`);
-      // setPendingFile("");
+      setPendingFile("");
+      //force state refresh
+      await getMySpecificRequirement();
+      await getExistingDocument();
     } catch (error) {
       app.showToast(`Failed uploading File: ${error?.response?.data?.message}`);
       console.log(error);
@@ -49,43 +52,44 @@ export default function RequirementDetail() {
     }
   }
 
-  useEffect(() => {
-    async function getMySpecificRequirement() {
-      try {
-        setLoading(true);
-        const currentParams = JSON.stringify(params.id);
-        const res = await api.get(`/employee-requirements/me/${params.id}`, {
+  async function getMySpecificRequirement() {
+    try {
+      setLoading(true);
+      const currentParams = JSON.stringify(params.id);
+      const res = await api.get(`/employee-requirements/me/${params.id}`, {
+        headers: {
+          Authorization: `Bearer ${app.session.accessToken}`,
+        },
+      });
+      setRequirement(res.data);
+    } catch (error) {
+      console.log(error.response.data.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function getExistingDocument() {
+    try {
+      setFetchingDocument(true);
+      const res = await api.get(
+        `/documents/employee-requirements/${params.id}`,
+        {
           headers: {
             Authorization: `Bearer ${app.session.accessToken}`,
           },
-        });
-        setRequirement(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setLoading(false);
-      }
+        },
+      );
+      setDocumentPreview(res.data);
+    } catch (error) {
+      console.log(error.response.data.message);
+    } finally {
+      setFetchingDocument(false);
     }
+  }
 
-    async function getExistingDocument() {
-      try {
-        setFetchingDocument(true);
-        const res = await api.get(
-          `/documents/employee-requirements/${params.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${app.session.accessToken}`,
-            },
-          },
-        );
-        setDocumentPreview(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setFetchingDocument(false);
-      }
-    }
-
+  useEffect(() => {
+    //testing putting the async functions outside useeffect but calling it inside
     getMySpecificRequirement();
     getExistingDocument();
   }, []);
@@ -186,29 +190,46 @@ export default function RequirementDetail() {
                   if (file) setPendingFile(e.target.files[0]);
                 }}
               />
-              <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
-                <Button
-                  disabled={!uploadable}
-                  onClick={() => fileInput.current?.click()}
-                >
-                  Choose file
-                </Button>
-                {requirement.status !== "pending" && (
+              {documentPreview && (
+                <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
                   <Button
-                    variant="primary"
-                    disabled={!uploadable || !pendingFile}
-                    onClick={(e) => uploadFile({ e, id: requirement._id })}
+                    disabled={!uploadable}
+                    onClick={() => fileInput.current?.click()}
                   >
-                    {requirement.file ? "Resubmit document" : "Submit document"}
+                    Choose file
                   </Button>
-                )}
-              </div>
+                  {requirement.status !== "pending" && (
+                    <Button
+                      variant="primary"
+                      disabled={!uploadable || !pendingFile || fileUploading}
+                      onClick={(e) => uploadFile({ e, id: requirement._id })}
+                    >
+                      {requirement.file
+                        ? "Resubmit document"
+                        : fileUploading
+                          ? "Submitting..."
+                          : "Submit document"}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           ) : !documentPreview ? (
             "Loading..."
           ) : (
             <div class="w-full max-w-lg aspect-[1/1.2941] mx-auto">
-              <iframe src={documentPreview.fileUrl} class="w-full h-full" />
+              <a
+                href={documentPreview.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-full w-full cursor-pointer"
+              >
+                <iframe
+                  src={`${documentPreview.fileUrl}#toolbar=0&navpanes=0`}
+                  className="pointer-events-none h-full w-full border-none"
+                  title="Document preview"
+                />
+              </a>
             </div>
           )}
         </div>
