@@ -64,28 +64,11 @@ export default function HrDashboard() {
     getAllEmployees();
   }, []);
 
-  console.log("emp", employees);
-  console.log("req", requirements);
+  if (empLoading || reqLoading) {
+    return <p>Loading...</p>;
+  }
 
-  // let pending = 0;
-  // let overdue = 0;
-  // let inProgress = 0;
-  // let completed = 0;
-
-  // for (const employee of app.employees) {
-  //   const counts = countRequirements(employee);
-  //   pending += counts.pending;
-  //   overdue += counts.overdue;
-  //   if (employeeStatus(employee) === "Completed") completed += 1;
-  //   else inProgress += 1;
-  // }
-
-  // const attention = app.employees
-  //   .filter((employee) => {
-  //     const counts = countRequirements(employee);
-  //     return counts.overdue > 0 || counts.pending > 3;
-  //   })
-  //   .slice(0, 5);
+  console.log("review", review);
 
   return (
     <>

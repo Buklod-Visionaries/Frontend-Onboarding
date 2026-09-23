@@ -1,16 +1,43 @@
-import { useState } from 'react';
-import { FileText } from 'lucide-react';
-import Modal from '../../ui/Modal';
-import Button from '../../ui/Button';
-import Badge from '../../ui/Badge';
-import { Field, Textarea } from '../../ui/Field';
-import { formatDate } from '../../../domain/date';
-import { useApp } from '../../../hooks/useApp';
+import { useState, useEffect } from "react";
+import { FileText, LoaderCircle } from "lucide-react";
+import Modal from "../../ui/Modal";
+import Button from "../../ui/Button";
+import Badge from "../../ui/Badge";
+import { Field, Textarea } from "../../ui/Field";
+import { formatDate } from "../../../domain/date";
+import { useApp } from "../../../hooks/useApp";
+import { capitalize } from "../../../lib/capitalize";
+//
+import api from "../../../lib/axios";
 
-function ReviewDialogBody({ employee, requirement, onClose }) {
+function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
   const app = useApp();
   const [resubmitMode, setResubmitMode] = useState(false);
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState("");
+  const [documentPreview, setDocumentPreview] = useState(null);
+  const [docLoading, setDocLoading] = useState(false);
+
+  useEffect(() => {
+    async function getSpecificDocument() {
+      try {
+        setDocLoading(true);
+        const res = await api.get(
+          `/documents/employee-requirements/${empReq._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${app.session.accessToken}`,
+            },
+          },
+        );
+        setDocumentPreview(res.data);
+      } catch (error) {
+        console.log(error.response.data.message);
+      } finally {
+        setDocLoading(false);
+      }
+    }
+    getSpecificDocument();
+  }, []);
 
   const approve = () => {
     app.approveRequirement(requirement);
@@ -23,26 +50,31 @@ function ReviewDialogBody({ employee, requirement, onClose }) {
       return;
     }
     if (!reason.trim()) {
-      app.showToast('Add a short reason so the employee knows what to correct.');
+      app.showToast(
+        "Add a short reason so the employee knows what to correct.",
+      );
       return;
     }
     app.requestResubmission(employee);
     onClose();
   };
 
+  // console.log("documentFIle", documentPreview);
   return (
     <Modal
       open
       onClose={onClose}
-      width="max-w-[720px]"
+      width="max-w-[800px]"
       kicker="Requirement verification"
       title={requirement.name}
-      subtitle={`${employee.name} · ${employee.position} · ${employee.department}`}
+      subtitle={`${employee.user.username} · ${capitalize(employee.position)} · ${capitalize(employee.department)}`}
       actions={
         <>
           <Button onClick={onClose}>Cancel</Button>
           <Button onClick={resubmit}>
-            {resubmitMode ? 'Send resubmission request' : 'Request resubmission'}
+            {resubmitMode
+              ? "Send resubmission request"
+              : "Request resubmission"}
           </Button>
           {!resubmitMode && (
             <Button variant="primary" onClick={approve}>
@@ -53,23 +85,39 @@ function ReviewDialogBody({ employee, requirement, onClose }) {
       }
     >
       <div className="grid gap-4 sm:grid-cols-[1.1fr_1fr]">
-        <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2 border border-divider bg-surface">
-          <FileText size={30} strokeWidth={1.5} className="text-accent" />
-          <div className="font-heading text-[15px]">{requirement.file || 'no_file.pdf'}</div>
-          <div className="text-[11px] text-ink/50">Document preview</div>
+        <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2">
+          {docLoading || !documentPreview ? (
+            <LoaderCircle className="animate-spin" />
+          ) : (
+            <a
+              href={documentPreview.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-full w-full cursor-pointer"
+            >
+              <iframe
+                src={`${documentPreview.fileUrl}#toolbar=0&navpanes=0`}
+                className="pointer-events-none h-full w-full border-none"
+                title="Document preview"
+              />
+            </a>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
-          <dl className="grid gap-2 text-cell" style={{ gridTemplateColumns: '110px 1fr' }}>
+          <dl
+            className="grid gap-2 text-cell"
+            style={{ gridTemplateColumns: "110px 1fr" }}
+          >
             <dt className="text-ink/50">Type</dt>
-            <dd className="m-0">{requirement.type}</dd>
+            <dd className="m-0">{capitalize(requirement.type)}</dd>
             <dt className="text-ink/50">Submitted</dt>
-            <dd className="m-0">{formatDate(requirement.submitted)}</dd>
+            <dd className="m-0">{formatDate(empReq.updatedAt)}</dd>
             <dt className="text-ink/50">Deadline</dt>
-            <dd className="m-0">{formatDate(requirement.deadline)}</dd>
+            <dd className="m-0">{formatDate(empReq.dueDate)}</dd>
             <dt className="text-ink/50">Status</dt>
             <dd className="m-0">
-              <Badge>{requirement.status}</Badge>
+              <Badge variant={empReq.status}>{capitalize(empReq.status)}</Badge>
             </dd>
           </dl>
 
@@ -102,6 +150,7 @@ export default function ReviewDialog({ target, onClose }) {
       key={target.requirement.id}
       employee={target.employee}
       requirement={target.requirement}
+      empReq={target}
       onClose={onClose}
     />
   );
