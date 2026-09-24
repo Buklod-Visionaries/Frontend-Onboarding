@@ -62,10 +62,10 @@ export default function EmployeeList() {
   const query = search.trim().toLowerCase();
   const rows = employees.filter((employee) => {
     const byDepartment =
-      department === "All" || employee.department === department;
+      department === "All" || employee.user.department === department;
     const byQuery =
       !query ||
-      employee.name.toLowerCase().includes(query) ||
+      employee.user.username.toLowerCase().includes(query) ||
       employee.position.toLowerCase().includes(query);
     return byDepartment && byQuery;
   });
