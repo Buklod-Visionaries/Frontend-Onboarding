@@ -14,7 +14,7 @@ import AccountCreatedDialog from "../../components/feature/accounts/AccountCreat
 import { useApp } from "../../hooks/useApp";
 import { EM_DASH, TEMP_PASSWORD } from "../../domain/constants";
 //
-import { formatRole } from "../../lib/formatRole";
+import { formatRole } from "../../lib/formatter";
 import api from "../../lib/axios";
 import { capitalize } from "../../lib/capitalize";
 
@@ -168,7 +168,7 @@ export default function UserManagement() {
                       </TCell>
                       <TCell>
                         <Badge
-                          variant={user.isFirstLogin ? "pending" : "active"}
+                          variant={user.isFirstLogin ? "in-progress" : "active"}
                         >
                           {user.isFirstLogin ? "Pending First Login" : "Active"}
                         </Badge>

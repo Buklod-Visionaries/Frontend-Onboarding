@@ -6,6 +6,7 @@ import {
   getSpecificEmpReq,
   getDepEmpReq,
   getSpecificDepEmpReq,
+  getEmpReqByEmpId,
   editEmpReq,
   deleteSpecificEmpReq,
 } from "../controllers/empReqController.js";
@@ -44,6 +45,13 @@ router.get(
   verifyToken,
   authorizeRoles("dept-rep"),
   asyncHandler(getSpecificDepEmpReq),
+);
+//get empReq using employee id
+router.get(
+  "/employee/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(getEmpReqByEmpId),
 );
 //for authorized roles marking employee requirements completion
 router.put(

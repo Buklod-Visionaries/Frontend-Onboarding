@@ -9,6 +9,7 @@ import { useApp } from "../../../hooks/useApp";
 import { capitalize } from "../../../lib/capitalize";
 //
 import api from "../../../lib/axios";
+import { formatRole } from "../../../lib/formatter";
 
 function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
   const app = useApp();
@@ -70,39 +71,48 @@ function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
       subtitle={`${employee.user.username} · ${capitalize(employee.position)} · ${capitalize(employee.department)}`}
       actions={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={resubmit}>
-            {resubmitMode
-              ? "Send resubmission request"
-              : "Request resubmission"}
-          </Button>
-          {!resubmitMode && (
-            <Button variant="primary" onClick={approve}>
-              Approve &amp; mark completed
+          {empReq.status === "pending" && (
+            <>
+              <Button onClick={onClose}>Cancel</Button>
+              <Button onClick={resubmit}>
+                {resubmitMode
+                  ? "Send resubmission request"
+                  : "Request resubmission"}
+              </Button>
+              <Button variant="primary" onClick={approve}>
+                Approve &amp; mark completed
+              </Button>
+            </>
+          )}
+          {empReq.status === "completed" && (
+            <Button variant="primary" onClick={onClose}>
+              Close
             </Button>
           )}
         </>
       }
     >
       <div className="grid gap-4 sm:grid-cols-[1.1fr_1fr]">
-        <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2">
-          {docLoading || !documentPreview ? (
-            <LoaderCircle className="animate-spin" />
-          ) : (
-            <a
-              href={documentPreview.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-full w-full cursor-pointer"
-            >
-              <iframe
-                src={`${documentPreview.fileUrl}#toolbar=0&navpanes=0`}
-                className="pointer-events-none h-full w-full border-none"
-                title="Document preview"
-              />
-            </a>
-          )}
-        </div>
+        {requirement.type === "document" && (
+          <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2">
+            {docLoading || !documentPreview ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <a
+                href={documentPreview.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-full w-full cursor-pointer"
+              >
+                <iframe
+                  src={`${documentPreview.fileUrl}#toolbar=0&navpanes=0`}
+                  className="pointer-events-none h-full w-full border-none"
+                  title="Document preview"
+                />
+              </a>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <dl
@@ -117,8 +127,28 @@ function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
             <dd className="m-0">{formatDate(empReq.dueDate)}</dd>
             <dt className="text-ink/50">Status</dt>
             <dd className="m-0">
-              <Badge variant={empReq.status}>{capitalize(empReq.status)}</Badge>
+              <Badge
+                variant={
+                  empReq.status === "in-progress" ||
+                  empReq.status === "resubmission-required"
+                    ? "pending"
+                    : empReq.status === "completed"
+                      ? "completed"
+                      : empReq.status === "pending" && "in-progress"
+                }
+              >
+                {capitalize(empReq.status)}
+              </Badge>
             </dd>
+            {empReq.verifiedBy && (
+              <>
+                <dt className="text-ink/50">Approved By</dt>
+                <dd className="m-0">
+                  {empReq.verifiedBy.username} -
+                  {formatRole(empReq.verifiedBy.role)}
+                </dd>
+              </>
+            )}
           </dl>
 
           {resubmitMode && (

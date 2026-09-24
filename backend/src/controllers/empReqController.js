@@ -163,6 +163,27 @@ export async function getSpecificDepEmpReq(req, res) {
   res.send(depEmpReq);
 }
 
+export async function getEmpReqByEmpId(req, res) {
+  const { id: paramsId } = req.params; //the id of employee
+
+  const empReq = await EmployeeRequirement.find({
+    employee: paramsId, //find empReq by employeeId
+  })
+    .populate({ path: "employee", populate: { path: "user" } })
+    .populate("verifiedBy")
+    .populate("requirement");
+  if (!empReq) {
+    return res
+      .status(404)
+      .send(
+        `Employee Requirement doesnt exist with employee with id ${paramsId}`,
+      );
+  }
+
+  //
+  res.send(empReq);
+}
+
 export async function editEmpReq(req, res) {
   const { id: userId } = req.user;
   const { id: paramsId } = req.params;
