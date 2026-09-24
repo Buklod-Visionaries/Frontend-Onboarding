@@ -14,7 +14,9 @@ import AccountCreatedDialog from "../../components/feature/accounts/AccountCreat
 import { useApp } from "../../hooks/useApp";
 import { EM_DASH, TEMP_PASSWORD } from "../../domain/constants";
 //
+import { formatRole } from "../../lib/formatRole";
 import api from "../../lib/axios";
+import { capitalize } from "../../lib/capitalize";
 
 const FILTERS = [
   { value: "All", label: "All" },
@@ -157,15 +159,17 @@ export default function UserManagement() {
                   {rows.map((user, index) => (
                     <TRow key={`${user.username}${user._id}`}>
                       <TCell strong>{user.username}</TCell>
-                      <TCell>{user.role}</TCell>
+                      <TCell>{formatRole(user.role)}</TCell>
                       <TCell>
-                        {user.role === "hr" ? "HR Staff" : user.department}
+                        {user.role === "hr" ? "-" : capitalize(user.department)}
                       </TCell>
                       <TCell muted className="text-cell">
                         {user.email}
                       </TCell>
                       <TCell>
-                        <Badge>
+                        <Badge
+                          variant={user.isFirstLogin ? "pending" : "active"}
+                        >
                           {user.isFirstLogin ? "Pending First Login" : "Active"}
                         </Badge>
                       </TCell>

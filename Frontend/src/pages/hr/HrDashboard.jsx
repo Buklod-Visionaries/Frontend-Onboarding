@@ -143,7 +143,7 @@ export default function HrDashboard() {
                       <Badge
                         variant={
                           employee.onboardingStatus === "in_progress"
-                            ? "pending"
+                            ? "active"
                             : "completed"
                         }
                       >
