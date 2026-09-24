@@ -11,12 +11,21 @@ import { capitalize } from "../../../lib/capitalize";
 import api from "../../../lib/axios";
 import { formatRole } from "../../../lib/formatter";
 
-function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
+function ReviewDialogBody({
+  employee,
+  requirement,
+  empReq,
+  onClose,
+  getReqFromEmpProfile,
+  getReqFromDashboard,
+}) {
   const app = useApp();
   const [resubmitMode, setResubmitMode] = useState(false);
   const [reason, setReason] = useState("");
   const [documentPreview, setDocumentPreview] = useState(null);
   const [docLoading, setDocLoading] = useState(false);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [resubmitLoading, setResubmitLoading] = useState(false);
 
   useEffect(() => {
     async function getSpecificDocument() {
@@ -40,12 +49,17 @@ function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
     getSpecificDocument();
   }, []);
 
-  const approve = () => {
-    app.approveRequirement(requirement);
+  const approve = async () => {
+    await app.approveRequirement(empReq, setApproveLoading);
+
     onClose();
+
+    //refreshes requirements list to reflect new changes
+    await getReqFromEmpProfile?.();
+    await getReqFromDashboard?.();
   };
 
-  const resubmit = () => {
+  const resubmit = async () => {
     if (!resubmitMode) {
       setResubmitMode(true);
       return;
@@ -56,8 +70,12 @@ function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
       );
       return;
     }
-    app.requestResubmission(employee);
+    app.requestResubmission(empReq, reason, setResubmitLoading);
     onClose();
+
+    //refreshes requirements list to reflect new changes
+    await getReqFromEmpProfile?.();
+    await getReqFromDashboard?.();
   };
 
   // console.log("documentFIle", documentPreview);
@@ -74,14 +92,28 @@ function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
           {empReq.status === "pending" && (
             <>
               <Button onClick={onClose}>Cancel</Button>
-              <Button onClick={resubmit}>
-                {resubmitMode
-                  ? "Send resubmission request"
-                  : "Request resubmission"}
-              </Button>
-              <Button variant="primary" onClick={approve}>
-                Approve &amp; mark completed
-              </Button>
+              {documentPreview && (
+                <>
+                  <Button onClick={resubmit} disabled={resubmitLoading}>
+                    {resubmitMode
+                      ? resubmitLoading
+                        ? "Sending request..."
+                        : "Send resubmission request"
+                      : "Request resubmission"}
+                  </Button>
+                  {!resubmitMode && (
+                    <Button
+                      variant="primary"
+                      disabled={approveLoading}
+                      onClick={approve}
+                    >
+                      {approveLoading
+                        ? "Approving..."
+                        : `Approve & mark completed`}
+                    </Button>
+                  )}
+                </>
+              )}
             </>
           )}
           {empReq.status === "completed" && (
@@ -173,7 +205,12 @@ function ReviewDialogBody({ employee, requirement, empReq, onClose }) {
  * The body is keyed on the requirement so opening a different submission mounts
  * a fresh form rather than carrying the previous reason across.
  */
-export default function ReviewDialog({ target, onClose }) {
+export default function ReviewDialog({
+  target,
+  onClose,
+  getReqFromEmpProfile,
+  getReqFromDashboard,
+}) {
   if (!target) return null;
   return (
     <ReviewDialogBody
@@ -181,6 +218,8 @@ export default function ReviewDialog({ target, onClose }) {
       employee={target.employee}
       requirement={target.requirement}
       empReq={target}
+      getReqFromEmpProfile={getReqFromEmpProfile}
+      getReqFromDashboard={getReqFromDashboard}
       onClose={onClose}
     />
   );

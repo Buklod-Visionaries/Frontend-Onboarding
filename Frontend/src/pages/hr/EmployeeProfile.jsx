@@ -207,7 +207,11 @@ export default function EmployeeProfile() {
         </Table>
       </Card>
 
-      <ReviewDialog target={review} onClose={() => setReview(null)} />
+      <ReviewDialog
+        target={review}
+        getReqFromEmpProfile={getEmployeeRequirements}
+        onClose={() => setReview(null)}
+      />
     </>
   );
 }

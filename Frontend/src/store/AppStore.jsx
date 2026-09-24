@@ -143,13 +143,56 @@ export default function AppProvider({ children }) {
   );
 
   const approveRequirement = useCallback(
-    (requirement) => showToast(`${requirement.name} marked completed`),
-    [showToast],
+    async (empReq, setApproveLoading) => {
+      try {
+        setApproveLoading(true);
+        const res = await api.put(
+          `/employee-requirements/${empReq._id}`,
+          { status: "completed" }, //they can only mark complete
+          {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`, //set token for authorization
+            },
+          },
+        );
+        showToast(`${empReq.requirement.name} marked completed`);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setApproveLoading(false);
+      }
+    },
+    // (requirement) => showToast(`${requirement.name} marked completed`),
+    // [showToast],
   );
 
   const requestResubmission = useCallback(
-    (employee) => showToast(`Resubmission requested from ${employee.name}`),
-    [showToast],
+    async (empReq, reason, setResubmitLoading) => {
+      try {
+        setResubmitLoading(true);
+        const res = await api.put(
+          `/employee-requirements/${empReq._id}`,
+          {
+            status: "resubmission-required",
+            resubmissionReason: reason,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          },
+        );
+        showToast(
+          `Resubmission requested from ${empReq.employee.user.username}`,
+        );
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setResubmitLoading(false);
+      }
+    },
+    // (employee) => showToast(`Resubmission requested from ${employee.name}`),
+    // [showToast],
   );
 
   //specific for department reps

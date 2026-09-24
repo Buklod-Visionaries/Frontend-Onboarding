@@ -28,38 +28,39 @@ export default function HrDashboard() {
   const [empLoading, setEmpLoading] = useState(false);
   const [reqLoading, setReqLoading] = useState(false);
 
-  useEffect(() => {
-    async function getAllRequirements() {
-      try {
-        setReqLoading(true);
-        const res = await api.get("/employee-requirements", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setRequirements(res.data);
-      } catch (error) {
-        app.showToast(`Error: ${error.response.data.message}`);
-      } finally {
-        setReqLoading(false);
-      }
+  async function getAllRequirements() {
+    try {
+      setReqLoading(true);
+      const res = await api.get("/employee-requirements", {
+        headers: {
+          Authorization: `Bearer ${app.session.accessToken}`,
+        },
+      });
+      setRequirements(res.data);
+    } catch (error) {
+      app.showToast(`Error: ${error.response.data.message}`);
+    } finally {
+      setReqLoading(false);
     }
+  }
 
-    async function getAllEmployees() {
-      try {
-        setEmpLoading(true);
-        const res = await api.get("/employees", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setEmployees(res.data);
-      } catch (error) {
-        app.showToast(`Error: ${error.response.data.message}`);
-      } finally {
-        setEmpLoading(false);
-      }
+  async function getAllEmployees() {
+    try {
+      setEmpLoading(true);
+      const res = await api.get("/employees", {
+        headers: {
+          Authorization: `Bearer ${app.session.accessToken}`,
+        },
+      });
+      setEmployees(res.data);
+    } catch (error) {
+      app.showToast(`Error: ${error.response.data.message}`);
+    } finally {
+      setEmpLoading(false);
     }
+  }
+
+  useEffect(() => {
     getAllRequirements();
     getAllEmployees();
   }, []);
@@ -238,7 +239,11 @@ export default function HrDashboard() {
         )}
       </Card>
 
-      <ReviewDialog target={review} onClose={() => setReview(null)} />
+      <ReviewDialog
+        target={review}
+        getReqFromDashboard={getAllRequirements}
+        onClose={() => setReview(null)}
+      />
     </>
   );
 }
