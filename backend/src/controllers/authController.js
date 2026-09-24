@@ -49,7 +49,7 @@ export async function register(req, res) {
   await newUser.save();
   res
     .status(200)
-    .send({ message: `New ${role} registered with username: ${username}` });
+    .send({ message: `New ${role} registered with username: ${username}`, user: newUser });
 }
 
 export async function login(req, res) {

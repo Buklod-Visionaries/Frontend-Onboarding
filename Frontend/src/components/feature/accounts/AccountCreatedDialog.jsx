@@ -1,6 +1,6 @@
-import Modal from '../../ui/Modal';
-import Button from '../../ui/Button';
-import Notice from '../../ui/Notice';
+import Modal from "../../ui/Modal";
+import Button from "../../ui/Button";
+import Notice from "../../ui/Notice";
 
 /** Receipt shown after an account is created, with the temporary credentials. */
 export default function AccountCreatedDialog({ receipt, onClose }) {
@@ -18,11 +18,18 @@ export default function AccountCreatedDialog({ receipt, onClose }) {
         </Button>
       }
     >
-      <dl className="grid gap-2 text-field" style={{ gridTemplateColumns: '150px 1fr' }}>
+      <dl
+        className="grid gap-2 text-field"
+        style={{ gridTemplateColumns: "150px 1fr" }}
+      >
         <dt className="text-ink/50">Role</dt>
         <dd className="m-0">{receipt.role}</dd>
-        <dt className="text-ink/50">Department</dt>
-        <dd className="m-0">{receipt.department}</dd>
+        {receipt.department && (
+          <>
+            <dt className="text-ink/50">Department</dt>
+            <dd className="m-0">{receipt.department}</dd>
+          </>
+        )}
         <dt className="text-ink/50">Work email</dt>
         <dd className="m-0">{receipt.email}</dd>
         <dt className="text-ink/50">Temporary password</dt>
@@ -33,8 +40,9 @@ export default function AccountCreatedDialog({ receipt, onClose }) {
 
       {receipt.requirementCount ? (
         <Notice>
-          {receipt.requirementCount} onboarding requirements were assigned automatically from the position
-          and department. The employee can sign in and view them immediately.
+          {receipt.requirementCount} onboarding requirements were assigned
+          automatically from the position and department. The employee can sign
+          in and view them immediately.
         </Notice>
       ) : null}
     </Modal>

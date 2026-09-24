@@ -63,27 +63,28 @@ export default function UserManagement() {
     return byRole && byQuery;
   });
 
-  useEffect(() => {
-    async function fetchAllUsers() {
-      try {
-        setLoading(true);
-        const res = await api.get("/users", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
+  //
+  async function fetchAllUsers() {
+    try {
+      setLoading(true);
+      const res = await api.get("/users", {
+        headers: {
+          Authorization: `Bearer ${app.session.accessToken}`,
+        },
+      });
 
-        if (!res.data) {
-          return console.log("Cannot fetch users");
-        }
-        setUsers(res.data);
-      } catch (error) {
-        console.log(error.response.data);
-      } finally {
-        setLoading(false);
+      if (!res.data) {
+        return console.log("Cannot fetch users");
       }
+      setUsers(res.data);
+    } catch (error) {
+      console.log(error.response.data);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     fetchAllUsers();
   }, []);
 
@@ -214,6 +215,7 @@ export default function UserManagement() {
           <CreateUserDialog
             open={createOpen}
             onClose={() => setCreateOpen(false)}
+            fetchAllUsers={fetchAllUsers}
             onCreated={setReceipt}
           />
           <ManageAccessDialog target={manage} onClose={() => setManage(null)} />

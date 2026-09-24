@@ -221,20 +221,65 @@ export default function AppProvider({ children }) {
 
   /** Create User. Returns the receipt for the confirmation dialog. */
   const createStaffUser = useCallback(
-    (draft) => {
-      const department =
-        draft.role === "HR Staff" ? "HR Department" : draft.department;
-      showToast(`${draft.role} account created for ${draft.name}`);
-      return {
-        name: draft.name,
-        role: draft.role,
-        department,
-        email: workEmailFor(draft.name, draft.email),
-        temp: TEMP_PASSWORD,
-        requirementCount: 0,
-      };
+    async (role, name, email, tempPass, department, setLoading) => {
+      try {
+        setLoading(true);
+        let normalizedRole;
+        if (role === "Department Representative") {
+          normalizedRole = "dept-rep";
+        }
+        if (role === "HR Staff") {
+          normalizedRole = "hr";
+        }
+        const res = await api.post(
+          "/auth/register",
+          {
+            username: name.trim(),
+            email,
+            tempPass,
+            role: normalizedRole,
+            //only allow department to be passed on payload if role is not HR
+            ...(normalizedRole !== "hr" && {
+              department: department.toLowerCase(),
+            }),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          },
+        );
+        //show toast after success
+        showToast(`${role} account created for ${name}`);
+        //
+        return {
+          name,
+          role,
+          email,
+          temp: tempPass,
+          requirementCount: 0,
+          ...(normalizedRole !== "hr" && department),
+        };
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
     },
-    [showToast],
+    // (draft) => {
+    //   const department =
+    //     draft.role === "HR Staff" ? "HR Department" : draft.department;
+    //   showToast(`${draft.role} account created for ${draft.name}`);
+    //   return {
+    //     name: draft.name,
+    //     role: draft.role,
+    //     department,
+    //     email: workEmailFor(draft.name, draft.email),
+    //     temp: TEMP_PASSWORD,
+    //     requirementCount: 0,
+    //   };
+    // },
+    // [showToast],
   );
 
   const updateAccount = useCallback((target, patch) => {
