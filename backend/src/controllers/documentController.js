@@ -138,6 +138,41 @@ export async function getEmpReqSpecificDocument(req, res) {
   });
 }
 
+//
+export async function deleteSpecificDocByEmpReqId(req, res) {
+  const { id: paramsId } = req.params;
+  const empReq = await EmployeeRequirement.findOne({ _id: paramsId });
+  if (!empReq) {
+    return res.status("404").send(`No emp req with id ${empReq._id}`);
+  }
+
+  const doc = await Document.findOne({ employeeRequirement: empReq._id });
+  if (!doc) {
+    return res
+      .status("404")
+      .send(`No document found with employee requirements id ${empReq._id}`);
+  }
+
+  //actual deletion
+
+  //delete file from supabase
+  const { error: uploadError } = await supabase.storage
+    .from("employee-files") //supabase bucket name
+    .remove([doc.fileUrl]);
+
+  if (uploadError) {
+    console.log(uploadError);
+    return res.send({ message: "Failed to delete file" });
+  }
+
+  //delete the document file after
+  const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
+  if (!deletedDocs) {
+    return res.send("Failed deleting document");
+  }
+  res.send(`successfully deleted document with id: ${doc._id}`);
+}
+
 export async function getSpecificDocument(req, res) {
   const { id } = req.params;
 

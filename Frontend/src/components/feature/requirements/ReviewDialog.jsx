@@ -32,7 +32,7 @@ function ReviewDialogBody({
       try {
         setDocLoading(true);
         const res = await api.get(
-          `/documents/employee-requirements/${empReq._id}`,
+          `/documents/employee-requirement/${empReq._id}`,
           {
             headers: {
               Authorization: `Bearer ${app.session.accessToken}`,

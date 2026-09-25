@@ -5,6 +5,7 @@ import {
   getEmpReqSpecificDocument,
   getSpecificDocument,
   deleteSpecificDocument,
+  deleteSpecificDocByEmpReqId,
 } from "../controllers/documentController.js";
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
@@ -24,11 +25,21 @@ router.post(
 );
 //get documents of specific empReq
 router.get(
-  "/employee-requirements/:id",
+  "/employee-requirement/:id",
   verifyToken,
   authorizeRoles("hr", "employee"),
   asyncHandler(getEmpReqSpecificDocument),
 );
+
+//
+//delete specific document using employeeRequirements id
+router.delete(
+  "/employee-requirement/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(deleteSpecificDocByEmpReqId),
+);
+
 //get specific doc
 router.get(
   "/:id",

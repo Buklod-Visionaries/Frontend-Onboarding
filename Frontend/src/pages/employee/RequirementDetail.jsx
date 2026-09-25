@@ -73,7 +73,7 @@ export default function RequirementDetail() {
     try {
       setFetchingDocument(true);
       const res = await api.get(
-        `/documents/employee-requirements/${params.id}`,
+        `/documents/employee-requirement/${params.id}`,
         {
           headers: {
             Authorization: `Bearer ${app.session.accessToken}`,
