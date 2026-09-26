@@ -200,26 +200,26 @@ export async function editEmpReq(req, res) {
     });
   }
 
-  if (status === "in-progress") {
-  }
+  // if employee requirement is set to resubmission
+  if (status === "resubmission-required") {
+    const newResubDueDate = new Date();
+    newResubDueDate.setDate(newResubDueDate.getDate() + 7);
+    const editedReq = await EmployeeRequirement.findByIdAndUpdate(
+      paramsId,
+      {
+        status,
+        resubmissionReason,
+        dueDate: newResubDueDate,
+        verifiedBy: userId,
+        verifiedAt: currentDate,
+      },
+      { returnDocument: "after" }, //return the edited
+    );
 
-  const editedReq = await EmployeeRequirement.findByIdAndUpdate(
-    paramsId,
-    {
-      status,
-      resubmissionReason,
-      verifiedBy: userId,
-      verifiedAt: currentDate,
-    },
-    { returnDocument: "after" }, //return the edited
-  );
-
-  //
-  if (editedReq.status === "resubmission-required") {
     const doc = await Document.findOne({ employeeRequirement: editedReq._id });
     if (!doc) {
       return res
-        .status("404")
+        .status(404)
         .send(
           `No document found with employee requirements id ${editedReq._id}`,
         );
@@ -248,7 +248,21 @@ export async function editEmpReq(req, res) {
     });
   }
 
-  res.send(editedReq);
+  //if employee requirement is set to complete
+  if (status === "completed") {
+    const editedReq = await EmployeeRequirement.findByIdAndUpdate(
+      paramsId,
+      {
+        status,
+        $unset: { resubmissionReason: 1 }, // remove the resubmissionReason if any
+        verifiedBy: userId,
+        verifiedAt: currentDate,
+      },
+      { returnDocument: "after" }, //return the edited
+    );
+
+    return res.send(editedReq);
+  }
 }
 
 export async function deleteSpecificEmpReq(req, res) {
