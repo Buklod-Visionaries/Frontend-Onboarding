@@ -82,7 +82,8 @@ export default function HrDashboard() {
         <StatCard
           label="Employees In progress"
           value={
-            requirements.filter((req) => req.status === "in-progress").length
+            employees.filter((emp) => emp.onboardingStatus === "in_progress")
+              .length
           }
           note="Onboarding not yet complete"
         />
