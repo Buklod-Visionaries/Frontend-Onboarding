@@ -18,6 +18,7 @@ function ReviewDialogBody({
   onClose,
   getReqFromEmpProfile,
   getReqFromDashboard,
+  getReqFromVerify,
 }) {
   const app = useApp();
   const [resubmitMode, setResubmitMode] = useState(false);
@@ -52,11 +53,14 @@ function ReviewDialogBody({
   const approve = async () => {
     await app.approveRequirement(empReq, setApproveLoading);
 
+    window.dispatchEvent(new Event("requirements-updated"));
+
     onClose();
 
     //refreshes requirements list to reflect new changes
     await getReqFromEmpProfile?.();
     await getReqFromDashboard?.();
+    await getReqFromVerify?.();
   };
 
   const resubmit = async () => {
@@ -70,12 +74,16 @@ function ReviewDialogBody({
       );
       return;
     }
-    app.requestResubmission(empReq, reason, setResubmitLoading);
+    await app.requestResubmission(empReq, reason, setResubmitLoading);
+
+    window.dispatchEvent(new Event("requirements-updated"));
+
     onClose();
 
     //refreshes requirements list to reflect new changes
     await getReqFromEmpProfile?.();
     await getReqFromDashboard?.();
+    await getReqFromVerify?.();
   };
 
   // console.log("documentFIle", documentPreview);
@@ -210,6 +218,7 @@ export default function ReviewDialog({
   onClose,
   getReqFromEmpProfile,
   getReqFromDashboard,
+  getReqFromVerify,
 }) {
   if (!target) return null;
   return (
@@ -220,6 +229,7 @@ export default function ReviewDialog({
       empReq={target}
       getReqFromEmpProfile={getReqFromEmpProfile}
       getReqFromDashboard={getReqFromDashboard}
+      getReqFromVerify={getReqFromVerify}
       onClose={onClose}
     />
   );

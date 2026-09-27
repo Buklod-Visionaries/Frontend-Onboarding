@@ -18,7 +18,9 @@ export default function Sidebar({ unreadCount, verifyCount }) {
   const counts = { unread: unreadCount, verify: verifyCount };
   const [username, setUsername] = useState("");
   const [position, setPosition] = useState("");
+  const [requirements, setRequirements] = useState([]);
   const [roleLabel, setRoleLabel] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const signOut = () => {
     setConfirmOpen(false);
@@ -51,8 +53,6 @@ export default function Sidebar({ unreadCount, verifyCount }) {
       }
     }
 
-    console.log("Dep", roleLabel);
-
     //just to set position of employees
     async function getCurrentEmployeeUser() {
       try {
@@ -67,8 +67,39 @@ export default function Sidebar({ unreadCount, verifyCount }) {
       }
     }
 
+    async function getRequirements() {
+      try {
+        setLoading(true);
+        const res = await api.get("/employee-requirements", {
+          headers: {
+            Authorization: `Bearer ${app.session.accessToken}`,
+          },
+        });
+        setRequirements(res.data);
+      } catch (error) {
+        console.log(error.response.data.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     getCurrentUser();
     getCurrentEmployeeUser();
+    getRequirements();
+
+    //
+    const handleRequirementsUpdated = () => {
+      getRequirements();
+    };
+
+    window.addEventListener("requirements-updated", handleRequirementsUpdated);
+
+    return () => {
+      window.removeEventListener(
+        "requirements-updated",
+        handleRequirementsUpdated,
+      );
+    };
   }, []);
 
   return (
@@ -84,7 +115,13 @@ export default function Sidebar({ unreadCount, verifyCount }) {
 
       <nav className="flex flex-1 flex-wrap gap-0.5 overflow-auto p-2.5 lg:flex-col lg:flex-nowrap lg:px-2.5 lg:py-3.5 scroll-thin">
         {items.map((item) => {
-          const badge = item.badge ? counts[item.badge] : 0;
+          const badge =
+            item.badge === "verify"
+              ? requirements.filter((req) => req.status === "pending").length
+              : item.badge === "unread"
+                ? unreadCount
+                : 0;
+
           return (
             <SidebarItem
               key={item.to}
