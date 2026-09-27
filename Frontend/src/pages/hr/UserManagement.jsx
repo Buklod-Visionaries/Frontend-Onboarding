@@ -17,6 +17,7 @@ import { EM_DASH, TEMP_PASSWORD } from "../../domain/constants";
 import { formatRole } from "../../lib/formatter";
 import api from "../../lib/axios";
 import { capitalize } from "../../lib/capitalize";
+import { formatDate, formatRelativeDate } from "../../domain/date";
 
 const FILTERS = [
   { value: "All", label: "All" },
@@ -188,7 +189,7 @@ export default function UserManagement() {
                           <span className="text-ink/45">{EM_DASH}</span>
                         )}
                       </TCell>
-                      <TCell>{user.lastLogin}</TCell>
+                      <TCell>{formatRelativeDate(user.lastSignIn)}</TCell>
                       {app.session.id !== user._id && (
                         <TCell align="right">
                           <Button onClick={() => setManage(user)}>

@@ -29,6 +29,47 @@ export function formatDate(iso) {
   return `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
+//
+export function formatRelativeDate(iso) {
+  if (!iso || iso === EM_DASH) return EM_DASH;
+
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime())) return EM_DASH;
+
+  const now = new Date();
+
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const dateOnly = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  const time = date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  if (dateOnly.getTime() === today.getTime()) {
+    return `Today, ${time}`;
+  }
+
+  if (dateOnly.getTime() === yesterday.getTime()) {
+    return `Yesterday, ${time}`;
+  }
+
+  return `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
 /** Offsets an ISO date by whole days and returns an ISO date. */
 export function addDays(iso, days) {
   const date = new Date(`${iso}T00:00:00`);

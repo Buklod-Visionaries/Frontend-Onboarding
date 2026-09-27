@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema(
       default: "active",
       required: true,
     },
+    lastSignIn: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );

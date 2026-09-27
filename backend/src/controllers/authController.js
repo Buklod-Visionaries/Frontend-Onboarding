@@ -47,9 +47,10 @@ export async function register(req, res) {
     isFirstLogin,
   });
   await newUser.save();
-  res
-    .status(200)
-    .send({ message: `New ${role} registered with username: ${username}`, user: newUser });
+  res.status(200).send({
+    message: `New ${role} registered with username: ${username}`,
+    user: newUser,
+  });
 }
 
 export async function login(req, res) {
@@ -111,6 +112,10 @@ export async function login(req, res) {
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000, //
   });
+
+  // set up sign in time
+  user.lastSignIn = new Date();
+  await user.save();
 
   res.status(200).send({
     accessToken: accessToken,
@@ -191,6 +196,11 @@ export async function firstLogin(req, res) {
   });
 
   console.log(`Successfully activated account of: ${user.username}`);
+
+  // set up sign in time
+  user.lastSignIn = new Date();
+  await user.save();
+
   res.status(200).send({
     accessToken: accessToken,
     user: {

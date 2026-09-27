@@ -88,7 +88,7 @@ export default function FirstLogin() {
         </Field>
         <Field label="Temporary password">
           <Input
-            type="password"
+            // type="password"
             value={tempPass}
             onChange={(e) => {
               setTempPass(e.target.value);
