@@ -123,7 +123,7 @@ export default function EmployeeList() {
                   <TCell strong>{employee.user.username}</TCell>
                   <TCell>{capitalize(employee.position)}</TCell>
                   <TCell>{capitalize(employee.department)}</TCell>
-                  <TCell>{formatDate(employee.user.createdAt)}</TCell>
+                  <TCell>{formatDate(employee.startDate)}</TCell>
                   <TCell className="min-w-[160px]">
                     <div className="flex items-center gap-2.5">
                       <ProgressBar
