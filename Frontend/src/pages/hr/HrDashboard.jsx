@@ -88,7 +88,9 @@ export default function HrDashboard() {
         />
         <StatCard
           label="Requirements In progress"
-          value={requirements.filter((req) => req.status === "pending").length}
+          value={
+            requirements.filter((req) => req.status === "in-progress").length
+          }
           note="Not yet submitted"
         />
         <StatCard
