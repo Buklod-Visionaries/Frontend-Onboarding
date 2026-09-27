@@ -43,7 +43,8 @@ export async function getDepartmentEmployees(req, res) {
 
 export async function addEmployee(req, res) {
   //first is creating a User minus the role because its specifically creating employee
-  const { username, email, tempPass, department, position } = req.body;
+  const { username, email, tempPass, startDate, phone, department, position } =
+    req.body;
   //get the HR user
   const { id } = req.user;
   const hrId = id; // assign to be readable
@@ -78,6 +79,8 @@ export async function addEmployee(req, res) {
   const newEmployee = new Employee({
     user: newUser._id,
     position,
+    startDate,
+    phone,
     department,
   });
 

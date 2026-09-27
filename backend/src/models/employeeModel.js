@@ -11,6 +11,13 @@ const employeeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  startDate: {
+    type: Date,
+  },
+  phone: {
+    type: String,
+    required: true,
+  },
   department: {
     type: String,
     enum: ["laboratory", "imaging", "cardiovascular", "administration"],

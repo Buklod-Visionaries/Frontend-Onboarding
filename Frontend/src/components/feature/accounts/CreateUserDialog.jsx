@@ -8,6 +8,7 @@ import { ROLES, TEMP_PASSWORD } from "../../../domain/constants";
 import { useApp } from "../../../hooks/useApp";
 //
 import { RefreshCcw } from "lucide-react";
+import { generatePassword } from "../../../lib/generateTempPassword";
 
 const departments = [
   "Select department",
@@ -16,18 +17,7 @@ const departments = [
   "Cardiovascular",
   "Administration",
 ];
-const CHARACTERS =
-  "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
 
-function generatePassword(length = 12) {
-  const values = new Uint32Array(length);
-  crypto.getRandomValues(values);
-
-  return Array.from(
-    values,
-    (value) => CHARACTERS[value % CHARACTERS.length],
-  ).join("");
-}
 function CreateUserDialogBody({ onClose, onCreated, fetchAllUsers }) {
   const app = useApp();
   const navigate = useNavigate();

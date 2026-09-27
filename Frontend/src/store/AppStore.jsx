@@ -242,24 +242,68 @@ export default function AppProvider({ children }) {
    * dialog shows what a real create would have produced.
    */
   const createEmployee = useCallback(
-    (form) => {
-      const config = POSITIONS[form.position];
-      const requirementCount = buildRequirements(
-        form.position,
-        form.start,
-        "preview",
-      ).length;
-      showToast(`${requirementCount} requirements assigned to ${form.name}`);
-      return {
-        name: form.name,
-        role: "Employee",
-        department: config.department,
-        email: workEmailFor(form.name, form.email),
-        temp: TEMP_PASSWORD,
-        requirementCount,
-      };
+    async ({ setLoadingSubmit, ...payload }) => {
+      try {
+        setLoadingSubmit(true);
+        const res = await api.post(
+          "/employees",
+          {
+            username: payload.name,
+            email: payload.email,
+            tempPass: payload.tempPass,
+            startDate: payload.startDate,
+            phone: payload.phone,
+            department: payload.department.toLowerCase(),
+            position: payload.position,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          },
+        );
+        return {
+          name: payload.name,
+          role: "Employee",
+          department: payload.department,
+          email: payload.email,
+          temp: payload.tempPass,
+          requirementCount: payload.empReq,
+        };
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoadingSubmit(false);
+      }
     },
-    [showToast],
+
+    // //const payload = {
+    //   name: name.trim(),
+    //   phone: phone.trim(),
+    //   startDate: formattedIsoDate, // Sent in full ISO format
+    //   position: position.trim(),
+    //   department: dep,
+    //   email: email.trim(),
+    //   tempPass,
+    // };
+    // (form) => {
+    //   const config = POSITIONS[form.position];
+    //   const requirementCount = buildRequirements(
+    //     form.position,
+    //     form.start,
+    //     "preview",
+    //   ).length;
+    //   showToast(`${requirementCount} requirements assigned to ${form.name}`);
+    //   return {
+    //     name: form.name,
+    //     role: "Employee",
+    //     department: config.department,
+    //     email: workEmailFor(form.name, form.email),
+    //     temp: TEMP_PASSWORD,
+    //     requirementCount,
+    //   };
+    // },
+    // [showToast],
   );
 
   /** Create User. Returns the receipt for the confirmation dialog. */
