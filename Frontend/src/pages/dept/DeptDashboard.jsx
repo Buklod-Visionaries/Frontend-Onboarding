@@ -13,6 +13,7 @@ import { formatDate } from "../../domain/date";
 //
 import { useApp } from "../../hooks/useApp";
 import api from "../../lib/axios";
+import { formatStatus } from "../../lib/formatter";
 
 export default function DeptDashboard() {
   const app = useApp();
@@ -162,27 +163,41 @@ export default function DeptDashboard() {
                 <tbody>
                   {confirmLoading
                     ? "Loading..."
-                    : depRequirements.map((req) => (
-                        <TRow key={req._id}>
-                          <TCell strong>{req.employee.user.username}</TCell>
-                          <TCell>{req.employee.position}</TCell>
-                          <TCell>{req.requirement.name}</TCell>
-                          <TCell>{formatDate(req.dueDate)}</TCell>
-                          <TCell>
-                            <Badge>{req.status}</Badge>
-                          </TCell>
-                          <TCell align="right">
-                            {req.status !== "completed" && (
-                              <Button
-                                variant="primary"
-                                onClick={() => setConfirm(req)}
+                    : depRequirements
+                        .filter((depReq) => depReq.status === "in-progress")
+                        .map((req) => (
+                          <TRow key={req._id}>
+                            <TCell strong>{req.employee.user.username}</TCell>
+                            <TCell>{req.employee.position}</TCell>
+                            <TCell>{req.requirement.name}</TCell>
+                            <TCell>{formatDate(req.dueDate)}</TCell>
+                            <TCell>
+                              <Badge
+                                variant={
+                                  req.status === "in-progress" ||
+                                  req.status === "resubmission-required"
+                                    ? "in-progress"
+                                    : req.status === "completed"
+                                      ? "completed"
+                                      : req.status === "pending" &&
+                                        "in-progress"
+                                }
                               >
-                                Confirm
-                              </Button>
-                            )}
-                          </TCell>
-                        </TRow>
-                      ))}
+                                {formatStatus(req.status)}
+                              </Badge>
+                            </TCell>
+                            <TCell align="right">
+                              {req.status !== "completed" && (
+                                <Button
+                                  variant="primary"
+                                  onClick={() => setConfirm(req)}
+                                >
+                                  Confirm
+                                </Button>
+                              )}
+                            </TCell>
+                          </TRow>
+                        ))}
                 </tbody>
               </Table>
             ) : (

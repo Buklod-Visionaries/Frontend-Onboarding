@@ -11,6 +11,7 @@ import { formatDate } from "../../domain/date";
 //
 import { useApp } from "../../hooks/useApp";
 import api from "../../lib/axios";
+import { formatStatus } from "../../lib/formatter";
 
 const ACTIVITIES = ["Orientation", "Department Training", "Team Introduction"];
 
@@ -88,7 +89,19 @@ export default function DeptRequirements() {
                                     : `Target ${formatDate(row.dueDate)}`}
                                 </div>
                               </div>
-                              <Badge>{row.status}</Badge>
+                              <Badge
+                                variant={
+                                  row.status === "in-progress" ||
+                                  row.status === "resubmission-required"
+                                    ? "in-progress"
+                                    : row.status === "completed"
+                                      ? "completed"
+                                      : row.status === "pending" &&
+                                        "in-progress"
+                                }
+                              >
+                                {formatStatus(row.status)}
+                              </Badge>
                               {row.status !== "completed" && (
                                 <Button onClick={() => setConfirm(row)}>
                                   Confirm
