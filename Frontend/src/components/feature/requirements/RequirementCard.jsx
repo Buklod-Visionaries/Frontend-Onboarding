@@ -4,6 +4,7 @@ import Badge, { OverdueBadge } from "../../ui/Badge";
 import { formatDate, isOverdue } from "../../../domain/date";
 // import { isOverdue } from "../../../domain/requirements";
 import { SUB_LABELS } from "../../../domain/constants";
+import { formatStatus } from "../../../lib/formatter";
 
 /** Employee-facing requirement card. */
 export default function RequirementCard({ requirement, onOpen }) {
@@ -35,7 +36,18 @@ export default function RequirementCard({ requirement, onOpen }) {
             {requirement.requirement.name}
           </div>
         </div>
-        <Badge>{requirement.status}</Badge>
+        <Badge
+          variant={
+            requirement.status === "in-progress" ||
+            requirement.status === "resubmission-required"
+              ? "in-progress"
+              : requirement.status === "completed"
+                ? "completed"
+                : requirement.status === "pending" && "in-progress"
+          }
+        >
+          {formatStatus(requirement.status)}
+        </Badge>
       </div>
       <div className="text-cell text-ink/60">{sub}</div>
       <div className="flex items-center gap-2 text-meta text-ink/50">

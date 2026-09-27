@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { SUB_LABELS } from "../../domain/constants.js";
 import api from "../../lib/axios.js";
 import { capitalize } from "../../lib/capitalize.js";
+import { formatStatus } from "../../lib/formatter.js";
 
 export default function EmployeeDashboard() {
   const app = useApp();
@@ -195,7 +196,7 @@ export default function EmployeeDashboard() {
                           <span className="block text-field font-medium">
                             {requirement.requirement.name}
                           </span>
-                          <span className="block text-meta text-ink/55">
+                          <span className="text-meta text-ink/55 flex">
                             {SUB_LABELS.map((label) => {
                               if (
                                 requirement.status === //continue implementing this one it should display the status of requirements
@@ -212,7 +213,19 @@ export default function EmployeeDashboard() {
                             &middot; due {formatDate(requirement.dueDate)}
                           </span>
                         </span>
-                        <Badge>{requirement.status}</Badge>
+                        <Badge
+                          variant={
+                            requirement.status === "in-progress" ||
+                            requirement.status === "resubmission-required"
+                              ? "in-progress"
+                              : requirement.status === "completed"
+                                ? "completed"
+                                : requirement.status === "pending" &&
+                                  "in-progress"
+                          }
+                        >
+                          {formatStatus(requirement.status)}
+                        </Badge>
                       </DividerRow>
                     ))}
                 </DividerList>
