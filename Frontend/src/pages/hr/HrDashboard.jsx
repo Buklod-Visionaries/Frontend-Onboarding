@@ -80,19 +80,19 @@ export default function HrDashboard() {
           note="Onboarding records on file"
         />
         <StatCard
-          label="In progress"
+          label="Employees In progress"
           value={
             requirements.filter((req) => req.status === "in-progress").length
           }
           note="Onboarding not yet complete"
         />
         <StatCard
-          label="Pending requirements"
+          label="Requirements In progress"
           value={requirements.filter((req) => req.status === "pending").length}
           note="Not yet submitted"
         />
         <StatCard
-          label="Overdue"
+          label="Requirements Overdue"
           value={
             requirements.filter(
               (req) =>
@@ -104,7 +104,7 @@ export default function HrDashboard() {
           note="Past deadline"
         />
         <StatCard
-          label="Completed" // is the completed referring to employees onboarding itself?
+          label="Onboarding Completed" // is the completed referring to employees onboarding itself?
           value={employees.filter((emp) => emp.status === "completed").length}
           note="Fully onboarded"
         />
