@@ -32,7 +32,9 @@ const employeeRequirementHistorySchema = new mongoose.Schema(
   },
 );
 
-export default mongoose.model(
+const EmployeeRequirementHistory = mongoose.model(
   "EmployeeRequirementHistory",
   employeeRequirementHistorySchema,
 );
+
+export default EmployeeRequirementHistory;

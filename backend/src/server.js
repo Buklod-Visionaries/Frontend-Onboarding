@@ -9,6 +9,7 @@ import employeeRoutes from "./routes/employeeRoutes.js";
 import requirementsRoutes from "./routes/requirementsRoutes.js";
 import empRequirementRoutes from "./routes/empRequirementRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
+import employeeRequirementHistoryRoutes from "./routes/employeeRequirementHistoryRoutes.js";
 
 dotenv.config();
 
@@ -43,6 +44,8 @@ app.use("/api/requirements", requirementsRoutes);
 app.use("/api/employee-requirements", empRequirementRoutes);
 //documents (pdf)
 app.use("/api/documents", documentRoutes);
+//employee requirement submission history
+app.use("/api/employee-requirement-history", employeeRequirementHistoryRoutes);
 
 //starts the db before the server
 connectDB().then(() => {
