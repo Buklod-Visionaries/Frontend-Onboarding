@@ -249,7 +249,7 @@ export async function editEmpReq(req, res) {
       employeeRequirement: editedReq._id,
       status: `resubmission-required`,
       changedBy: userId,
-      note: "Resubmission Requested by Hr",
+      note: "Resubmission Requested by HR",
     });
 
     await empReqHistory.save();
@@ -272,6 +272,16 @@ export async function editEmpReq(req, res) {
       },
       { returnDocument: "after" }, //return the edited
     );
+
+    //creates a history/audit log
+    const empReqHistory = new EmployeeRequirementHistory({
+      employeeRequirement: editedReq._id,
+      status: `completed`,
+      changedBy: userId,
+      note: "Mark completed",
+    });
+
+    await empReqHistory.save();
 
     return res.send(editedReq);
   }

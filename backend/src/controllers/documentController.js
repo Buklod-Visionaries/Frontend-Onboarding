@@ -3,6 +3,7 @@ import Document from "../models/documentModel.js";
 import User from "../models/userModel.js";
 import Employee from "../models/employeeModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
+import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
 import supabase from "../lib/supabase.js";
 
 export async function getAllDocuments(req, res) {
@@ -88,6 +89,17 @@ export async function submitDocument(req, res) {
   //set status in progress
   currentEmpReq.status = "pending";
   await currentEmpReq.save();
+
+  //creates a history/audit log
+  const empReqHistory = new EmployeeRequirementHistory({
+    employeeRequirement: currentEmpReq._id,
+    status: `pending`,
+    changedBy: currentEmployee._id,
+    note: `Document submitted - ${file.originalname}`,
+  });
+
+  await empReqHistory.save();
+
   res.send({ message: "Document uploaded successfully", document: docs });
 }
 
