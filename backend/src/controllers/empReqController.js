@@ -3,6 +3,7 @@ import User from "../models/userModel.js";
 import Employee from "../models/employeeModel.js";
 import Document from "../models/documentModel.js";
 import Requirement from "../models/requirementModel.js";
+import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
 import supabase from "../lib/supabase.js";
 
 export async function getAllEmpReq(req, res) {
@@ -242,6 +243,17 @@ export async function editEmpReq(req, res) {
     if (!deletedDocs) {
       return res.send("Failed deleting document");
     }
+
+    //creates a history/audit log
+    const empReqHistory = new EmployeeRequirementHistory({
+      employeeRequirement: editedReq._id,
+      status: `resubmission-required`,
+      changedBy: userId,
+      note: "Resubmission Requested by Hr",
+    });
+
+    await empReqHistory.save();
+
     return res.send({
       message: `successfully changed status of empReq ${editedReq}`,
       deletedDocument: `${deletedDocs}`,

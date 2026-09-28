@@ -19,6 +19,15 @@ export async function createHistory(req, res) {
   });
 }
 
+//
+export async function getAllEmpReqHistory(req, res) {
+  //get all
+  const allEmpReqHistory = await EmployeeRequirementHistory.find();
+
+  res.status(200).send(allEmpReqHistory);
+}
+
+//
 export async function getHistoryByEmployeeRequirement(req, res) {
   const { id: paramsId } = req.params;
   const empReqHistory = await EmployeeRequirementHistory.find({
