@@ -94,7 +94,7 @@ export async function submitDocument(req, res) {
   const empReqHistory = new EmployeeRequirementHistory({
     employeeRequirement: currentEmpReq._id,
     status: `pending`,
-    changedBy: currentEmployee._id,
+    changedBy: currentUser._id,
     note: `Document submitted - ${file.originalname}`,
   });
 

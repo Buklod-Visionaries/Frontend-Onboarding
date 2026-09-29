@@ -1,25 +1,23 @@
 import mongoose from "mongoose";
+import User from "./userModel.js";
+import EmployeeRequirement from "./employeeRequirement.js";
 
 const employeeRequirementHistorySchema = new mongoose.Schema(
   {
     employeeRequirement: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "EmployeeRequirement",
+      ref: EmployeeRequirement,
       required: true,
     },
 
     status: {
       type: String,
-      enum: [
-        "in-progress",
-        "completed",
-        "resubmission-required",
-      ],
+      enum: ["in-progress", "pending", "completed", "resubmission-required"],
       required: true,
     },
- changedBy: {
+    changedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: User,
       required: true,
     },
 

@@ -15,6 +15,7 @@ import { formatDate } from "../../domain/date";
 import { REQUIREMENT_DESCRIPTIONS } from "../../data/positions";
 //
 import api from "../../lib/axios";
+import { formatStatus } from "../../lib/formatter";
 
 /** Requirement details + document upload / resubmission. */
 export default function RequirementDetail() {
@@ -27,6 +28,8 @@ export default function RequirementDetail() {
   const [loading, setLoading] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
   const [fetchingDocument, setFetchingDocument] = useState(false);
+  const [reqHistory, setReqHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [documentPreview, setDocumentPreview] = useState(null);
 
   // const me = useCurrentEmployee();
@@ -45,7 +48,7 @@ export default function RequirementDetail() {
       await getMySpecificRequirement();
       await getExistingDocument();
     } catch (error) {
-      app.showToast(`Failed uploading File: ${error?.response?.data?.message}`);
+      app.showToast(`Failed uploading File: ${error.response.data.message}`);
       console.log(error);
     } finally {
       setFileUploading(false);
@@ -87,6 +90,24 @@ export default function RequirementDetail() {
       setFetchingDocument(false);
     }
   }
+  async function getRequirementHistory() {
+    try {
+      setHistoryLoading(true);
+      const res = await api.get(
+        `/employee-requirement-history/employee-requirement/${requirement._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${app.session.accessToken}`,
+          },
+        },
+      );
+      setReqHistory(res.data);
+    } catch (error) {
+      console.log("history error", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
 
   useEffect(() => {
     //testing putting the async functions outside useeffect but calling it inside
@@ -94,7 +115,13 @@ export default function RequirementDetail() {
     getExistingDocument();
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    if (requirement) {
+      getRequirementHistory();
+    }
+  }, [requirement]);
+
+  if (loading || historyLoading) {
     return <p>Loading...</p>;
   }
 
@@ -137,7 +164,18 @@ export default function RequirementDetail() {
             {requirement.requirement.name}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge>{requirement.status}</Badge>
+            <Badge
+              variant={
+                requirement.status === "in-progress" ||
+                requirement.status === "resubmission-required"
+                  ? "pending"
+                  : requirement.status === "completed"
+                    ? "completed"
+                    : requirement.status === "pending" && "in-progress"
+              }
+            >
+              {formatStatus(requirement.status)}
+            </Badge>
             <span className="text-meta text-ink/55">
               Deadline {formatDate(requirement.dueDate)}
             </span>
@@ -242,16 +280,16 @@ export default function RequirementDetail() {
         </Button>
       </Card>
 
-      {/* <Card padding="lg" className="gap-3.5">
+      <Card padding="lg" className="gap-3.5">
         <h4 className="text-[20px]">Submission history</h4>
         <EventList
           items={
-            requirement.history.length
-              ? requirement.history
+            reqHistory
+              ? reqHistory
               : [{ text: "No submissions yet", time: "—" }]
           }
         />
-      </Card> */}
+      </Card>
     </AutoGrid>
   );
 }

@@ -8,6 +8,8 @@ import { formatDate } from "../../../domain/date";
 import { useApp } from "../../../hooks/useApp";
 import { capitalize } from "../../../lib/capitalize";
 //
+import Card from "../../ui/Card";
+import { EventList } from "../../ui/Timeline";
 import api from "../../../lib/axios";
 import { formatRole } from "../../../lib/formatter";
 
@@ -24,31 +26,59 @@ function ReviewDialogBody({
   const [resubmitMode, setResubmitMode] = useState(false);
   const [reason, setReason] = useState("");
   const [documentPreview, setDocumentPreview] = useState(null);
+  const [reqHistory, setReqHistory] = useState([]);
   const [docLoading, setDocLoading] = useState(false);
   const [approveLoading, setApproveLoading] = useState(false);
   const [resubmitLoading, setResubmitLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  async function getSpecificDocument() {
+    try {
+      setDocLoading(true);
+      const res = await api.get(
+        `/documents/employee-requirement/${empReq._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${app.session.accessToken}`,
+          },
+        },
+      );
+      setDocumentPreview(res.data);
+    } catch (error) {
+      console.log(error.response.data.message);
+    } finally {
+      setDocLoading(false);
+    }
+  }
+
+  async function getRequirementHistory() {
+    try {
+      setHistoryLoading(true);
+      const res = await api.get(
+        `/employee-requirement-history/employee-requirement/${empReq._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${app.session.accessToken}`,
+          },
+        },
+      );
+      setReqHistory(res.data);
+    } catch (error) {
+      console.log(error.response.data.message);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function getSpecificDocument() {
-      try {
-        setDocLoading(true);
-        const res = await api.get(
-          `/documents/employee-requirement/${empReq._id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${app.session.accessToken}`,
-            },
-          },
-        );
-        setDocumentPreview(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setDocLoading(false);
-      }
-    }
     getSpecificDocument();
   }, []);
+
+  useEffect(() => {
+    if (empReq) {
+      getRequirementHistory();
+    }
+  }, [empReq]);
 
   const approve = async () => {
     await app.approveRequirement(empReq, setApproveLoading);
@@ -85,6 +115,9 @@ function ReviewDialogBody({
     await getReqFromDashboard?.();
     await getReqFromVerify?.();
   };
+  if (historyLoading) {
+    return <p>Loading...</p>;
+  }
 
   // console.log("documentFIle", documentPreview);
   return (
@@ -180,7 +213,7 @@ function ReviewDialogBody({
                 {capitalize(empReq.status)}
               </Badge>
             </dd>
-            {empReq.verifiedBy && (
+            {empReq.verifiedBy && empReq.status === "completed" && (
               <>
                 <dt className="text-ink/50">Approved By</dt>
                 <dd className="m-0">
@@ -191,7 +224,7 @@ function ReviewDialogBody({
             )}
           </dl>
 
-          {resubmitMode && (
+          {resubmitMode ? (
             <Field label="Reason for resubmission (sent to the employee)">
               <Textarea
                 value={reason}
@@ -199,6 +232,17 @@ function ReviewDialogBody({
                 placeholder="e.g. The uploaded scan is cut off. Please upload a full copy of the document."
               />
             </Field>
+          ) : (
+            <Card padding="lg" className="gap-3.5">
+              <h4 className="text-[20px]">Submission history</h4>
+              <EventList
+                items={
+                  reqHistory
+                    ? reqHistory
+                    : [{ text: "No submissions yet", time: "—" }]
+                }
+              />
+            </Card>
           )}
         </div>
       </div>
