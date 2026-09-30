@@ -4,6 +4,8 @@ import Employee from "../models/employeeModel.js";
 import Requirement from "../models/requirementModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
 import Document from "../models/documentModel.js";
+import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+import supabase from "../lib/supabase.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -153,20 +155,128 @@ export async function updateEmployee(req, res) {
   res.send(updatedEmployee);
 }
 
+// export async function deleteSpecificEmployee(req, res) {
+//   const { id } = req.params;
+//   const employee = await Employee.findOne({ _id: id }).populate("user");
+
+//   // const deletedEmployee = await Employee.findOneAndDelete({
+//   //   _id: id,
+//   // });
+//   // if (!deletedEmployee) {
+//   //   return res
+//   //     .status(404)
+//   //     .send({ message: "Cannot delete, employee doesn't exist" });
+//   // }
+
+//   //
+
+//   res.status(200).send(employee);
+// }
+
+//
 export async function deleteSpecificEmployee(req, res) {
-  const { id } = req.params;
-  const employee = await Employee.findOne({ _id: id }).populate("user");
+  try {
+    // Get the user ID from /:id
+    const { id } = req.params;
 
-  // const deletedEmployee = await Employee.findOneAndDelete({
-  //   _id: id,
-  // });
-  // if (!deletedEmployee) {
-  //   return res
-  //     .status(404)
-  //     .send({ message: "Cannot delete, employee doesn't exist" });
-  // }
+    // 1. Find the user
+    const selectedUser = await User.findById(id);
 
-  //
+    if (!selectedUser) {
+      return res.status(404).send({
+        message: "User doesn't exist",
+      });
+    }
 
-  res.status(200).send(employee);
+    // 2. Make sure the user is an employee
+    if (selectedUser.role !== "employee") {
+      return res.status(400).send({
+        message: "Cannot delete non-employee user",
+      });
+    }
+
+    // 3. Find the employee record
+    const employee = await Employee.findOne({
+      user: id,
+    });
+
+    if (!employee) {
+      return res.status(404).send({
+        message: "Employee record doesn't exist",
+      });
+    }
+
+    // 4. Find ALL employee requirements belonging to this employee
+    const employeeRequirements = await EmployeeRequirement.find({
+      employee: employee._id,
+    });
+
+    // Get all EmployeeRequirement IDs
+    const employeeRequirementIds = employeeRequirements.map(
+      (empReq) => empReq._id,
+    );
+
+    // 5. Find ALL documents tied to those requirements
+    const documents = await Document.find({
+      employeeRequirement: { $in: employeeRequirementIds },
+    });
+
+    // 6. Collect all Supabase file paths
+    const filePaths = documents.map((doc) => doc.fileUrl);
+
+    // 7. Delete files from Supabase
+    if (filePaths.length > 0) {
+      const { error: uploadError } = await supabase.storage
+        .from("employee-files")
+        .remove(filePaths);
+
+      if (uploadError) {
+        console.error(uploadError);
+
+        return res.status(500).send({
+          message: "Failed to delete employee files from Supabase",
+        });
+      }
+    }
+
+    // 8. Delete all Document records
+    await Document.deleteMany({
+      employeeRequirement: { $in: employeeRequirementIds },
+    });
+
+    // 9. Delete ALL EmployeeRequirementHistory records
+    await EmployeeRequirementHistory.deleteMany({
+      employeeRequirement: { $in: employeeRequirementIds },
+    });
+
+    // 10. Delete ALL EmployeeRequirement records
+    await EmployeeRequirement.deleteMany({
+      employee: employee._id,
+    });
+
+    // 11. Delete the Employee record
+    await Employee.deleteOne({
+      _id: employee._id,
+    });
+
+    // 12. Finally delete the User record
+    await User.deleteOne({
+      _id: id,
+    });
+
+    return res.status(200).send({
+      message: "Successfully deleted employee and all related data",
+      deletedUserId: id,
+      deletedEmployeeId: employee._id,
+      deletedEmployeeRequirements: employeeRequirementIds.length,
+      deletedDocuments: documents.length,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).send({
+      message: "Failed to delete employee",
+      error: error.message,
+    });
+  }
 }
