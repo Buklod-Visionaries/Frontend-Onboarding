@@ -125,12 +125,24 @@ export default function HrDashboard() {
               View all
             </Button>
           </div>
-          {requirements.length ? (
+          {employees.filter((employee) => {
+            return requirements.some(
+              (req) =>
+                req.employee._id === employee._id &&
+                (req.status === "pending" ||
+                  isOverdue(formatDate(req.dueDate))),
+            );
+          }).length ? (
             <div className="flex flex-col">
               {employees
-                .filter(
-                  (employee) => employee.onboardingStatus === "in_progress",
-                )
+                .filter((employee) => {
+                  return requirements.some(
+                    (req) =>
+                      req.employee._id === employee._id &&
+                      (req.status === "pending" ||
+                        isOverdue(formatDate(req.dueDate))),
+                  );
+                })
                 .map((employee) => {
                   return (
                     <button
@@ -156,22 +168,38 @@ export default function HrDashboard() {
                           : "Completed"}
                       </Badge>
                       <span className="text-meta text-ink/55">
-                        {
-                          requirements.filter(
-                            (req) =>
-                              req.employee._id === employee._id &&
-                              isOverdue(formatDate(req.dueDate)),
-                          ).length
-                        }{" "}
-                        overdue ·{" "}
-                        {
-                          requirements.filter(
-                            (req) =>
-                              req.employee._id === employee._id &&
-                              req.status === "pending",
-                          ).length
-                        }{" "}
-                        pending
+                        {requirements.filter(
+                          (req) =>
+                            req.employee._id === employee._id &&
+                            isOverdue(formatDate(req.dueDate)),
+                        ).length > 0 && (
+                          <span>
+                            {
+                              requirements.filter(
+                                (req) =>
+                                  req.employee._id === employee._id &&
+                                  isOverdue(formatDate(req.dueDate)),
+                              ).length
+                            }
+                            {" overdue ·"}
+                          </span>
+                        )}
+                        {requirements.filter(
+                          (req) =>
+                            req.employee._id === employee._id &&
+                            req.status === "pending",
+                        ).length > 0 && (
+                          <span>
+                            {
+                              requirements.filter(
+                                (req) =>
+                                  req.employee._id === employee._id &&
+                                  req.status === "pending",
+                              ).length
+                            }{" "}
+                            pending
+                          </span>
+                        )}
                       </span>
 
                       <span className="text-[11px] text-ink/45">
