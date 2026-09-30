@@ -31,15 +31,41 @@ export default function RequirementDetail() {
   const [reqHistory, setReqHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [documentPreview, setDocumentPreview] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   // const me = useCurrentEmployee();
   // const requirement = me.requirements.find((row) => row.id === params.id);
+
+  function handleFile(file) {
+    if (!file) return;
+
+    // Check file type
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+
+    if (!allowedTypes.includes(file.type)) {
+      app.showToast("Only PDF, JPG, JPEG, and PNG files are allowed.");
+      setPendingFile(null);
+      return;
+    }
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      app.showToast("File size must not exceed 10 MB.");
+      setPendingFile(null);
+      return;
+    }
+
+    setPendingFile(file);
+  }
 
   async function uploadFile({ e, id }) {
     // e.preventDefault();
     try {
       setFileUploading(true);
       if (!pendingFile) return;
+
       //sends the file and target requirement
       await app.submitDocument(pendingFile, id);
       // console.log(`${id} ${pendingFile}`);
@@ -211,23 +237,61 @@ export default function RequirementDetail() {
           requirement.status === "resubmission-required" ? (
             <div
               className={cx(
-                "flex flex-col items-center gap-1.5 border border-dashed p-6 text-center",
-                uploadable ? "border-ink/30" : "border-ink/[0.18] opacity-55",
+                "flex flex-col items-center gap-1.5 border border-dashed p-6 text-center transition",
+                isDragging
+                  ? "border-accent bg-accent/5"
+                  : uploadable
+                    ? "border-ink/30"
+                    : "border-ink/[0.18] opacity-55",
               )}
+              onDragOver={(e) => {
+                e.preventDefault();
+
+                if (uploadable) {
+                  setIsDragging(true);
+                }
+              }}
+              onDragLeave={() => {
+                setIsDragging(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+
+                if (!uploadable) return;
+
+                const file = e.dataTransfer.files?.[0];
+
+                if (file) {
+                  handleFile(file);
+                }
+              }}
             >
               <Upload size={26} strokeWidth={1.5} className="text-accent" />
+
               <div className="text-field">{uploadLabel}</div>
+
               <div className="text-meta text-ink/50">
                 PDF, JPG or PNG &middot; max 10 MB
               </div>
+
               <input
                 ref={fileInput}
                 type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files && e.target.files[0];
-                  if (file) setPendingFile(e.target.files[0]);
+                  const file = e.target.files?.[0];
+
+                  if (file) {
+                    handleFile(file);
+                  }
+
+                  // Allows the same file to be selected again
+                  e.target.value = "";
                 }}
               />
+
               {documentPreview && (
                 <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
                   <Button
@@ -236,6 +300,7 @@ export default function RequirementDetail() {
                   >
                     Choose file
                   </Button>
+
                   {requirement.status !== "pending" && (
                     <Button
                       variant="primary"
