@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -11,65 +11,44 @@ import { EmptyState } from "../../components/ui/Notice";
 import ReviewDialog from "../../components/feature/requirements/ReviewDialog";
 import { useApp } from "../../hooks/useApp";
 import { useVerificationQueue } from "../../hooks/useVerificationQueue";
-import { countRequirements } from "../../domain/requirements";
-import { employeeStatus } from "../../domain/employees";
 import { formatDate, isOverdue } from "../../domain/date";
 //
 import { capitalize } from "../../lib/capitalize";
-import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRequirements } from "../../hooks/useRequirements";
+import { useEmployees } from "../../hooks/useEmployees";
 
 export default function HrDashboard() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const queue = useVerificationQueue();
   const [review, setReview] = useState(null);
-  const [requirements, setRequirements] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [empLoading, setEmpLoading] = useState(false);
-  const [reqLoading, setReqLoading] = useState(false);
+  //from employee hooks
+  const {
+    data: employees = [],
+    isLoading: employeesLoading,
+    isError: employeesError,
+  } = useEmployees(app.session.accessToken);
 
-  async function getAllRequirements() {
-    try {
-      setReqLoading(true);
-      const res = await api.get("/employee-requirements", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setRequirements(res.data);
-    } catch (error) {
-      app.showToast(`Error: ${error.response.data.message}`);
-    } finally {
-      setReqLoading(false);
-    }
-  }
+  //from requirement hooks
+  const {
+    data: requirements = [],
+    isLoading: requirementsLoading,
+    isError: requirementsError,
+  } = useRequirements(app.session.accessToken);
 
-  async function getAllEmployees() {
-    try {
-      setEmpLoading(true);
-      const res = await api.get("/employees", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setEmployees(res.data);
-    } catch (error) {
-      app.showToast(`Error: ${error.response.data.message}`);
-    } finally {
-      setEmpLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    getAllRequirements();
-    getAllEmployees();
-  }, []);
-
-  if (empLoading || reqLoading) {
+  ////
+  if (employeesLoading || requirementsLoading) {
     return <p>Loading...</p>;
   }
 
-  console.log("review", review);
+  if (employeesError) {
+    return <p>Failed loading employees.</p>;
+  }
+  if (requirementsError) {
+    return <p>Failed loading requirements</p>;
+  }
 
   return (
     <>
@@ -272,7 +251,9 @@ export default function HrDashboard() {
 
       <ReviewDialog
         target={review}
-        getReqFromDashboard={getAllRequirements}
+        getReqFromDashboard={() => {
+          queryClient.invalidateQueries({ queryKey: ["requirements"] }); //triggers a refresh
+        }}
         onClose={() => setReview(null)}
       />
     </>

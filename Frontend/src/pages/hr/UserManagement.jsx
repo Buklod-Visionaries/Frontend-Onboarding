@@ -36,7 +36,7 @@ export default function UserManagement() {
   const [createOpen, setCreateOpen] = useState(false);
   const [manage, setManage] = useState(null);
   const [receipt, setReceipt] = useState(null);
-  //
+  //from users hook
   const {
     data: users = [],
     isLoading,
@@ -186,9 +186,9 @@ export default function UserManagement() {
           <CreateUserDialog
             open={createOpen}
             onClose={() => setCreateOpen(false)}
-            // fetchAllUsers={fetchAllUsers}
             onCreated={(user) => {
               queryClient.invalidateQueries({
+                //triggers a refresh
                 queryKey: ["users"],
               });
 
