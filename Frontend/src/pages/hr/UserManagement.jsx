@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -15,9 +15,11 @@ import { useApp } from "../../hooks/useApp";
 import { EM_DASH, TEMP_PASSWORD } from "../../domain/constants";
 //
 import { formatRole } from "../../lib/formatter";
-import api from "../../lib/axios";
+// import api from "../../lib/axios";
 import { capitalize } from "../../lib/capitalize";
 import { formatDate, formatRelativeDate } from "../../domain/date";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUsers } from "../../hooks/useUsers";
 
 const FILTERS = [
   { value: "All", label: "All" },
@@ -29,13 +31,21 @@ const FILTERS = [
 /** User & account management — all accounts across the three roles. */
 export default function UserManagement() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [createOpen, setCreateOpen] = useState(false);
   const [manage, setManage] = useState(null);
   const [receipt, setReceipt] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  //
+  const {
+    data: users = [],
+    isLoading,
+    error,
+  } = useUsers(app.session.accessToken);
+
+  // const [users, setUsers] = useState([]);
+  // const [loading, setLoading] = useState(false);
 
   // const staff = app.staffUsers.map((user) => ({ kind: "staff", ...user }));
   // const employeeAccounts = app.employees.map((employee) => {
@@ -66,34 +76,38 @@ export default function UserManagement() {
     return byRole && byQuery;
   });
 
-  //
-  async function fetchAllUsers() {
-    try {
-      setLoading(true);
-      const res = await api.get("/users", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
+  // //
+  // async function fetchAllUsers() {
+  //   try {
+  //     setLoading(true);
+  //     const res = await api.get("/users", {
+  //       headers: {
+  //         Authorization: `Bearer ${app.session.accessToken}`,
+  //       },
+  //     });
 
-      if (!res.data) {
-        return console.log("Cannot fetch users");
-      }
-      setUsers(res.data);
-    } catch (error) {
-      console.log(error.response.data);
-    } finally {
-      setLoading(false);
-    }
+  //     if (!res.data) {
+  //       return console.log("Cannot fetch users");
+  //     }
+  //     setUsers(res.data);
+  //   } catch (error) {
+  //     console.log(error.response.data);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+
+  // useEffect(() => {
+  //   fetchAllUsers();
+  // }, []);
+
+  if (error) {
+    return <p>Failed to load users.</p>;
   }
-
-  useEffect(() => {
-    fetchAllUsers();
-  }, []);
 
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         "Loading..."
       ) : (
         <>
@@ -220,8 +234,14 @@ export default function UserManagement() {
           <CreateUserDialog
             open={createOpen}
             onClose={() => setCreateOpen(false)}
-            fetchAllUsers={fetchAllUsers}
-            onCreated={setReceipt}
+            // fetchAllUsers={fetchAllUsers}
+            onCreated={(user) => {
+              queryClient.invalidateQueries({
+                queryKey: ["users"],
+              });
+
+              setReceipt(user);
+            }}
           />
           <ManageAccessDialog target={manage} onClose={() => setManage(null)} />
           <AccountCreatedDialog

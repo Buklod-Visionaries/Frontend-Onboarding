@@ -18,7 +18,7 @@ const departments = [
   "Administration",
 ];
 
-function CreateUserDialogBody({ onClose, onCreated, fetchAllUsers }) {
+function CreateUserDialogBody({ onClose, onCreated }) {
   const app = useApp();
   const navigate = useNavigate();
   const [role, setRole] = useState("HR Staff");
@@ -59,8 +59,6 @@ function CreateUserDialogBody({ onClose, onCreated, fetchAllUsers }) {
     );
     onClose();
     onCreated(receipt);
-    //refresh fetching users to reflect new
-    fetchAllUsers();
   };
 
   return (
@@ -155,18 +153,7 @@ function CreateUserDialogBody({ onClose, onCreated, fetchAllUsers }) {
  *
  * The body only mounts while open, so each opening starts from a blank form.
  */
-export default function CreateUserDialog({
-  open,
-  onClose,
-  onCreated,
-  fetchAllUsers,
-}) {
+export default function CreateUserDialog({ open, onClose, onCreated }) {
   if (!open) return null;
-  return (
-    <CreateUserDialogBody
-      onClose={onClose}
-      fetchAllUsers={fetchAllUsers}
-      onCreated={onCreated}
-    />
-  );
+  return <CreateUserDialogBody onClose={onClose} onCreated={onCreated} />;
 }
