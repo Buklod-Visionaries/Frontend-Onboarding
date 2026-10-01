@@ -8,58 +8,40 @@ import { useVerificationQueue } from "../../hooks/useVerificationQueue";
 import { formatDate } from "../../domain/date";
 //
 import { useApp } from "../../hooks/useApp";
-import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRequirements } from "../../hooks/useRequirements";
+import { usePendingDocuments } from "../../hooks/usePendingDocuments";
 import { capitalize } from "../../lib/capitalize";
 
 /** Requirement verification queue — every submission awaiting HR review. */
 export default function Verification() {
   const [review, setReview] = useState(null);
-  const queue = useVerificationQueue();
   const app = useApp();
-  const [requirements, setRequirements] = useState([]);
-  const [documents, setDocuments] = useState([]);
-  const [loadingReq, setLoadingReq] = useState(false);
-  const [loadingDoc, setLoadingDoc] = useState(false);
+  const queryClient = useQueryClient();
+  // from requirements hook
+  const {
+    data: requirements = [],
+    isLoading: requirementsLoading,
+    isError: requirementsError,
+  } = useRequirements(app.session.accessToken);
+  //from pendinDocuments Hook
+  const {
+    data: documents = [],
+    isLoading: documentsLoading,
+    isError: documentsError,
+  } = usePendingDocuments(app.session.accessToken);
 
-  async function getAllRequirements() {
-    try {
-      setLoadingReq(true);
-      const res = await api.get("/employee-requirements", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setRequirements(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setLoadingReq(false);
-    }
-  }
-
-  async function getPendingDocuments() {
-    try {
-      setLoadingDoc(true);
-      const res = await api.get("/documents", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setDocuments(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setLoadingDoc(false);
-    }
-  }
-
-  useEffect(() => {
-    getAllRequirements();
-    getPendingDocuments();
-  }, []);
-
-  if (loadingDoc || loadingReq) {
+  //
+  if (requirementsLoading || documentsLoading) {
     return <p>Loading...</p>;
+  }
+
+  if (requirementsError) {
+    return <p>Failed loading requirements.</p>;
+  }
+
+  if (documentsError) {
+    return <p>Failed loadin docs.</p>;
   }
 
   return (
@@ -120,7 +102,15 @@ export default function Verification() {
         )}
       </Card>
 
-      <ReviewDialog target={review} getReqFromVerify={getAllRequirements} onClose={() => setReview(null)} />
+      <ReviewDialog
+        target={review}
+        getReqFromVerify={() =>
+          queryClient.invalidateQueries({
+            queryKey: ["requirements"],
+          })
+        }
+        onClose={() => setReview(null)}
+      />
     </>
   );
 }
