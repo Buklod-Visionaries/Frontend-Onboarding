@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -8,56 +8,30 @@ import { Input, Segmented } from "../../components/ui/Field";
 import { TCell, THead, TRow, Table } from "../../components/ui/Table";
 import { EmptyState } from "../../components/ui/Notice";
 import { useApp } from "../../hooks/useApp";
-import { countRequirements } from "../../domain/requirements";
-import { employeeStatus } from "../../domain/employees";
 import { formatDate } from "../../domain/date";
 import { DEPARTMENTS } from "../../domain/constants";
 //
-import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEmployees } from "../../hooks/useEmployees";
+import { useRequirements } from "../../hooks/useRequirements";
 import { capitalize } from "../../lib/capitalize";
 
 export default function EmployeeList() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All");
-  const [employees, setEmployees] = useState([]);
-  const [requirements, setRequirements] = useState([]);
-  const [empLoading, setEmpLoading] = useState(false);
-  const [reqLoading, setReqLoading] = useState(false);
-
-  async function getAllEmployees() {
-    try {
-      setEmpLoading(true);
-      const res = await api.get("/employees", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setEmployees(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setEmpLoading(false);
-    }
-  }
-
-  async function getAllRequirements() {
-    try {
-      setReqLoading(true);
-      const res = await api.get("/employee-requirements", {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setRequirements(res.data);
-    } catch (error) {
-    } finally {
-      setReqLoading(false);
-    }
-  }
-
-  console.log(employees);
+  const {
+    data: employees = [],
+    isLoading: employeesLoading,
+    isError: employeesError,
+  } = useEmployees(app.session.accessToken);
+  const {
+    data: requirements = [],
+    isLoading: requirementsLoading,
+    isError: requirementsError,
+  } = useRequirements(app.session.accessToken);
 
   const query = search.trim().toLowerCase();
   const rows = employees.filter((employee) => {
@@ -70,13 +44,15 @@ export default function EmployeeList() {
     return byDepartment && byQuery;
   });
 
-  useEffect(() => {
-    getAllEmployees();
-    getAllRequirements();
-  }, []);
-
-  if (empLoading || reqLoading) {
+  if (employeesLoading || requirementsLoading) {
     return <p>Loading...</p>;
+  }
+
+  if (employeesError) {
+    return <p>Failed loading employees.</p>;
+  }
+  if (requirementsError) {
+    return <p>Failed loading requirements.</p>;
   }
 
   return (

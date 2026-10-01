@@ -15,7 +15,6 @@ import { useApp } from "../../hooks/useApp";
 import { EM_DASH, TEMP_PASSWORD } from "../../domain/constants";
 //
 import { formatRole } from "../../lib/formatter";
-// import api from "../../lib/axios";
 import { capitalize } from "../../lib/capitalize";
 import { formatDate, formatRelativeDate } from "../../domain/date";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,28 +43,6 @@ export default function UserManagement() {
     error,
   } = useUsers(app.session.accessToken);
 
-  // const [users, setUsers] = useState([]);
-  // const [loading, setLoading] = useState(false);
-
-  // const staff = app.staffUsers.map((user) => ({ kind: "staff", ...user }));
-  // const employeeAccounts = app.employees.map((employee) => {
-  //   const status = app.employeeAccounts[employee.id] || "Pending first login";
-  //   return {
-  //     kind: "employee",
-  //     id: employee.id,
-  //     name: employee.name,
-  //     role: "Employee",
-  //     department: employee.department,
-  //     email: employee.email,
-  //     status,
-  //     lastLogin: status === "Active" ? "Aug 15, 2026" : EM_DASH,
-  //   };
-  // });
-  // const accounts = [...staff, ...employeeAccounts];
-
-  // const count = (status) =>
-  //   accounts.filter((user) => user.status === status).length;
-
   const query = search.trim().toLowerCase();
   const rows = users.filter((user) => {
     const byRole = filter === "All" || user.role === filter;
@@ -75,31 +52,6 @@ export default function UserManagement() {
       user.email.toLowerCase().includes(query);
     return byRole && byQuery;
   });
-
-  // //
-  // async function fetchAllUsers() {
-  //   try {
-  //     setLoading(true);
-  //     const res = await api.get("/users", {
-  //       headers: {
-  //         Authorization: `Bearer ${app.session.accessToken}`,
-  //       },
-  //     });
-
-  //     if (!res.data) {
-  //       return console.log("Cannot fetch users");
-  //     }
-  //     setUsers(res.data);
-  //   } catch (error) {
-  //     console.log(error.response.data);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   fetchAllUsers();
-  // }, []);
 
   if (error) {
     return <p>Failed to load users.</p>;

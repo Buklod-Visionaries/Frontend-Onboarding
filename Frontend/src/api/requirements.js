@@ -1,7 +1,7 @@
 import api from "../lib/axios";
 
-export async function fetchAllEmployees(token) {
-  const res = await api.get("/employees", {
+export async function fetchAllRequirements(token) {
+  const res = await api.get("/employee-requirements", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
