@@ -10,43 +10,55 @@ import { STATUSES } from "../../domain/constants";
 //
 import { useApp } from "../../hooks/useApp";
 import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMyRequirements } from "../../hooks/useRequirements";
 
 const FILTERS = ["All", ...STATUSES];
 
 export default function MyRequirements() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [filter, setFilter] = useState("All");
   const me = useCurrentEmployee();
-  const [requirements, setRequirements] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    data: myRequirements = [],
+    isLoading: myRequirementsLoading,
+    isError: myRequirementsError,
+  } = useMyRequirements(app.session.accessToken);
+  // const [requirements, setRequirements] = useState([]);
+  // const [loading, setLoading] = useState(false);
 
-  const rows = requirements.filter(
+  const rows = myRequirements.filter(
     (requirement) => filter === "All" || requirement.status === filter,
   );
 
-  useEffect(() => {
-    async function getMyRequirements() {
-      try {
-        setLoading(true);
-        const res = await api.get("/employee-requirements/me", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setRequirements(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+  // useEffect(() => {
+  //   async function getMyRequirements() {
+  //     try {
+  //       setLoading(true);
+  //       const res = await api.get("/employee-requirements/me", {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       });
+  //       setRequirements(res.data);
+  //     } catch (error) {
+  //       console.log(error.response.data.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
 
-    getMyRequirements();
-  }, []);
+  //   getMyRequirements();
+  // }, []);
 
-  if (loading || !requirements) {
+  if (myRequirementsLoading) {
     return <p>Loading...</p>;
+  }
+
+  if (myRequirementsError) {
+    return <p>Failed loading requirements.</p>;
   }
 
   return (
