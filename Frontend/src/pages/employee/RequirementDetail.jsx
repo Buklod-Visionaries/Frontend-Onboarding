@@ -15,6 +15,10 @@ import { formatDate } from "../../domain/date";
 import { REQUIREMENT_DESCRIPTIONS } from "../../data/positions";
 //
 import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMySpecificRequirement } from "../../hooks/useRequirements";
+import { useExistingDocument } from "../../hooks/useDocuments";
+import { useSpecificEmpReqHistories } from "../../hooks/useRequirementHistories";
 import { formatStatus } from "../../lib/formatter";
 
 /** Requirement details + document upload / resubmission. */
@@ -24,19 +28,28 @@ export default function RequirementDetail() {
   const navigate = useNavigate();
   const fileInput = useRef(null);
   const [pendingFile, setPendingFile] = useState(null);
-  const [requirement, setRequirement] = useState(null);
-  const [loading, setLoading] = useState(false);
+  //from myRequirement hook
+  const {
+    data: myRequirement = [],
+    isLoading: myRequirementLoading,
+    isError: myRequirementError,
+  } = useMySpecificRequirement(app.session.accessToken, params.id);
+  //from existingDoc hook
+  const {
+    data: existingDocument = [],
+    isLoading: existingDocumentLoading,
+    isError: existingDocumentError,
+  } = useExistingDocument(app.session.accessToken, params.id);
+  //from specificEMpReqHistories hook
+  const {
+    data: specificEmpReqHistories = [],
+    isLoading: specificEmpReqHistoriesLoading,
+    isError: specificEmpReqHistoriesError,
+  } = useSpecificEmpReqHistories(app.session.accessToken, myRequirement._id);
   const [fileUploading, setFileUploading] = useState(false);
-  const [fetchingDocument, setFetchingDocument] = useState(false);
-  const [reqHistory, setReqHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [documentPreview, setDocumentPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-  // const me = useCurrentEmployee();
-  // const requirement = me.requirements.find((row) => row.id === params.id);
 
   function handleFile(file) {
     if (!file) return;
@@ -81,77 +94,26 @@ export default function RequirementDetail() {
     }
   }
 
-  async function getMySpecificRequirement() {
-    try {
-      setLoading(true);
-      const currentParams = JSON.stringify(params.id);
-      const res = await api.get(`/employee-requirements/me/${params.id}`, {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setRequirement(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function getExistingDocument() {
-    try {
-      setFetchingDocument(true);
-      const res = await api.get(
-        `/documents/employee-requirement/${params.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        },
-      );
-      setDocumentPreview(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setFetchingDocument(false);
-    }
-  }
-  async function getRequirementHistory() {
-    try {
-      setHistoryLoading(true);
-      const res = await api.get(
-        `/employee-requirement-history/employee-requirement/${requirement._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        },
-      );
-      setReqHistory(res.data);
-    } catch (error) {
-      console.log("history error", error);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    //testing putting the async functions outside useeffect but calling it inside
-    getMySpecificRequirement();
-    getExistingDocument();
-  }, []);
-
-  useEffect(() => {
-    if (requirement) {
-      getRequirementHistory();
-    }
-  }, [requirement]);
-
-  if (loading || historyLoading) {
+  ////
+  if (
+    myRequirementLoading ||
+    existingDocumentLoading ||
+    specificEmpReqHistoriesLoading
+  ) {
     return <p>Loading...</p>;
   }
 
-  if (!requirement) {
+  if (myRequirementError) {
+    return <p>Failed loading requirements.</p>;
+  }
+  if (existingDocumentError) {
+    return <p>Failed loading document.</p>;
+  }
+  if (specificEmpReqHistoriesError) {
+    return <p>Failed loading requirements history.</p>;
+  }
+
+  if (!myRequirement) {
     return (
       <Card>
         <p className="m-0 text-field">That requirement does not exist.</p>
@@ -165,18 +127,18 @@ export default function RequirementDetail() {
     );
   }
 
-  const uploadable = requirement.status !== "completed";
+  const uploadable = myRequirement.status !== "completed";
 
   const uploadLabel = pendingFile
     ? `Selected: ${pendingFile.name}`
-    : requirement.status === "completed"
-      ? requirement.file
-        ? `${requirement.file} — verified`
+    : myRequirement.status === "completed"
+      ? myRequirement.file
+        ? `${myRequirement.file} — verified`
         : "Confirmed — no upload required"
-      : requirement.owner !== "employee"
+      : myRequirement.owner !== "employee"
         ? "Confirmed by your department representative"
-        : requirement.file
-          ? `Last upload: ${requirement.file}`
+        : myRequirement.file
+          ? `Last upload: ${myRequirement.file}`
           : "Choose a file to submit";
 
   return (
@@ -184,57 +146,57 @@ export default function RequirementDetail() {
       <Card padding="lg" className="gap-4">
         <div>
           <div className="text-micro uppercase text-accent-700">
-            {requirement.type}
+            {myRequirement.type}
           </div>
           <h2 className="mb-2 mt-1 text-[30px]">
-            {requirement.requirement.name}
+            {myRequirement.requirement.name}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant={
-                requirement.status === "in-progress" ||
-                requirement.status === "resubmission-required"
+                myRequirement.status === "in-progress" ||
+                myRequirement.status === "resubmission-required"
                   ? "pending"
-                  : requirement.status === "completed"
+                  : myRequirement.status === "completed"
                     ? "completed"
-                    : requirement.status === "pending" && "in-progress"
+                    : myRequirement.status === "pending" && "in-progress"
               }
             >
-              {formatStatus(requirement.status)}
+              {formatStatus(myRequirement.status)}
             </Badge>
             <span className="text-meta text-ink/55">
-              Deadline {formatDate(requirement.dueDate)}
+              Deadline {formatDate(myRequirement.dueDate)}
             </span>
-            {requirement.status === "pending" && (
+            {myRequirement.status === "pending" && (
               <>
                 {" "}
                 |
                 <span className="text-meta text-ink/55">
-                  Submitted at {formatDate(requirement.updatedAt)}
+                  Submitted at {formatDate(myRequirement.updatedAt)}
                 </span>
               </>
             )}
-            <OverdueBadge when={isOverdue(requirement)} />
+            <OverdueBadge when={isOverdue(myRequirement.dueDate)} />
           </div>
         </div>
 
         <p className="m-0 text-field leading-relaxed text-ink/70">
-          {REQUIREMENT_DESCRIPTIONS[requirement.requirement.name] ||
+          {REQUIREMENT_DESCRIPTIONS[myRequirement.requirement.name] ||
             "Submit this requirement to the HR Department for verification."}
         </p>
 
-        {requirement.resubmissionReason &&
-          requirement.status !== "completed" && (
+        {myRequirement.resubmissionReason &&
+          myRequirement.status !== "completed" && (
             <Notice title="Resubmission requested">
-              {requirement.resubmissionReason} -{" "}
-              {requirement.verifiedBy.username}
+              {myRequirement.resubmissionReason} -{" "}
+              {myRequirement.verifiedBy.username}
             </Notice>
           )}
 
         <div className="flex flex-col gap-2.5">
           <span className="text-micro uppercase text-ink/50">Submission</span>
-          {requirement.status === "in-progress" ||
-          requirement.status === "resubmission-required" ? (
+          {myRequirement.status === "in-progress" ||
+          myRequirement.status === "resubmission-required" ? (
             <div
               className={cx(
                 "flex flex-col items-center gap-1.5 border border-dashed p-6 text-center transition",
@@ -292,7 +254,7 @@ export default function RequirementDetail() {
                 }}
               />
 
-              {documentPreview && (
+              {existingDocument && (
                 <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
                   <Button
                     disabled={!uploadable}
@@ -301,13 +263,13 @@ export default function RequirementDetail() {
                     Choose file
                   </Button>
 
-                  {requirement.status !== "pending" && (
+                  {myRequirement.status !== "pending" && (
                     <Button
                       variant="primary"
                       disabled={!uploadable || !pendingFile || fileUploading}
-                      onClick={(e) => uploadFile({ e, id: requirement._id })}
+                      onClick={(e) => uploadFile({ e, id: myRequirement._id })}
                     >
-                      {requirement.file
+                      {myRequirement.file
                         ? "Resubmit document"
                         : fileUploading
                           ? "Submitting..."
@@ -317,18 +279,18 @@ export default function RequirementDetail() {
                 </div>
               )}
             </div>
-          ) : !documentPreview ? (
+          ) : !existingDocument ? (
             "Loading..."
           ) : (
             <div class="w-full max-w-lg aspect-[1/1.2941] mx-auto">
               <a
-                href={documentPreview.fileUrl}
+                href={existingDocument.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-full w-full cursor-pointer"
               >
                 <iframe
-                  src={`${documentPreview.fileUrl}#toolbar=0&navpanes=0`}
+                  src={`${existingDocument.fileUrl}#toolbar=0&navpanes=0`}
                   className="pointer-events-none h-full w-full border-none"
                   title="Document preview"
                 />
@@ -349,9 +311,9 @@ export default function RequirementDetail() {
         <h4 className="text-[20px]">Submission history</h4>
         <EventList
           items={
-            reqHistory
-              ? reqHistory
-              : [{ text: "No submissions yet", time: "—" }]
+            specificEmpReqHistories.length > 0
+              ? specificEmpReqHistories
+              : [{ note: "No submissions yet", time: "—" }]
           }
         />
       </Card>

@@ -237,9 +237,9 @@ function ReviewDialogBody({
               <h4 className="text-[20px]">Submission history</h4>
               <EventList
                 items={
-                  reqHistory
+                  reqHistory.length > 0
                     ? reqHistory
-                    : [{ text: "No submissions yet", time: "—" }]
+                    : [{ note: "No submissions yet", time: "—" }]
                 }
               />
             </Card>

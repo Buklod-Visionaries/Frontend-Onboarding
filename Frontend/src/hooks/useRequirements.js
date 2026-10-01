@@ -3,6 +3,7 @@ import {
   fetchAllRequirements,
   fetchAllDepEmpReq,
   fetchMyRequirements,
+  fetchMySpecificRequirement,
 } from "../api/requirements";
 
 export function useRequirements(token) {
@@ -26,5 +27,13 @@ export function useMyRequirements(token) {
     queryKey: ["myRequirements"],
     queryFn: () => fetchMyRequirements(token),
     enabled: !!token,
+  });
+}
+
+export function useMySpecificRequirement(token, paramsId) {
+  return useQuery({
+    queryKey: ["myRequirement", paramsId],
+    queryFn: () => fetchMySpecificRequirement(token, paramsId),
+    enabled: !!token && !!paramsId,
   });
 }

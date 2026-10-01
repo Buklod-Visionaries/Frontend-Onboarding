@@ -26,32 +26,10 @@ export default function MyRequirements() {
     isLoading: myRequirementsLoading,
     isError: myRequirementsError,
   } = useMyRequirements(app.session.accessToken);
-  // const [requirements, setRequirements] = useState([]);
-  // const [loading, setLoading] = useState(false);
 
   const rows = myRequirements.filter(
     (requirement) => filter === "All" || requirement.status === filter,
   );
-
-  // useEffect(() => {
-  //   async function getMyRequirements() {
-  //     try {
-  //       setLoading(true);
-  //       const res = await api.get("/employee-requirements/me", {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       });
-  //       setRequirements(res.data);
-  //     } catch (error) {
-  //       console.log(error.response.data.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   getMyRequirements();
-  // }, []);
 
   if (myRequirementsLoading) {
     return <p>Loading...</p>;
@@ -80,9 +58,9 @@ export default function MyRequirements() {
             <RequirementCard
               key={requirement._id}
               requirement={requirement}
-              onOpen={() =>
-                navigate(`/employee/requirements/${requirement._id}`)
-              }
+              onOpen={() => {
+                navigate(`/employee/requirements/${requirement._id}`);
+              }}
             />
           ))}
         </AutoGrid>
