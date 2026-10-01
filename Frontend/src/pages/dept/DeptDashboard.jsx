@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -12,9 +12,7 @@ import { useDepartmentScope } from "../../hooks/useDepartmentScope";
 import { formatDate } from "../../domain/date";
 //
 import { useApp } from "../../hooks/useApp";
-import api from "../../lib/axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCurrentUser } from "../../hooks/useUsers";
 import { useDepEmployees } from "../../hooks/useEmployees";
 import { useDepEmpReq } from "../../hooks/useRequirements";
 import { formatStatus } from "../../lib/formatter";

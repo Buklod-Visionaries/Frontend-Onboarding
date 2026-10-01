@@ -11,6 +11,8 @@ import { formatDate } from "../../domain/date";
 //
 import { useApp } from "../../hooks/useApp";
 import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useDepEmpReq } from "../../hooks/useRequirements";
 import { formatStatus } from "../../lib/formatter";
 
 const ACTIVITIES = ["Orientation", "Department Training", "Team Introduction"];
@@ -19,34 +21,46 @@ const ACTIVITIES = ["Orientation", "Department Training", "Team Introduction"];
 export default function DeptRequirements() {
   // const scope = useDepartmentScope();
   const app = useApp();
+  const queryClient = useQueryClient();
   const [confirm, setConfirm] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const [depRequirements, setDepRequirements] = useState([]);
+  // const [depRequirements, setDepRequirements] = useState([]);
 
-  useEffect(() => {
-    async function getRequirements() {
-      try {
-        setLoading(true);
-        const res = await api.get("/employee-requirements/department", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setDepRequirements(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+  //from depReq hook
+  const {
+    data: depRequirements = [],
+    isLoading: depRequirementsLoading,
+    isError: depRequirementsError,
+  } = useDepEmpReq(app.session.accessToken);
 
-    getRequirements();
-  }, []);
+  // useEffect(() => {
+  //   async function getRequirements() {
+  //     try {
+  //       setLoading(true);
+  //       const res = await api.get("/employee-requirements/department", {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       });
+  //       setDepRequirements(res.data);
+  //     } catch (error) {
+  //       console.log(error.response.data.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+
+  //   getRequirements();
+  // }, []);
+
+  if (depRequirementsError) {
+    return <p>Failed loading department requirements.</p>;
+  }
 
   return (
     <>
-      {loading ? (
+      {depRequirementsLoading ? (
         "Loading..."
       ) : (
         <>
@@ -123,7 +137,9 @@ export default function DeptRequirements() {
           <ConfirmActivityDialog
             target={confirm}
             setConfirmLoading={setConfirmLoading}
-            setDepRequirements={setDepRequirements}
+            setDepRequirements={() => {
+              queryClient.invalidateQueries({ queryKey: ["depRequirements"] });
+            }}
             onClose={() => setConfirm(null)}
           />
         </>
