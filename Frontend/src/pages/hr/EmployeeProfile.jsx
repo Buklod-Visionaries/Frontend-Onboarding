@@ -7,71 +7,87 @@ import ProgressBar from "../../components/ui/ProgressBar";
 import { TCell, THead, TRow, Table } from "../../components/ui/Table";
 import ReviewDialog from "../../components/feature/requirements/ReviewDialog";
 import { useApp } from "../../hooks/useApp";
-import {
-  countRequirements,
-  isAwaitingVerification,
-  isOverdue,
-} from "../../domain/requirements";
-import { employeeStatus } from "../../domain/employees";
+import { isOverdue } from "../../domain/requirements";
 import { formatDate } from "../../domain/date";
 //
 import { formatStatus } from "../../lib/formatter";
 import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSpecificEmployee } from "../../hooks/useEmployees";
+import { useSpecificEmployeeRequirements } from "../../hooks/useRequirements";
 import { capitalize } from "../../lib/capitalize";
 
 /** Employee record, scoped to onboarding requirements. */
 export default function EmployeeProfile() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const params = useParams();
   const navigate = useNavigate();
   const [review, setReview] = useState(null);
-  const [employee, setEmployee] = useState(null);
-  const [requirements, setRequirements] = useState([]);
-  const [empLoading, setEmpLoading] = useState(false);
-  const [reqLoading, setReqLoading] = useState(false);
+  const {
+    data: employee = [],
+    isLoading: employeeLoading,
+    isError: employeeError,
+  } = useSpecificEmployee(app.session.accessToken, params.id);
+  const {
+    data: empRequirements = [],
+    isLoading: empRequirementsLoading,
+    isError: empRequirementsError,
+  } = useSpecificEmployeeRequirements(app.session.accessToken, params.id);
+  // const [employee, setEmployee] = useState(null);
+  // const [requirements, setRequirements] = useState([]);
+  // const [empLoading, setEmpLoading] = useState(false);
+  // const [reqLoading, setReqLoading] = useState(false);
 
-  async function getSpecificEmployee() {
-    try {
-      setEmpLoading(true);
-      const res = await api.get(`/employees/${params.id}`, {
-        headers: {
-          Authorization: `Bearer ${app.session.accessToken}`,
-        },
-      });
-      setEmployee(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setEmpLoading(false);
-    }
-  }
+  // async function getSpecificEmployee() {
+  //   try {
+  //     setEmpLoading(true);
+  //     const res = await api.get(`/employees/${params.id}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${app.session.accessToken}`,
+  //       },
+  //     });
+  //     setEmployee(res.data);
+  //   } catch (error) {
+  //     console.log(error.response.data.message);
+  //   } finally {
+  //     setEmpLoading(false);
+  //   }
+  // }
 
-  async function getEmployeeRequirements() {
-    try {
-      setReqLoading(true);
-      const res = await api.get(
-        `/employee-requirements/employee/${params.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        },
-      );
-      setRequirements(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setReqLoading(false);
-    }
-  }
+  // async function getEmployeeRequirements() {
+  //   try {
+  //     setReqLoading(true);
+  //     const res = await api.get(
+  //       `/employee-requirements/employee/${params.id}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       },
+  //     );
+  //     setRequirements(res.data);
+  //   } catch (error) {
+  //     console.log(error.response.data.message);
+  //   } finally {
+  //     setReqLoading(false);
+  //   }
+  // }
 
-  useEffect(() => {
-    getSpecificEmployee();
-    getEmployeeRequirements();
-  }, []);
+  // useEffect(() => {
+  //   getSpecificEmployee();
+  //   getEmployeeRequirements();
+  // }, []);
 
-  if (empLoading || reqLoading) {
+  if (employeeLoading || empRequirementsLoading) {
     return <p>Loading...</p>;
+  }
+
+  if (employeeError) {
+    return <p>Failed loading employee.</p>;
+  }
+  if (empRequirementsError) {
+    return <p>Failed loading requirements.</p>;
   }
 
   if (!employee) {
@@ -108,7 +124,7 @@ export default function EmployeeProfile() {
               <span className="text-meta text-ink/55">
                 Started {formatDate(employee.start)} &middot;{" "}
                 {
-                  requirements.filter(
+                  empRequirements.filter(
                     (req) =>
                       req.employee._id === employee._id &&
                       req.status === "completed",
@@ -116,7 +132,7 @@ export default function EmployeeProfile() {
                 }
                 /
                 {
-                  requirements.filter(
+                  empRequirements.filter(
                     (req) => req.employee._id === employee._id,
                   ).length
                 }{" "}
@@ -136,11 +152,11 @@ export default function EmployeeProfile() {
 
         <ProgressBar
           value={
-            (requirements.filter(
+            (empRequirements.filter(
               (req) =>
                 req.employee._id === employee._id && req.status === "completed",
             ).length /
-              requirements.filter((req) => req.employee._id === employee._id)
+              empRequirements.filter((req) => req.employee._id === employee._id)
                 .length) *
             100
           }
@@ -159,7 +175,7 @@ export default function EmployeeProfile() {
             ]}
           />
           <tbody>
-            {requirements.map((req) => {
+            {empRequirements.map((req) => {
               return (
                 <TRow key={req._id}>
                   <TCell>
@@ -209,7 +225,11 @@ export default function EmployeeProfile() {
 
       <ReviewDialog
         target={review}
-        getReqFromEmpProfile={getEmployeeRequirements}
+        getReqFromEmpProfile={() =>
+          queryClient.invalidateQueries({
+            queryKey: ["empRequirements", params.id],
+          })
+        }
         onClose={() => setReview(null)}
       />
     </>

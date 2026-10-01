@@ -11,6 +11,9 @@ import { capitalize } from "../../../lib/capitalize";
 import Card from "../../ui/Card";
 import { EventList } from "../../ui/Timeline";
 import api from "../../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useExistingDocument } from "../../../hooks/useDocuments";
+import { useSpecificEmpReqHistories } from "../../../hooks/useRequirementHistories";
 import { formatRole } from "../../../lib/formatter";
 
 function ReviewDialogBody({
@@ -23,62 +26,73 @@ function ReviewDialogBody({
   getReqFromVerify,
 }) {
   const app = useApp();
+  const queryClient = useQueryClient();
   const [resubmitMode, setResubmitMode] = useState(false);
   const [reason, setReason] = useState("");
-  const [documentPreview, setDocumentPreview] = useState(null);
-  const [reqHistory, setReqHistory] = useState([]);
-  const [docLoading, setDocLoading] = useState(false);
+  // const [documentPreview, setDocumentPreview] = useState(null);
+  // const [reqHistory, setReqHistory] = useState([]);
+  // const [docLoading, setDocLoading] = useState(false);
   const [approveLoading, setApproveLoading] = useState(false);
   const [resubmitLoading, setResubmitLoading] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  // const [historyLoading, setHistoryLoading] = useState(false);
+  const {
+    data: existingDocument = [],
+    isLoading: existingDocumentLoading,
+    isError: existingDocumentError,
+  } = useExistingDocument(app.session.accessToken, empReq._id);
+  const {
+    data: specificEmpReqHistories = [],
+    isLoading: specificEmpReqHistoriesLoading,
+    isError: specificEmpReqHistoriesError,
+  } = useSpecificEmpReqHistories(app.session.accessToken, empReq._id);
 
-  async function getSpecificDocument() {
-    try {
-      setDocLoading(true);
-      const res = await api.get(
-        `/documents/employee-requirement/${empReq._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        },
-      );
-      setDocumentPreview(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setDocLoading(false);
-    }
-  }
+  // async function getSpecificDocument() {
+  //   try {
+  //     setDocLoading(true);
+  //     const res = await api.get(
+  //       `/documents/employee-requirement/${empReq._id}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       },
+  //     );
+  //     setDocumentPreview(res.data);
+  //   } catch (error) {
+  //     console.log(error.response.data.message);
+  //   } finally {
+  //     setDocLoading(false);
+  //   }
+  // }
 
-  async function getRequirementHistory() {
-    try {
-      setHistoryLoading(true);
-      const res = await api.get(
-        `/employee-requirement-history/employee-requirement/${empReq._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        },
-      );
-      setReqHistory(res.data);
-    } catch (error) {
-      console.log(error.response.data.message);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }
+  // async function getRequirementHistory() {
+  //   try {
+  //     setHistoryLoading(true);
+  //     const res = await api.get(
+  //       `/employee-requirement-history/employee-requirement/${empReq._id}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       },
+  //     );
+  //     setReqHistory(res.data);
+  //   } catch (error) {
+  //     console.log(error.response.data.message);
+  //   } finally {
+  //     setHistoryLoading(false);
+  //   }
+  // }
 
-  useEffect(() => {
-    getSpecificDocument();
-  }, []);
+  // useEffect(() => {
+  //   getSpecificDocument();
+  // }, []);
 
-  useEffect(() => {
-    if (empReq) {
-      getRequirementHistory();
-    }
-  }, [empReq]);
+  // useEffect(() => {
+  //   if (empReq) {
+  //     getRequirementHistory();
+  //   }
+  // }, [empReq]);
 
   const approve = async () => {
     await app.approveRequirement(empReq, setApproveLoading);
@@ -115,8 +129,15 @@ function ReviewDialogBody({
     await getReqFromDashboard?.();
     await getReqFromVerify?.();
   };
-  if (historyLoading) {
+  if (specificEmpReqHistoriesLoading || existingDocumentLoading) {
     return <p>Loading...</p>;
+  }
+
+  if (existingDocumentError) {
+    return <p>Failed loading document.</p>;
+  }
+  if (specificEmpReqHistoriesError) {
+    return <p>Failed loading history.</p>;
   }
 
   // console.log("documentFIle", documentPreview);
@@ -133,7 +154,7 @@ function ReviewDialogBody({
           {empReq.status === "pending" && (
             <>
               <Button onClick={onClose}>Cancel</Button>
-              {documentPreview && (
+              {existingDocument && (
                 <>
                   <Button onClick={resubmit} disabled={resubmitLoading}>
                     {resubmitMode
@@ -168,17 +189,17 @@ function ReviewDialogBody({
       <div className="grid gap-4 sm:grid-cols-[1.1fr_1fr]">
         {requirement.type === "document" && (
           <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2">
-            {docLoading || !documentPreview ? (
+            {existingDocumentLoading || !existingDocument ? (
               <LoaderCircle className="animate-spin" />
             ) : (
               <a
-                href={documentPreview.fileUrl}
+                href={existingDocument.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-full w-full cursor-pointer"
               >
                 <iframe
-                  src={`${documentPreview.fileUrl}#toolbar=0&navpanes=0`}
+                  src={`${existingDocument.fileUrl}#toolbar=0&navpanes=0`}
                   className="pointer-events-none h-full w-full border-none"
                   title="Document preview"
                 />
@@ -237,8 +258,8 @@ function ReviewDialogBody({
               <h4 className="text-[20px]">Submission history</h4>
               <EventList
                 items={
-                  reqHistory.length > 0
-                    ? reqHistory
+                  specificEmpReqHistories.length > 0
+                    ? specificEmpReqHistories
                     : [{ note: "No submissions yet", time: "—" }]
                 }
               />

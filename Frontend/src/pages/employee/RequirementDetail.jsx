@@ -24,6 +24,7 @@ import { formatStatus } from "../../lib/formatter";
 /** Requirement details + document upload / resubmission. */
 export default function RequirementDetail() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const params = useParams();
   const navigate = useNavigate();
   const fileInput = useRef(null);
@@ -84,8 +85,17 @@ export default function RequirementDetail() {
       // console.log(`${id} ${pendingFile}`);
       setPendingFile("");
       //force state refresh
-      await getMySpecificRequirement();
-      await getExistingDocument();
+      // await getMySpecificRequirement();
+      // await getExistingDocument();
+      queryClient.invalidateQueries({
+        queryKey: ["myRequirement", params.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["existingDocument", params.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["specificEmpReqHistories", myRequirement._id],
+      });
     } catch (error) {
       app.showToast(`Failed uploading File: ${error.response.data.message}`);
       console.log(error);

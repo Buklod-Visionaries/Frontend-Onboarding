@@ -3,6 +3,7 @@ import {
   fetchAllEmployees,
   fetchAllDepEmployees,
   fetchCurrentEmployee,
+  fetchSpecificEmployee,
 } from "../api/employees";
 
 export function useEmployees(token) {
@@ -26,5 +27,13 @@ export function useCurrentEmployee(token) {
     queryKey: ["currentEmployee"],
     queryFn: () => fetchCurrentEmployee(token),
     enabled: !!token,
+  });
+}
+
+export function useSpecificEmployee(token, paramsId) {
+  return useQuery({
+    queryKey: ["employee", paramsId],
+    queryFn: () => fetchSpecificEmployee(token, paramsId),
+    enabled: !!token && !!paramsId,
   });
 }

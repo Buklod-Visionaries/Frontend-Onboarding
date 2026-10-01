@@ -27,3 +27,12 @@ export async function fetchCurrentEmployee(token) {
   });
   return res.data;
 }
+
+export async function fetchSpecificEmployee(token, paramsId) {
+  const res = await api.get(`/employees/${paramsId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

@@ -35,3 +35,12 @@ export async function fetchMySpecificRequirement(token, paramsId) {
   });
   return res.data;
 }
+
+export async function fetchSpecificEmployeeRequirements(token, paramsId) {
+  const res = await api.get(`/employee-requirements/employee/${paramsId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
