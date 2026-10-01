@@ -8,3 +8,12 @@ export async function fetchAllUsers(token) {
   });
   return res.data;
 }
+
+export async function fetchCurrentUser(token) {
+  const res = await api.get("/users/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

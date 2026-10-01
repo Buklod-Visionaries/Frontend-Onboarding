@@ -10,7 +10,7 @@ import { formatDate } from "../../domain/date";
 import { useApp } from "../../hooks/useApp";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRequirements } from "../../hooks/useRequirements";
-import { usePendingDocuments } from "../../hooks/usePendingDocuments";
+import { usePendingDocuments } from "../../hooks/useDocuments";
 import { capitalize } from "../../lib/capitalize";
 
 /** Requirement verification queue — every submission awaiting HR review. */
