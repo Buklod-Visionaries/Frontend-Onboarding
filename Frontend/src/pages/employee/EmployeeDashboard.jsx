@@ -9,65 +9,79 @@ import { StatStrip } from "../../components/ui/StatCard";
 import { EmptyState } from "../../components/ui/Notice";
 import { cx } from "../../lib/cx";
 import { useApp } from "../../hooks/useApp";
-import { useCurrentEmployee } from "../../hooks/useCurrentEmployee";
 import { countRequirements } from "../../domain/requirements";
 import { formatDate, isOverdue } from "../../domain/date";
 //
 import { useState, useEffect } from "react";
 import { SUB_LABELS } from "../../domain/constants.js";
 import api from "../../lib/axios.js";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentEmployee } from "../../hooks/useEmployees.js";
+import { useMyRequirements } from "../../hooks/useRequirements.js";
 import { capitalize } from "../../lib/capitalize.js";
 import { formatStatus } from "../../lib/formatter.js";
 
 export default function EmployeeDashboard() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const {
+    data: currentUser = [],
+    isLoading: currentUserLoading,
+    isError: currentUserError,
+  } = useCurrentEmployee(app.session.accessToken);
+  const {
+    data: myRequirements = [],
+    isLoading: myRequirementsLoading,
+    isError: myRequirementsError,
+  } = useMyRequirements(app.session.accessToken);
+
   // const me = useCurrentEmployee();
-  const [user, setUser] = useState(null);
-  const [requirements, setRequirements] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [reqLoading, setReqLoading] = useState(false);
+  // const [user, setUser] = useState(null);
+  // const [requirements, setRequirements] = useState([]);
+  // const [loading, setLoading] = useState(false);
+  // const [reqLoading, setReqLoading] = useState(false);
   // const counts = countRequirements(req);
 
-  useEffect(() => {
-    async function getCurrentUser() {
-      try {
-        setLoading(true);
-        const res = await api.get("/employees/me", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setUser(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+  // useEffect(() => {
+  //   async function getCurrentUser() {
+  //     try {
+  //       setLoading(true);
+  //       const res = await api.get("/employees/me", {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       });
+  //       setUser(res.data);
+  //     } catch (error) {
+  //       console.log(error.response.data.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
 
-    async function getUserRequirements() {
-      try {
-        setReqLoading(true);
-        const res = await api.get("/employee-requirements/me", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setRequirements(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setReqLoading(false);
-      }
-    }
+  //   async function getUserRequirements() {
+  //     try {
+  //       setReqLoading(true);
+  //       const res = await api.get("/employee-requirements/me", {
+  //         headers: {
+  //           Authorization: `Bearer ${app.session.accessToken}`,
+  //         },
+  //       });
+  //       setRequirements(res.data);
+  //     } catch (error) {
+  //       console.log(error.response.data.message);
+  //     } finally {
+  //       setReqLoading(false);
+  //     }
+  //   }
 
-    getCurrentUser();
-    getUserRequirements();
-  }, []);
+  //   getCurrentUser();
+  //   getUserRequirements();
+  // }, []);
 
-  console.log("requiremens:", requirements);
-  const actionable = requirements
+  // console.log("requiremens:", requirements);
+  const actionable = myRequirements
     .filter((requirement) => requirement.status !== "completed")
     .slice(0, 5);
 
@@ -76,8 +90,15 @@ export default function EmployeeDashboard() {
     .slice(0, 3);
 
   //avoid rendering when currentUser is not yet fetched
-  if (loading || !user) {
+  if (currentUserLoading || myRequirementsLoading) {
     return <p>Loading...</p>;
+  }
+
+  if (currentUserError) {
+    return <p>Failed loading current user.</p>;
+  }
+  if (myRequirementsError) {
+    return <p>Failed loading requirements.</p>;
   }
 
   return (
@@ -89,19 +110,21 @@ export default function EmployeeDashboard() {
               <div className="text-micro uppercase text-accent-700">
                 Overall onboarding progress
               </div>
-              <h2 className="mt-1.5 text-[34px]">{user.user.username}</h2>
+              <h2 className="mt-1.5 text-[34px]">
+                {currentUser.user.username}
+              </h2>
               <div className="text-cell text-ink/55">
-                {capitalize(user.position)} &middot;{" "}
-                {capitalize(user.department)} &middot; Started{" "}
-                {formatDate(user.user.createdAt)}
+                {capitalize(currentUser.position)} &middot;{" "}
+                {capitalize(currentUser.department)} &middot; Started{" "}
+                {formatDate(currentUser.user.createdAt)}
               </div>
             </div>
             <div className="font-heading text-[56px] leading-none">
-              {requirements.length
+              {myRequirements.length
                 ? Math.round(
-                    (requirements.filter((req) => req.status === "completed")
+                    (myRequirements.filter((req) => req.status === "completed")
                       .length /
-                      requirements.length) *
+                      myRequirements.length) *
                       100,
                   )
                 : 0}
@@ -110,18 +133,18 @@ export default function EmployeeDashboard() {
           </div>
           <ProgressBar
             value={
-              requirements.length
+              myRequirements.length
                 ? Math.round(
-                    (requirements.filter((req) => req.status === "completed")
+                    (myRequirements.filter((req) => req.status === "completed")
                       .length /
-                      requirements.length) *
+                      myRequirements.length) *
                       100,
                   )
                 : 0
             }
             height="lg"
           />
-          {reqLoading ? (
+          {myRequirementsLoading ? (
             "Loading..."
           ) : (
             <StatStrip
@@ -129,25 +152,25 @@ export default function EmployeeDashboard() {
               items={[
                 {
                   label: "Completed",
-                  value: requirements.filter(
+                  value: myRequirements.filter(
                     (requirements) => requirements.status === "completed",
                   ).length,
                 },
                 {
                   label: "In progress",
-                  value: requirements.filter(
+                  value: myRequirements.filter(
                     (requirements) => requirements.status === "in-progress",
                   ).length,
                 },
                 {
                   label: "Pending",
-                  value: requirements.filter(
+                  value: myRequirements.filter(
                     (requirements) => requirements.status === "pending",
                   ).length,
                 },
                 {
                   label: "Overdue",
-                  value: requirements.filter(
+                  value: myRequirements.filter(
                     (requirements) =>
                       (requirements.status === "in-progress" ||
                         requirements.status === "resubmission-required") &&
@@ -160,7 +183,7 @@ export default function EmployeeDashboard() {
         </Card>
 
         <AutoGrid min={320}>
-          {reqLoading ? (
+          {myRequirementsLoading ? (
             "Loading..."
           ) : (
             <Card className="gap-3">

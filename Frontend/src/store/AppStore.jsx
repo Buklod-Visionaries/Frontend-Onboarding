@@ -100,7 +100,6 @@ export default function AppProvider({ children }) {
 
     //set new session
     setSession(newSession);
-    console.log("login:", newSession);
 
     return newSession;
   }, []);
@@ -134,7 +133,6 @@ export default function AppProvider({ children }) {
           Authorization: `Bearer ${session.accessToken}`,
         },
       });
-      console.log(res.data);
       showToast(`${pendingFile.name} submitted - awaiting HR Verification`);
     },
     // (requirement) =>
