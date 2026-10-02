@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Upload } from "lucide-react";
 import Card from "../../components/ui/Card";
@@ -9,12 +9,10 @@ import Notice from "../../components/ui/Notice";
 import { EventList } from "../../components/ui/Timeline";
 import { cx } from "../../lib/cx";
 import { useApp } from "../../hooks/useApp";
-import { useCurrentEmployee } from "../../hooks/useCurrentEmployee";
 import { isOverdue } from "../../domain/requirements";
 import { formatDate } from "../../domain/date";
 import { REQUIREMENT_DESCRIPTIONS } from "../../data/positions";
 //
-import api from "../../lib/axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMySpecificRequirement } from "../../hooks/useRequirements";
 import { useExistingDocument } from "../../hooks/useDocuments";
@@ -82,11 +80,7 @@ export default function RequirementDetail() {
 
       //sends the file and target requirement
       await app.submitDocument(pendingFile, id);
-      // console.log(`${id} ${pendingFile}`);
       setPendingFile("");
-      //force state refresh
-      // await getMySpecificRequirement();
-      // await getExistingDocument();
       queryClient.invalidateQueries({
         queryKey: ["myRequirement", params.id],
       });

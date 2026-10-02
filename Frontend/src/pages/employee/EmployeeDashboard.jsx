@@ -25,62 +25,20 @@ export default function EmployeeDashboard() {
   const app = useApp();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  //from currentUser hook
   const {
     data: currentUser = [],
     isLoading: currentUserLoading,
     isError: currentUserError,
   } = useCurrentEmployee(app.session.accessToken);
+  //from myReq hook
   const {
     data: myRequirements = [],
     isLoading: myRequirementsLoading,
     isError: myRequirementsError,
   } = useMyRequirements(app.session.accessToken);
 
-  // const me = useCurrentEmployee();
-  // const [user, setUser] = useState(null);
-  // const [requirements, setRequirements] = useState([]);
-  // const [loading, setLoading] = useState(false);
-  // const [reqLoading, setReqLoading] = useState(false);
-  // const counts = countRequirements(req);
 
-  // useEffect(() => {
-  //   async function getCurrentUser() {
-  //     try {
-  //       setLoading(true);
-  //       const res = await api.get("/employees/me", {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       });
-  //       setUser(res.data);
-  //     } catch (error) {
-  //       console.log(error.response.data.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   async function getUserRequirements() {
-  //     try {
-  //       setReqLoading(true);
-  //       const res = await api.get("/employee-requirements/me", {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       });
-  //       setRequirements(res.data);
-  //     } catch (error) {
-  //       console.log(error.response.data.message);
-  //     } finally {
-  //       setReqLoading(false);
-  //     }
-  //   }
-
-  //   getCurrentUser();
-  //   getUserRequirements();
-  // }, []);
-
-  // console.log("requiremens:", requirements);
   const actionable = myRequirements
     .filter((requirement) => requirement.status !== "completed")
     .slice(0, 5);

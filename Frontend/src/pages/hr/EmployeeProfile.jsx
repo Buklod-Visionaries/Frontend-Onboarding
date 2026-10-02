@@ -11,7 +11,6 @@ import { isOverdue } from "../../domain/requirements";
 import { formatDate } from "../../domain/date";
 //
 import { formatStatus } from "../../lib/formatter";
-import api from "../../lib/axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSpecificEmployee } from "../../hooks/useEmployees";
 import { useSpecificEmployeeRequirements } from "../../hooks/useRequirements";
@@ -24,61 +23,20 @@ export default function EmployeeProfile() {
   const params = useParams();
   const navigate = useNavigate();
   const [review, setReview] = useState(null);
+  //from employee hook
   const {
     data: employee = [],
     isLoading: employeeLoading,
     isError: employeeError,
   } = useSpecificEmployee(app.session.accessToken, params.id);
+  //from empReq hook
   const {
     data: empRequirements = [],
     isLoading: empRequirementsLoading,
     isError: empRequirementsError,
   } = useSpecificEmployeeRequirements(app.session.accessToken, params.id);
-  // const [employee, setEmployee] = useState(null);
-  // const [requirements, setRequirements] = useState([]);
-  // const [empLoading, setEmpLoading] = useState(false);
-  // const [reqLoading, setReqLoading] = useState(false);
 
-  // async function getSpecificEmployee() {
-  //   try {
-  //     setEmpLoading(true);
-  //     const res = await api.get(`/employees/${params.id}`, {
-  //       headers: {
-  //         Authorization: `Bearer ${app.session.accessToken}`,
-  //       },
-  //     });
-  //     setEmployee(res.data);
-  //   } catch (error) {
-  //     console.log(error.response.data.message);
-  //   } finally {
-  //     setEmpLoading(false);
-  //   }
-  // }
-
-  // async function getEmployeeRequirements() {
-  //   try {
-  //     setReqLoading(true);
-  //     const res = await api.get(
-  //       `/employee-requirements/employee/${params.id}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       },
-  //     );
-  //     setRequirements(res.data);
-  //   } catch (error) {
-  //     console.log(error.response.data.message);
-  //   } finally {
-  //     setReqLoading(false);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   getSpecificEmployee();
-  //   getEmployeeRequirements();
-  // }, []);
-
+  ////
   if (employeeLoading || empRequirementsLoading) {
     return <p>Loading...</p>;
   }
@@ -103,8 +61,6 @@ export default function EmployeeProfile() {
       </Card>
     );
   }
-
-  // const counts = countRequirements(employee);
 
   return (
     <>
