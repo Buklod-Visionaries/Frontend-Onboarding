@@ -143,13 +143,7 @@ export default function RequirementDetail() {
     ? `Selected: ${pendingFile.name}`
     : myRequirement.status === "completed"
       ? myRequirement.file
-        ? `${myRequirement.file} — verified`
-        : "Confirmed — no upload required"
-      : myRequirement.owner !== "employee"
-        ? "Confirmed by your department representative"
-        : myRequirement.file
-          ? `Last upload: ${myRequirement.file}`
-          : "Choose a file to submit";
+      : "Choose a file to submit";
 
   return (
     <AutoGrid min={320} className="items-start">
