@@ -38,6 +38,9 @@ export default function HrDashboard() {
     isError: requirementsError,
   } = useRequirements(app.session.accessToken);
 
+  //change when the notif api arrives
+  let notifications = [];
+
   ////
   if (employeesLoading || requirementsLoading) {
     return <p>Loading...</p>;
@@ -196,7 +199,11 @@ export default function HrDashboard() {
 
         <Card className="gap-3.5">
           <h4 className="text-[20px]">Recent onboarding activity</h4>
-          <EventList items={app.activity.slice(0, 6)} round />
+          {notifications.length > 0 ? (
+            <EventList items={app.activity.slice(0, 6)} round />
+          ) : (
+            "Notifications not implemented yet."
+          )}
         </Card>
       </AutoGrid>
 
@@ -217,7 +224,7 @@ export default function HrDashboard() {
             Open verification queue
           </Button>
         </div>
-        {requirements.length ? (
+        {requirements.length > 0 ? (
           <Table>
             <THead
               columns={[

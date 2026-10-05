@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchAllUsers, fetchCurrentUser } from "../api/users";
+import {
+  fetchAllUsers,
+  fetchCurrentUser,
+  getCurrentEmployeeUser,
+} from "../api/users";
 
 export function useUsers(token) {
   return useQuery({
@@ -13,6 +17,14 @@ export function useCurrentUser(token) {
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: () => fetchCurrentUser(token),
+    enabled: !!token,
+  });
+}
+
+export function useCurrentEmployeeUser(token) {
+  return useQuery({
+    queryKey: ["currentEmployeeUser"],
+    queryFn: () => getCurrentEmployeeUser(token),
     enabled: !!token,
   });
 }

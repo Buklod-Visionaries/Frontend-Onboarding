@@ -12,6 +12,7 @@ export function useRequirements(token) {
     queryKey: ["requirements"],
     queryFn: () => fetchAllRequirements(token),
     enabled: !!token,
+    refetchInterval: 5000,
   });
 }
 
@@ -20,6 +21,7 @@ export function useDepEmpReq(token) {
     queryKey: ["depRequirements"],
     queryFn: () => fetchAllDepEmpReq(token),
     enabled: !!token,
+    refetchInterval: 5000,
   });
 }
 
