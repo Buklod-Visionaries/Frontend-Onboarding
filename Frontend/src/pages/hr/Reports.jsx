@@ -1,4 +1,6 @@
 import { useState } from "react";
+import * as XLSX from "xlsx";
+
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -7,17 +9,8 @@ import { Field, Select } from "../../components/ui/Field";
 import { TCell, THead, TRow, Table } from "../../components/ui/Table";
 import { DEPARTMENTS } from "../../domain/constants";
 import { useApp } from "../../hooks/useApp";
-//
 import { formatDepartment } from "../../lib/formatter";
 import { useReports } from "../../hooks/useReports";
-
-// const TYPES = [
-//   "Employee onboarding status",
-//   "Completed requirements",
-//   "Pending requirements",
-//   "Overdue requirements",
-//   "In-progress requirements",
-// ];
 
 export default function Reports() {
   const app = useApp();
@@ -53,23 +46,44 @@ export default function Reports() {
     setGenerated(true);
   };
 
+  const handleExportExcel = () => {
+    if (!reports.length) return;
+
+    const excelData = reports.map((employee) => ({
+      Employee: employee.employee,
+      Position: employee.position,
+      Department: formatDepartment(employee.department),
+      Completed: employee.completed,
+      "In Progress": employee.inProgress,
+      Pending: employee.pending,
+      Total: employee.total,
+      Status:
+        employee.onboardingStatus === "in_progress"
+          ? "In Progress"
+          : employee.onboardingStatus === "resubmission-required"
+            ? "Resubmission Required"
+            : employee.onboardingStatus,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+
+    const departmentName =
+      department === "All" ? "All-Departments" : formatDepartment(department);
+
+    const fileName = `Onboarding-Report-${departmentName}-${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+
+    XLSX.writeFile(workbook, fileName);
+  };
+
   return (
     <Card className="gap-4">
       <div className="flex flex-wrap items-end gap-3">
-        {/* <Field label="Report type" className="min-w-[220px]">
-          <Select
-            value={type}
-            options={TYPES.map((item) => ({
-              value: item,
-              label: item,
-            }))}
-            onChange={(e) => {
-              setType(e.target.value);
-              setGenerated(false);
-            }}
-          />
-        </Field> */}
-
         <Field label="Department" className="min-w-[180px]">
           <Select
             value={department}
@@ -87,6 +101,12 @@ export default function Reports() {
         <Button variant="primary" onClick={handleGenerate} disabled={isLoading}>
           {isLoading ? "Generating..." : "Generate report"}
         </Button>
+
+        {generated && !isLoading && !isError && reports.length > 0 && (
+          <Button variant="secondary" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+        )}
       </div>
 
       {generated && (
@@ -169,7 +189,7 @@ export default function Reports() {
 
                         <TCell>{employee.position}</TCell>
 
-                        <TCell>{employee.department}</TCell>
+                        <TCell>{formatDepartment(employee.department)}</TCell>
 
                         <TCell>{employee.completed}</TCell>
 
@@ -188,13 +208,17 @@ export default function Reports() {
                                 ? "pending"
                                 : employee.onboardingStatus === "completed"
                                   ? "completed"
-                                  : employee.onboardingStatus === "pending" &&
-                                    "in-progress"
+                                  : employee.onboardingStatus === "pending"
+                                    ? "in-progress"
+                                    : undefined
                             }
                           >
                             {employee.onboardingStatus === "in_progress"
                               ? "In Progress"
-                              : employee.onboardingStatus}
+                              : employee.onboardingStatus ===
+                                  "resubmission-required"
+                                ? "Resubmission Required"
+                                : employee.onboardingStatus}
                           </Badge>
                         </TCell>
                       </TRow>
