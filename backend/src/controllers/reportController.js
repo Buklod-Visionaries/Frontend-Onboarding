@@ -39,6 +39,7 @@ export async function generateReports(req, res) {
     });
 
     const reports = await Promise.all(
+      //wait for all async to finish through the map before giving result
       employees.map(async (employee) => {
         const empReqs = await EmployeeRequirement.find({
           employee: employee._id,
@@ -56,11 +57,14 @@ export async function generateReports(req, res) {
             },
           },
         });
+        const total = empReqs.length;
         const completed = empReqs.filter(
           (req) => req.status === "completed",
         ).length;
         const inProgress = empReqs.filter(
-          (req) => req.status === "in-progress",
+          (req) =>
+            req.status === "in-progress" ||
+            req.status === "resubmission-required",
         ).length;
         const pending = empReqs.filter(
           (req) => req.status === "pending",
@@ -72,6 +76,7 @@ export async function generateReports(req, res) {
           completed,
           inProgress,
           pending,
+          total,
           onboardingStatus: employee.onboardingStatus,
         };
       }),
