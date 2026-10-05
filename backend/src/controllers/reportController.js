@@ -78,5 +78,5 @@ export async function generateReports(req, res) {
       }),
   );
 
-  res.send({ reports: reports, date: new Date() });
+  res.send(reports);
 }
