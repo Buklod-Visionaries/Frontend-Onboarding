@@ -2,18 +2,11 @@ import Employee from "../models/employeeModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
 
 export async function generateReports(req, res) {
-  const { type, department } = req.query;
+  const { department } = req.query;
 
-  if (!type && !department) {
+  if (!department) {
     return res.status(404).send({ message: "No reports" });
   }
-
-  //accepted types
-  //employee-onboarding-status
-  //completed-requirements
-  //pending-requirements
-  //overdue-requirements
-  //in-progress-requirements
 
   //accepted department
   //all
@@ -21,28 +14,29 @@ export async function generateReports(req, res) {
   //imaging
   //cardiovascular
   //administration
+  const employees = await Employee.find(
+    {},
+    { startDate: 0, phone: 0 }, //exclude fields
+  ).populate({
+    path: "user",
+    select: {
+      password: 0,
+      role: 0,
+      lastSignIn: 0,
+      createdAt: 0,
+      updatedAt: 0,
+      isFirstLogin: 0,
+    },
+  });
 
-  if (type === "employee-onboarding-status" && department === "all") {
-    const employees = await Employee.find(
-      {},
-      { startDate: 0, phone: 0 }, //exclude fields
-    ).populate({
-      path: "user",
-      select: {
-        password: 0,
-        role: 0,
-        lastSignIn: 0,
-        createdAt: 0,
-        updatedAt: 0,
-        isFirstLogin: 0,
-      },
-    });
-
-    const reports = await Promise.all(
-      //wait for all async to finish through the map before giving result
-      employees.map(async (employee) => {
+  const reports = await Promise.all(
+    employees
+      .filter((employee) =>
+        department === "all" ? employee : employee.department === department,
+      )
+      .map(async (employee) => {
         const empReqs = await EmployeeRequirement.find({
-          employee: employee._id,
+          employee: employee._id, //only gets the requirements for each employee
         }).populate({
           path: "employee",
           populate: {
@@ -57,6 +51,7 @@ export async function generateReports(req, res) {
             },
           },
         });
+        //requirement status filters
         const total = empReqs.length;
         const completed = empReqs.filter(
           (req) => req.status === "completed",
@@ -69,6 +64,7 @@ export async function generateReports(req, res) {
         const pending = empReqs.filter(
           (req) => req.status === "pending",
         ).length;
+        //payload data for reports
         return {
           employee: employee.user.username,
           position: employee.position,
@@ -80,10 +76,7 @@ export async function generateReports(req, res) {
           onboardingStatus: employee.onboardingStatus,
         };
       }),
-    );
+  );
 
-    return res.status(200).send(reports);
-  }
-
-  res.send("Ok");
+  res.send({ reports: reports, date: new Date() });
 }
