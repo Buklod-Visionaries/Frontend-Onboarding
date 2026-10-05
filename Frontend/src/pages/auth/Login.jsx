@@ -112,8 +112,8 @@ export default function Login() {
         </Button>
 
         <p className="m-0 text-center text-[11px] leading-relaxed text-ink/50">
-          Credentials are pre-filled for the prototype. Accounts are created by
-          authorized HR staff &mdash; the system has no public sign-up.
+          Accounts are created by authorized HR staff &mdash; the system has no
+          public sign-up.
         </p>
 
         <div className="flex flex-wrap justify-center gap-1.5">
