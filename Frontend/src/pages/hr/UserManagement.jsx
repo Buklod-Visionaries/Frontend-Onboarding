@@ -141,7 +141,11 @@ export default function UserManagement() {
                         </Badge>
                       </TCell>
                       <TCell>
-                        {user.isFirstLogin ? (
+                        {user.passwordResetRequested && !user.tempPass ? (
+                          <Badge variant={"in-progress"}>
+                            Password Reset Requested
+                          </Badge>
+                        ) : user.isFirstLogin || user.tempPass ? (
                           <CopyField
                             value={user.password}
                             label={`temporary password for ${user.name}`}

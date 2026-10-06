@@ -6,6 +6,7 @@ import {
   getOwnUser,
   getSpecificUser,
   updateUser,
+  resetUserPassword,
   deleteUser,
 } from "../controllers/userController.js";
 //
@@ -28,7 +29,13 @@ router.get(
 //
 router.put("/:id", verifyToken, authorizeRoles("hr"), asyncHandler(updateUser));
 
-//change user pass
+//reset password for hr
+router.patch(
+  "/:id/reset-password",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(resetUserPassword),
+);
 
 //delete user
 router.delete(

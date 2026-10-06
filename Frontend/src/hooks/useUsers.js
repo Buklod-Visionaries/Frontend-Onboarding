@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   fetchAllUsers,
   fetchCurrentUser,
   getCurrentEmployeeUser,
+  resetTempPass,
 } from "../api/users";
 
 export function useUsers(token) {
@@ -26,5 +27,11 @@ export function useCurrentEmployeeUser(token) {
     queryKey: ["currentEmployeeUser"],
     queryFn: () => getCurrentEmployeeUser(token),
     enabled: !!token,
+  });
+}
+
+export function useResetTempPass(token) {
+  return useMutation({
+    mutationFn: ({userId, tempPass}) => resetTempPass(token, userId, tempPass),
   });
 }

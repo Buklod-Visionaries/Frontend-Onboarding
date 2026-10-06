@@ -22,6 +22,29 @@ export async function getOwnUser(req, res) {
   res.status(200).send(me);
 }
 
+export async function resetUserPassword(req, res) {
+  //from the frontend
+  const { tempPass } = req.body;
+  //user id
+  const { id } = req.params;
+
+  if (!tempPass) {
+    return res.send({ message: "Temporary password is empty" });
+  }
+  //update temp pass
+  const user = await User.findByIdAndUpdate(id, {
+    tempPass: tempPass,
+    password: tempPass,
+  });
+  if (!user) {
+    return res.status(404).send({ message: `No user found` });
+  }
+
+  res
+    .status(200)
+    .send({ message: `Successfully reset password of ${user.email}` });
+}
+
 export async function deleteUser(req, res) {
   //get the /:id from url params
   const { id } = req.params;
