@@ -39,3 +39,4 @@ export async function resetTempPass(token, userId, tempPass) {
   );
   return res.data;
 }
+

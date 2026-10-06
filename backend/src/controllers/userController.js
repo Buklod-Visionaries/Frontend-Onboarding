@@ -88,20 +88,14 @@ export async function getSpecificUser(req, res) {
   res.status(200).send(user);
 }
 
-export async function updateUser(req, res) {
-  const { id: paramsId } = req.params;
-  const { username, email, password, role, department, isFirstLogin } =
-    req.body;
+export async function updateOwnUserPassword(req, res) {
+  const { email, password } = req.body;
 
   const updatedUser = await User.findByIdAndUpdate(
     paramsId,
     {
-      username,
       email,
       password,
-      role,
-      department,
-      isFirstLogin,
     },
     {
       returnDocument: "after",
