@@ -4,6 +4,9 @@ import Button from "../../components/ui/Button";
 import AutoGrid from "../../components/ui/AutoGrid";
 import { Field, Input, Select } from "../../components/ui/Field";
 import { useApp } from "../../hooks/useApp";
+//
+import { useQueryClient } from "@tanstack/react-query";
+import { useUpdateOwnUserPass } from "../../hooks/useUsers";
 
 const DEADLINE_OPTIONS = [
   { value: "7", label: "7 days from start date" },
@@ -19,10 +22,15 @@ const REMINDER_OPTIONS = [
 
 export default function Settings() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  const save = () => {
+  const updateOwnUserPasswordMutation = useUpdateOwnUserPass(
+    app.session.accessToken,
+  );
+
+  const save = async () => {
     if (next.length < 6) {
       app.showToast("Use at least 6 characters for the new password.");
       return;
@@ -31,6 +39,8 @@ export default function Settings() {
       app.showToast("The two passwords do not match.");
       return;
     }
+    //update the password by passing password in the mutation
+    await updateOwnUserPasswordMutation.mutateAsync(next); //next is the name of useState variable where password is set
     setNext("");
     setConfirm("");
     app.showToast("Password updated");
@@ -67,7 +77,12 @@ export default function Settings() {
             onChange={(e) => setConfirm(e.target.value)}
           />
         </Field>
-        <Button variant="primary" className="self-start" onClick={save}>
+        <Button
+          variant="primary"
+          className="self-start"
+          onClick={save}
+          disabled={!next || !confirm}
+        >
           Update password
         </Button>
       </Card>

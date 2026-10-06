@@ -92,11 +92,12 @@ export async function updateOwnUserPassword(req, res) {
   const { id } = req.user;
   const { password } = req.body;
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   const updatedUser = await User.findByIdAndUpdate(
     id,
     {
-      email,
-      password,
+      password: hashedPassword,
     },
     {
       returnDocument: "after",

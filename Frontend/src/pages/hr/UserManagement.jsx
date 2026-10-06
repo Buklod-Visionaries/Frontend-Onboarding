@@ -177,7 +177,7 @@ export default function UserManagement() {
 
             <div className="flex flex-wrap items-baseline gap-4 text-meta text-ink/50">
               <span>
-                Showing {users.length} of {users.length} accounts
+                Showing {rows.length} of {users.length} accounts
               </span>
               <span>
                 Employee accounts are created through Employees &rarr; Add

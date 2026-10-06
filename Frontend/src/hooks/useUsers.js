@@ -4,6 +4,7 @@ import {
   fetchCurrentUser,
   getCurrentEmployeeUser,
   resetTempPass,
+  updateOwnUserPass,
 } from "../api/users";
 
 export function useUsers(token) {
@@ -33,6 +34,13 @@ export function useCurrentEmployeeUser(token) {
 
 export function useResetTempPass(token) {
   return useMutation({
-    mutationFn: ({userId, tempPass}) => resetTempPass(token, userId, tempPass),
+    mutationFn: ({ userId, tempPass }) =>
+      resetTempPass(token, userId, tempPass),
+  });
+}
+
+export function useUpdateOwnUserPass(token) {
+  return useMutation({
+    mutationFn: (password) => updateOwnUserPass(token, password),
   });
 }
