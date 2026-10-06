@@ -115,8 +115,9 @@ export default function FirstLogin() {
           block
           className="h-[42px]"
           onClick={(e) => saveAndLogin(e)}
+          disabled={loading}
         >
-          Save password &amp; continue
+          {loading ? "Saving new password..." : "Save password &amp; continue"}
         </Button>
 
         <Link to="/login" className="self-center">
