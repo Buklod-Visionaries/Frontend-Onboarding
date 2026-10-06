@@ -112,5 +112,5 @@ export async function updateUser(req, res) {
     return res.send({ message: "user doesnt exist" });
   }
 
-  res.send(updatedUser);
+  res.send({ message: "Successfully edited user" });
 }

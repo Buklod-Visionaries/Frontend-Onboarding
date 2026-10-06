@@ -27,14 +27,11 @@ router.get(
   asyncHandler(getSpecificUser),
 );
 //
-router.put("/:id", verifyToken, authorizeRoles("hr"), asyncHandler(updateUser));
-
-//reset password for hr
-router.patch(
-  "/:id/reset-password",
+router.post(
+  "/:id",
   verifyToken,
   authorizeRoles("hr"),
-  asyncHandler(resetUserPassword),
+  asyncHandler(updateUser),
 );
 
 //delete user
@@ -43,6 +40,14 @@ router.delete(
   verifyToken,
   authorizeRoles("hr"),
   asyncHandler(deleteUser),
+);
+
+//reset password for hr
+router.patch(
+  "/:id/reset-password",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(resetUserPassword),
 );
 
 export default router;
