@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import crypto from "crypto";
 
 export async function register(req, res) {
   //takes the destructured value from json
@@ -255,4 +256,29 @@ export function logout(req, res) {
   //temp
   console.log("REFRESH COOKIE:", req.cookies.refreshToken);
   res.send({ message: "Logout" });
+}
+
+//request password reset controller
+export async function requestPasswordReset(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).send({ message: "No email" });
+  }
+
+  const existingUser = await User.findOneAndUpdate(
+    { email: email },
+    { passwordResetRequested: true },
+    { returnDocument: "after" },
+  );
+
+  if (!existingUser) {
+    return res
+      .status(400)
+      .send({ message: `No existing user with email ${email}` });
+  }
+
+  res
+    .status(200)
+    .send({ message: `Password reset for ${email} requested to HR.` });
 }
