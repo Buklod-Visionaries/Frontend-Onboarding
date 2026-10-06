@@ -18,6 +18,12 @@ router.get("/", verifyToken, authorizeRoles("hr"), asyncHandler(getAllUser));
 
 //get own account
 router.get("/me", verifyToken, asyncHandler(getOwnUser));
+//update own user pass
+router.post(
+  "/me/update-password",
+  verifyToken,
+  asyncHandler(updateOwnUserPassword),
+);
 
 //get specific user
 router.get(
@@ -25,13 +31,6 @@ router.get(
   verifyToken,
   authorizeRoles("hr"),
   asyncHandler(getSpecificUser),
-);
-//update own user pass
-router.post(
-  "/:id",
-  verifyToken,
-  authorizeRoles("hr"),
-  asyncHandler(updateOwnUserPassword),
 );
 
 //delete user

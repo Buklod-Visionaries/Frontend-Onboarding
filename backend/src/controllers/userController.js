@@ -89,10 +89,11 @@ export async function getSpecificUser(req, res) {
 }
 
 export async function updateOwnUserPassword(req, res) {
-  const { email, password } = req.body;
+  const { id } = req.user;
+  const { password } = req.body;
 
   const updatedUser = await User.findByIdAndUpdate(
-    paramsId,
+    id,
     {
       email,
       password,
