@@ -99,7 +99,7 @@ export default function Reports() {
         </Field>
 
         <Button variant="primary" onClick={handleGenerate} disabled={isLoading}>
-          {isLoading ? "Generating..." : "Generate report"}
+          Generate Report
         </Button>
 
         {generated && !isLoading && !isError && reports.length > 0 && (

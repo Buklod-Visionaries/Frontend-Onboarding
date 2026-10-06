@@ -11,6 +11,7 @@ export function useUsers(token) {
     queryKey: ["users"], //represents users data
     queryFn: () => fetchAllUsers(token), //when "users" are needed call fetchAllUsers
     enabled: !!token, //
+    refetchInterval: 5000,
   });
 }
 

@@ -33,17 +33,17 @@ export default function Login() {
     e.preventDefault();
 
     if (!email || !password) {
-      return alert("All fields are required");
+      return showToast("All fields are required");
     }
     if (!email.includes("@gmail.com")) {
-      return alert("Email must end with @gmail.com");
+      return showToast("Email must end with @gmail.com");
     }
     try {
       setLoading(true);
       const session = await login(email, password);
 
       if (!session) {
-        return alert("User cannot be fetched");
+        return showToast("User cannot be fetched");
       }
 
       if (session.role === "dept-rep") {
