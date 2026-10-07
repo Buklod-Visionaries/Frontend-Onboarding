@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true, // true on production
     },
+    passwordResetRequested: {
+      type: Boolean,
+      default: false,
+    },
+    tempPass: {
+      type: String,
+      default: null,
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],

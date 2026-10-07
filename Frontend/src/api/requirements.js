@@ -17,3 +17,30 @@ export async function fetchAllDepEmpReq(token) {
   });
   return res.data;
 }
+
+export async function fetchMyRequirements(token) {
+  const res = await api.get("/employee-requirements/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchMySpecificRequirement(token, paramsId) {
+  const res = await api.get(`/employee-requirements/me/${paramsId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchSpecificEmployeeRequirements(token, paramsId) {
+  const res = await api.get(`/employee-requirements/employee/${paramsId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

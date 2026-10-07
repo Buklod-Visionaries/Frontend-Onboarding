@@ -33,17 +33,17 @@ export default function Login() {
     e.preventDefault();
 
     if (!email || !password) {
-      return alert("All fields are required");
+      return showToast("All fields are required");
     }
     if (!email.includes("@gmail.com")) {
-      return alert("Email must end with @gmail.com");
+      return showToast("Email must end with @gmail.com");
     }
     try {
       setLoading(true);
       const session = await login(email, password);
 
       if (!session) {
-        return alert("User cannot be fetched");
+        return showToast("User cannot be fetched");
       }
 
       if (session.role === "dept-rep") {
@@ -112,8 +112,8 @@ export default function Login() {
         </Button>
 
         <p className="m-0 text-center text-[11px] leading-relaxed text-ink/50">
-          Credentials are pre-filled for the prototype. Accounts are created by
-          authorized HR staff &mdash; the system has no public sign-up.
+          Accounts are created by authorized HR staff &mdash; the system has no
+          public sign-up.
         </p>
 
         <div className="flex flex-wrap justify-center gap-1.5">

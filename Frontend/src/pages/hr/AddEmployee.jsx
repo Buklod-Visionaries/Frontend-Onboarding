@@ -7,17 +7,12 @@ import DividerList, { DividerRow } from "../../components/ui/DividerList";
 import Notice, { SectionHeading } from "../../components/ui/Notice";
 import { Field, Input, Select } from "../../components/ui/Field";
 import AccountCreatedDialog from "../../components/feature/accounts/AccountCreatedDialog";
-import { POSITIONS, POSITION_NAMES } from "../../data/positions";
-import { buildRequirements } from "../../domain/requirements";
-import { TEMP_PASSWORD } from "../../domain/constants";
 import { useApp } from "../../hooks/useApp";
 //
 import { RefreshCcw } from "lucide-react";
 import { generatePassword } from "../../lib/generateTempPassword";
 import { handlePhoneChange } from "../../lib/validator";
 import api from "../../lib/axios";
-
-const DEFAULT_START = "2026-08-24";
 
 /**
  * Add Employee: employee information, position + department, account information.
@@ -45,13 +40,6 @@ export default function AddEmployee() {
     "Administration",
   ];
   const [dep, setDep] = useState(departments[0]);
-  // const [form, setForm] = useState({
-  //   name: "",
-  //   email: "",
-  //   phone: "",
-  //   start: DEFAULT_START,
-  //   position: "Medical Technologist",
-  // });
 
   async function getAllRequirementsTemplate() {
     try {
@@ -72,19 +60,6 @@ export default function AddEmployee() {
   useEffect(() => {
     getAllRequirementsTemplate();
   }, []);
-
-  //
-  // const department = POSITIONS[form.position].department;
-  // const preview = buildRequirements(
-  //   form.position,
-  //   form.start || DEFAULT_START,
-  //   "preview",
-  // );
-
-  // const set = (key) => (e) => {
-  //   const { value } = e.target;
-  //   setForm((current) => ({ ...current, [key]: value }));
-  // };
 
   const submit = async () => {
     if (

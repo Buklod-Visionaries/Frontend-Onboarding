@@ -19,3 +19,14 @@ export function formatStatus(status) {
 
   return statuses[status] || status;
 }
+
+export function formatDepartment(department) {
+  const dep = {
+    laboratory: "Laboratory",
+    cardiovascular: "Cardiovascular",
+    imaging: "Imaging",
+    administration: "Administration",
+  };
+
+  return dep[department] || department;
+}

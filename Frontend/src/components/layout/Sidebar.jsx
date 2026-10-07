@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import Button from "../ui/Button";
 import SignOutDialog from "../feature/accounts/SignOutDialog";
-import { NAV, ROLE_LABEL } from "./navigation";
+import { NAV } from "./navigation";
 import { useApp } from "../../hooks/useApp";
 //
-import api from "../../lib/axios";
+import { useCurrentUser, useCurrentEmployeeUser } from "../../hooks/useUsers";
+import { useRequirements } from "../../hooks/useRequirements";
 import { capitalize } from "../../lib/capitalize";
 
 export default function Sidebar({ unreadCount, verifyCount }) {
@@ -15,12 +16,27 @@ export default function Sidebar({ unreadCount, verifyCount }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const role = app.session.role;
   const items = NAV[role];
-  const counts = { unread: unreadCount, verify: verifyCount };
-  const [username, setUsername] = useState("");
-  const [position, setPosition] = useState("");
-  const [requirements, setRequirements] = useState([]);
-  const [roleLabel, setRoleLabel] = useState("");
-  const [loading, setLoading] = useState(false);
+  //if user is either hr or dept rep
+  const {
+    data: currentUser,
+    isLoading: currentUserLoading,
+    isError: currentUserError,
+  } = useCurrentUser(app.session.accessToken);
+  //if user is employee
+  const {
+    data: currentEmployeeUser,
+    isLoading: currentEmployeeUserLoading,
+    isError: currentEmployeeUserError,
+  } = useCurrentEmployeeUser(app.session.accessToken);
+  //from req hook
+  const {
+    data: requirements = [],
+    isLoading: requirementsLoading,
+    isError: requirementsError,
+  } = useRequirements(app.session.accessToken);
+
+  let position = "";
+  let roleLabel = "";
 
   const signOut = () => {
     setConfirmOpen(false);
@@ -28,80 +44,18 @@ export default function Sidebar({ unreadCount, verifyCount }) {
     navigate("/login");
   };
 
-  useEffect(() => {
-    async function getCurrentUser() {
-      try {
-        const res = await api.get("/users/me", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setUsername(res.data.username);
-        if (res.data.role === "hr") {
-          setPosition("HR Staff");
-          setRoleLabel("Administration");
-          return;
-        }
-
-        setRoleLabel(res.data.department);
-        if (res.data.role === "dept-rep") {
-          setPosition(`Department Representative`);
-          return;
-        }
-      } catch (error) {
-        console.log(error.response.data);
-      }
+  if (currentUser) {
+    if (currentUser.role === "hr") {
+      position = "HR Staff";
+      roleLabel = "Administration";
+    } else if (currentUser.role === "dept-rep") {
+      position = "Department Representative";
+      roleLabel = currentUser.department;
+    } else if (currentUser.role === "employee") {
+      position = currentEmployeeUser?.position ?? "";
+      roleLabel = currentUser.department;
     }
-
-    //just to set position of employees
-    async function getCurrentEmployeeUser() {
-      try {
-        const res = await api.get("/employees/me", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setPosition(res.data.position);
-      } catch (error) {
-        console.log(error.response.data);
-      }
-    }
-
-    async function getRequirements() {
-      try {
-        setLoading(true);
-        const res = await api.get("/employee-requirements", {
-          headers: {
-            Authorization: `Bearer ${app.session.accessToken}`,
-          },
-        });
-        setRequirements(res.data);
-      } catch (error) {
-        console.log(error.response.data.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    getCurrentUser();
-    getCurrentEmployeeUser();
-    getRequirements();
-
-    //
-    const handleRequirementsUpdated = () => {
-      getRequirements();
-    };
-
-    window.addEventListener("requirements-updated", handleRequirementsUpdated);
-
-    return () => {
-      window.removeEventListener(
-        "requirements-updated",
-        handleRequirementsUpdated,
-      );
-    };
-  }, []);
-
+  }
   return (
     <aside className="flex flex-col bg-accent-900 text-bg lg:sticky lg:top-0 lg:h-screen">
       <div className="border-b border-bg/[0.14] px-5 pb-4 pt-5">
@@ -138,7 +92,9 @@ export default function Sidebar({ unreadCount, verifyCount }) {
           stacked block, so this row keeps sign-out reachable on small screens. */}
       <div className="flex flex-wrap items-center gap-3 border-t border-bg/[0.14] px-5 py-4 lg:block">
         <div className="min-w-0 flex-1 lg:flex-none">
-          <div className="text-cell">{username}</div>
+          <div className="text-cell">
+            {currentUser?.username || currentEmployeeUser?.user.username || ""}
+          </div>
           <div className="text-[11px] opacity-55 lg:mb-2.5">
             {capitalize(position)}
           </div>

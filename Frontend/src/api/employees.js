@@ -18,3 +18,21 @@ export async function fetchAllDepEmployees(token) {
   });
   return res.data;
 }
+
+export async function fetchCurrentEmployee(token) {
+  const res = await api.get("/employees/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchSpecificEmployee(token, paramsId) {
+  const res = await api.get(`/employees/${paramsId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

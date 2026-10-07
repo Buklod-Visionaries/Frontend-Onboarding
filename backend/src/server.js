@@ -11,6 +11,7 @@ import empRequirementRoutes from "./routes/empRequirementRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import employeeRequirementHistoryRoutes from "./routes/employeeRequirementHistoryRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";    
+import reportRoutes from "./routes/reportRoutes.js";
 
 dotenv.config();
 
@@ -49,6 +50,8 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/employee-requirement-history", employeeRequirementHistoryRoutes);
 //notifications
 app.use("/api/notifications", notificationRoutes);
+//generating reports
+app.use("/api/reports", reportRoutes);
 
 //starts the db before the server
 connectDB().then(() => {

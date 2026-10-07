@@ -6,6 +6,10 @@ import { ACCOUNT_STATUSES, DEPARTMENTS } from "../../../domain/constants";
 import { useApp } from "../../../hooks/useApp";
 import { formatRole } from "../../../lib/formatter";
 import { capitalize } from "../../../lib/capitalize";
+//
+import { useQueryClient } from "@tanstack/react-query";
+import { useResetTempPass } from "../../../hooks/useUsers";
+import { generatePassword } from "../../../lib/generateTempPassword";
 
 const NOTES = {
   Employee:
@@ -17,8 +21,25 @@ const NOTES = {
 
 function ManageAccessDialogBody({ target, onClose }) {
   const app = useApp();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState(target.status);
   const [department, setDepartment] = useState(target.department);
+  const [tempPass, setTempPass] = useState(generatePassword());
+
+  //pass the user token on reset pass hook
+  const resetPasswordMutation = useResetTempPass(app.session.accessToken);
+
+  //sends the userId and generated tempPass to the hook patch request
+  const resetTempPass = async () => {
+    await resetPasswordMutation.mutateAsync({
+      userId: target._id,
+      tempPass,
+    });
+    //reloads users
+    await queryClient.invalidateQueries({
+      queryKey: ["users"],
+    });
+  };
 
   return (
     <Modal
@@ -30,13 +51,23 @@ function ManageAccessDialogBody({ target, onClose }) {
       subtitle={`${formatRole(target.role)} ${target.department ? ` · ${capitalize(target.department)}` : ""}`}
       actions={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose} disabled={resetPasswordMutation.isPending}>
+            Cancel
+          </Button>
           <Button
-            onClick={() => {
-              app.updateAccount(target, { status: "Pending first login" });
-              app.showToast(`Temporary password issued for ${target.name}`);
-              onClose();
+            onClick={async () => {
+              try {
+                await resetTempPass();
+                app.showToast(
+                  `Temporary password issued for ${target.username}`,
+                );
+                onClose();
+              } catch (error) {
+                console.error(error);
+                app.showToast("Failed to reset temporary password");
+              }
             }}
+            disabled={resetPasswordMutation.isPending}
           >
             Reset to temporary password
           </Button>
@@ -47,6 +78,7 @@ function ManageAccessDialogBody({ target, onClose }) {
               app.showToast(`Access updated for ${target.name}`);
               onClose();
             }}
+            disabled={resetPasswordMutation.isPending}
           >
             Save changes
           </Button>

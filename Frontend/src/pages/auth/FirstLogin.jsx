@@ -23,7 +23,7 @@ export default function FirstLogin() {
   async function saveAndLogin(e) {
     e.preventDefault();
     if (!email.includes("@gmail.com")) {
-      return alert("Email must end with @gmail.com");
+      return app.showToast("Email must end with @gmail.com");
     }
     if (newPass.length < 6) {
       app.showToast("Use at least 6 characters for the new password.");
@@ -115,8 +115,9 @@ export default function FirstLogin() {
           block
           className="h-[42px]"
           onClick={(e) => saveAndLogin(e)}
+          disabled={loading}
         >
-          Save password &amp; continue
+          {loading ? "Saving new password..." : "Save password & continue"}
         </Button>
 
         <Link to="/login" className="self-center">

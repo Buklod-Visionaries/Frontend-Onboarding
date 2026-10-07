@@ -22,6 +22,29 @@ export async function getOwnUser(req, res) {
   res.status(200).send(me);
 }
 
+export async function resetUserPassword(req, res) {
+  //from the frontend
+  const { tempPass } = req.body;
+  //user id
+  const { id } = req.params;
+
+  if (!tempPass) {
+    return res.send({ message: "Temporary password is empty" });
+  }
+  //update temp pass
+  const user = await User.findByIdAndUpdate(id, {
+    tempPass: tempPass,
+    password: tempPass,
+  });
+  if (!user) {
+    return res.status(404).send({ message: `No user found` });
+  }
+
+  res
+    .status(200)
+    .send({ message: `Successfully reset password of ${user.email}` });
+}
+
 export async function deleteUser(req, res) {
   //get the /:id from url params
   const { id } = req.params;
@@ -65,20 +88,16 @@ export async function getSpecificUser(req, res) {
   res.status(200).send(user);
 }
 
-export async function updateUser(req, res) {
-  const { id: paramsId } = req.params;
-  const { username, email, password, role, department, isFirstLogin } =
-    req.body;
+export async function updateOwnUserPassword(req, res) {
+  const { id } = req.user;
+  const { password } = req.body;
+
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const updatedUser = await User.findByIdAndUpdate(
-    paramsId,
+    id,
     {
-      username,
-      email,
-      password,
-      role,
-      department,
-      isFirstLogin,
+      password: hashedPassword,
     },
     {
       returnDocument: "after",
@@ -89,5 +108,5 @@ export async function updateUser(req, res) {
     return res.send({ message: "user doesnt exist" });
   }
 
-  res.send(updatedUser);
+  res.send({ message: "Successfully edited user" });
 }

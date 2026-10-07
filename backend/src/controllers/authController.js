@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import crypto from "crypto";
 
 export async function register(req, res) {
   //takes the destructured value from json
@@ -66,7 +67,7 @@ export async function login(req, res) {
       .send({ message: `User with email ${email} not found` });
   }
   //doesnt allow users with temporaryPassword
-  if (user.isFirstLogin) {
+  if (user.isFirstLogin || user.tempPass || user.passwordResetRequested) {
     return res
       .status(404)
       .send({ message: "First-time login user needs to setup new password" });
@@ -143,14 +144,14 @@ export async function firstLogin(req, res) {
       .status(404)
       .send({ message: `User with email ${email} not found` });
   }
-  //if account already active
-  if (!user.isFirstLogin) {
-    return res.send({ message: "First-time login not applicable" });
+  //if account already active and not requesting password reset
+  if (!user.isFirstLogin && !user.passwordResetRequested) {
+    return res.status(400).send({ message: "First-time login not applicable" });
   }
   //if password do not match
   if (tempPass !== user.password) {
     console.log(`Invalid credentials`);
-    return res.status(404).send({ message: `Invalid temporary password` });
+    return res.status(400).send({ message: `Invalid temporary password` });
   }
 
   //hashed the new password typed in form
@@ -158,6 +159,8 @@ export async function firstLogin(req, res) {
   //set new pass and the account to active
   user.password = newHashedPass;
   user.isFirstLogin = false;
+  user.tempPass = null; //should only be used on password reset
+  user.passwordResetRequested = false; //set to false so the tempPass wont show on frontend
   //saves to DB
   await user.save();
 
@@ -255,4 +258,29 @@ export function logout(req, res) {
   //temp
   console.log("REFRESH COOKIE:", req.cookies.refreshToken);
   res.send({ message: "Logout" });
+}
+
+//request password reset controller
+export async function requestPasswordReset(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).send({ message: "No email" });
+  }
+
+  const existingUser = await User.findOneAndUpdate(
+    { email: email },
+    { passwordResetRequested: true },
+    { returnDocument: "after" },
+  );
+
+  if (!existingUser) {
+    return res
+      .status(400)
+      .send({ message: `No existing user with email ${email}` });
+  }
+
+  res
+    .status(200)
+    .send({ message: `Password reset for ${email} requested to HR.` });
 }
