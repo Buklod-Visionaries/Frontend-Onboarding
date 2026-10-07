@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import Notification from "../models/notificationModel.js";
 import crypto from "crypto";
 
 export async function register(req, res) {
@@ -268,6 +269,7 @@ export async function requestPasswordReset(req, res) {
     return res.status(400).send({ message: "No email" });
   }
 
+  //find the user with email and set Password reset requested field to true
   const existingUser = await User.findOneAndUpdate(
     { email: email },
     { passwordResetRequested: true },
@@ -280,7 +282,23 @@ export async function requestPasswordReset(req, res) {
       .send({ message: `No existing user with email ${email}` });
   }
 
-  res
-    .status(200)
-    .send({ message: `Password reset for ${email} requested to HR.` });
+  //find all HR
+  const hr = await User.find({ role: "hr" });
+
+  //create notification for each HR
+  const notif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: "Password Reset Request",
+      message: `${existingUser.username} forgot their password and asking for password reset.`,
+    });
+  });
+
+  // save notifications
+  await Notification.insertMany(notif);
+
+  res.status(200).send({
+    message: `Password reset for ${email} requested to HR.`,
+    notifCreated: notif.length,
+  });
 }

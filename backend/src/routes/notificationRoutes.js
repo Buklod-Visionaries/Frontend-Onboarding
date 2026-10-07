@@ -5,6 +5,8 @@ import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
 import {
   createNotification,
   getAllNotifications,
+  readAllOwnNotifications,
+  getAllOwnNotifications,
   getNotificationById,
   updateNotification,
   deleteNotification,
@@ -12,36 +14,37 @@ import {
 
 const router = express.Router();
 
-router.get(
-  "/",
-  verifyToken,
-  asyncHandler(getAllNotifications)
-);
-
 router.post(
   "/",
   verifyToken,
-  authorizeRoles("hr","dept-rep"),
-  asyncHandler(createNotification)
+  authorizeRoles("hr", "dept-rep"),
+  asyncHandler(createNotification),
 );
 
 router.get(
-  "/:id", 
+  "/",
   verifyToken,
-  asyncHandler(getNotificationById)
+  authorizeRoles("hr"),
+  asyncHandler(getAllNotifications),
+); //all including from other users
+
+router.get("/me", verifyToken, asyncHandler(getAllOwnNotifications)); // all own only
+
+router.patch(
+  "/me/read-all", //mark read all own notif
+  verifyToken,
+  asyncHandler(readAllOwnNotifications),
 );
 
-router.put(
-  "/:id",
-  verifyToken,
-  asyncHandler(updateNotification)
-);
+router.get("/:id", verifyToken, asyncHandler(getNotificationById));
+
+router.put("/:id", verifyToken, asyncHandler(updateNotification));
 
 router.delete(
   "/:id",
   verifyToken,
   authorizeRoles("hr"),
-  asyncHandler(deleteNotification)
+  asyncHandler(deleteNotification),
 );
 
 export default router;

@@ -8,6 +8,7 @@ import { useApp } from "../../hooks/useApp";
 //
 import { useCurrentUser, useCurrentEmployeeUser } from "../../hooks/useUsers";
 import { useRequirements } from "../../hooks/useRequirements";
+import { useAllOwnNotif } from "../../hooks/useNotifications";
 import { capitalize } from "../../lib/capitalize";
 
 export default function Sidebar({ unreadCount, verifyCount }) {
@@ -34,6 +35,12 @@ export default function Sidebar({ unreadCount, verifyCount }) {
     isLoading: requirementsLoading,
     isError: requirementsError,
   } = useRequirements(app.session.accessToken);
+  //from notif hook
+  const {
+    data: notifications = [],
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+  } = useAllOwnNotif(app.session.accessToken);
 
   let position = "";
   let roleLabel = "";
@@ -73,7 +80,7 @@ export default function Sidebar({ unreadCount, verifyCount }) {
             item.badge === "verify"
               ? requirements.filter((req) => req.status === "pending").length
               : item.badge === "unread"
-                ? unreadCount
+                ? notifications.filter((notif) => !notif.isRead).length
                 : 0;
 
           return (
