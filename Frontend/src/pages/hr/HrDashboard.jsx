@@ -42,7 +42,7 @@ export default function HrDashboard() {
     data: empReqHistories = [],
     isLoading: empReqHistoriesLoading,
     isError: empReqHistoriesError,
-  } = useAllEmpReqHistories(app.session.accessToken, 5);
+  } = useAllEmpReqHistories(app.session.accessToken, 4); // the number is how many history to show. already sorted newest
 
   ////
   if (employeesLoading || requirementsLoading || empReqHistoriesLoading) {
