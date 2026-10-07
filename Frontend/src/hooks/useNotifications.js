@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   fetchAllOwnNotifications,
   readAllOwnNotifications,
+  deleteAllOwnNotifications,
 } from "../api/notifications";
 
 export function useAllOwnNotif(token) {
@@ -16,5 +17,11 @@ export function useAllOwnNotif(token) {
 export function useReadAllOwnNotif(token) {
   return useMutation({
     mutationFn: () => readAllOwnNotifications(token),
+  });
+}
+
+export function useDeleteAllOwnNotif(token) {
+  return useMutation({
+    mutationFn: () => deleteAllOwnNotifications(token),
   });
 }

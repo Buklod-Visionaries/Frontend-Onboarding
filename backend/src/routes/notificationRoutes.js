@@ -6,6 +6,7 @@ import {
   createNotification,
   getAllNotifications,
   readAllOwnNotifications,
+  deleteAllOwnNotifications,
   getAllOwnNotifications,
   getNotificationById,
   updateNotification,
@@ -34,6 +35,12 @@ router.patch(
   "/me/read-all", //mark read all own notif
   verifyToken,
   asyncHandler(readAllOwnNotifications),
+);
+
+router.delete(
+  "/me/delete-all", //mark read all own notif
+  verifyToken,
+  asyncHandler(deleteAllOwnNotifications),
 );
 
 router.get("/:id", verifyToken, asyncHandler(getNotificationById));

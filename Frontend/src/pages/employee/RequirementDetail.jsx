@@ -92,7 +92,7 @@ export default function RequirementDetail() {
       });
     } catch (error) {
       app.showToast(`Failed uploading File: ${error.response.data.message}`);
-      console.log(error);
+      console.log("failed uploading file:", error);
     } finally {
       setFileUploading(false);
     }

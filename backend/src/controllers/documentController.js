@@ -4,6 +4,7 @@ import User from "../models/userModel.js";
 import Employee from "../models/employeeModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
 import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+import Notification from "../models/notificationModel.js";
 import supabase from "../lib/supabase.js";
 
 export async function getAllDocuments(req, res) {
@@ -26,7 +27,9 @@ export async function submitDocument(req, res) {
   }
 
   const currentUser = await User.findOne({ _id: id });
-  const currentEmployee = await Employee.findOne({ user: currentUser._id });
+  const currentEmployee = await Employee.findOne({
+    user: currentUser._id,
+  }).populate("user");
 
   //find the current requirements
   const currentEmpReq = await EmployeeRequirement.findOne({
@@ -99,6 +102,22 @@ export async function submitDocument(req, res) {
   });
 
   await empReqHistory.save();
+
+  //notif
+  //find all HR
+  const hr = await User.find({ role: "hr" });
+
+  //create notification for each HR
+  const notif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: `${currentEmployee.user.username} submitted ${currentEmpReq.requirement.name}`,
+      message: `A new document is ready for your review.`,
+    });
+  });
+
+  // save notifications
+  await Notification.insertMany(notif);
 
   res.send({ message: "Document uploaded successfully", document: docs });
 }

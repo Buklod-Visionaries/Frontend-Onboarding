@@ -21,3 +21,12 @@ export async function readAllOwnNotifications(token) {
   );
   return res.data;
 }
+
+export async function deleteAllOwnNotifications(token) {
+  const res = await api.delete("/notifications/me/delete-all", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

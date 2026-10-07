@@ -5,7 +5,11 @@ import NotificationList from "../components/feature/notifications/NotificationLi
 import { useApp } from "../hooks/useApp";
 //
 import { useQueryClient } from "@tanstack/react-query";
-import { useAllOwnNotif, useReadAllOwnNotif } from "../hooks/useNotifications";
+import {
+  useAllOwnNotif,
+  useReadAllOwnNotif,
+  useDeleteAllOwnNotif,
+} from "../hooks/useNotifications";
 
 /** One notifications screen, reused by all three roles — filtered by session role. */
 export default function Notifications() {
@@ -19,35 +23,52 @@ export default function Notifications() {
   } = useAllOwnNotif(app.session.accessToken);
 
   const readAllNotifMutation = useReadAllOwnNotif(app.session.accessToken);
+  const deleteAllNotifMutation = useDeleteAllOwnNotif(app.session.accessToken);
 
   // const items = app.notifications.filter((notification) => notification.to === role);
   // const unread = items.filter((notification) => notification.unread).length;
 
   return (
     <Card className="gap-3.5">
-      <div className="flex flex-wrap items-center gap-3">
-        <h4 className="text-[20px]">Notifications</h4>
-        <span className="text-meta text-ink/55">
-          {notifications.filter((notif) => !notif.isRead).length
-            ? `${notifications.filter((notif) => !notif.isRead).length} unread`
-            : "All caught up"}
-        </span>
-        {isLoading ? (
-          ""
-        ) : (
+      <div className="flex flex-wrap items-center justify-between gap-3 ">
+        <h4 className="text-[20px]">
+          Notifications
+          <span className="ml-auto text-meta text-ink/55">
+            {notifications.filter((notif) => !notif.isRead).length
+              ? `${notifications.filter((notif) => !notif.isRead).length} unread`
+              : " All caught up"}
+          </span>
+        </h4>
+
+        <div className="flex">
           <Button
-            className="ml-auto"
+            className="mx-2"
             onClick={async () => {
               await readAllNotifMutation.mutateAsync(); //mark all as read by calling API
               queryClient.invalidateQueries({
                 queryKey: ["notifications"], //reload notif state
               });
             }}
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              notifications.filter((notif) => !notif.isRead).length === 0 //disabled when no notifs are unread
+            }
           >
             Mark all as read
           </Button>
-        )}
+          <Button
+            className="mx-2"
+            onClick={async () => {
+              await deleteAllNotifMutation.mutateAsync(); //delete all read by calling API
+              queryClient.invalidateQueries({
+                queryKey: ["notifications"], //reload notif state
+              });
+            }}
+            disabled={isLoading || notifications.length === 0}
+          >
+            Clear All
+          </Button>
+        </div>
       </div>
       {notifications.length ? (
         <NotificationList items={notifications} />

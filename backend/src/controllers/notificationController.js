@@ -44,6 +44,17 @@ export async function readAllOwnNotifications(req, res) {
   res.send(readNotifs);
 }
 
+export async function deleteAllOwnNotifications(req, res) {
+  const { id } = req.user;
+
+  const deletedNotifs = await Notification.deleteMany({ user: id });
+
+  res.send({
+    message: "Successfully deleted all notifs",
+    deletedNotifs: deletedNotifs,
+  });
+}
+
 export async function getAllOwnNotifications(req, res) {
   const notifications = await Notification.find({ user: req.user.id })
     .populate(
