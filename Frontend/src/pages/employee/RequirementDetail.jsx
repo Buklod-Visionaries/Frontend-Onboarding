@@ -74,8 +74,9 @@ export default function RequirementDetail() {
   async function uploadFile({ e, id }) {
     // e.preventDefault();
     try {
-      setFileUploading(true);
+      //test bugfix
       if (!pendingFile) return;
+      setFileUploading(true);
 
       //sends the file and target requirement
       await app.submitDocument(pendingFile, id);
@@ -254,7 +255,7 @@ export default function RequirementDetail() {
               {existingDocument && (
                 <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
                   <Button
-                    disabled={!uploadable}
+                    disabled={!uploadable || fileUploading}
                     onClick={() => fileInput.current?.click()}
                   >
                     Choose file

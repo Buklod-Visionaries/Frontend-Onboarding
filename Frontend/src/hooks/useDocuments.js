@@ -6,6 +6,8 @@ export function usePendingDocuments(token) {
     queryKey: ["documents"],
     queryFn: () => fetchPendingDocuments(token),
     enabled: !!token,
+    refetchInterval: 5000,
+    refetchOnMount: "always",
   });
 }
 

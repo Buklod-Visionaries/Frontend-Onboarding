@@ -15,7 +15,7 @@ export default function RequirementCard({ requirement, onOpen }) {
       : ownedByEmployee
         ? requirement.status === "in-progress"
           ? "Upload document"
-          : "View / resubmit"
+          : "View details"
         : "View details";
 
   const sub = ownedByEmployee

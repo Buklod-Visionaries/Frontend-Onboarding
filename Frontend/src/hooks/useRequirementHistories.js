@@ -6,5 +6,6 @@ export function useSpecificEmpReqHistories(token, requirementId) {
     queryKey: ["specificEmpReqHistories", requirementId],
     queryFn: () => fetchSpecificEmpReqHistories(token, requirementId),
     enabled: !!token && !!requirementId,
+    refetchInterval: 30000,
   });
 }

@@ -12,7 +12,8 @@ export function useRequirements(token) {
     queryKey: ["requirements"],
     queryFn: () => fetchAllRequirements(token),
     enabled: !!token,
-    refetchInterval: 5000,
+    refetchOnMount: "always",
+    refetchInterval: 30000 //30 seconds
   });
 }
 
@@ -21,7 +22,6 @@ export function useDepEmpReq(token) {
     queryKey: ["depRequirements"],
     queryFn: () => fetchAllDepEmpReq(token),
     enabled: !!token,
-    refetchInterval: 5000,
   });
 }
 
@@ -38,6 +38,7 @@ export function useMySpecificRequirement(token, paramsId) {
     queryKey: ["myRequirement", paramsId],
     queryFn: () => fetchMySpecificRequirement(token, paramsId),
     enabled: !!token && !!paramsId,
+    refetchInterval: 5000,
   });
 }
 
