@@ -11,3 +11,19 @@ export async function fetchSpecificEmpReqHistories(token, requirementId) {
   );
   return res.data;
 }
+
+export async function fetchAllEmpReqHistories(token, limit) {
+  const res = await api.get(
+    "/employee-requirement-history",
+
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        limit: limit, //set limit
+      },
+    },
+  );
+  return res.data;
+}

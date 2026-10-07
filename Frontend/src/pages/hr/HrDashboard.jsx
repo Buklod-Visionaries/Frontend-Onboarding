@@ -16,6 +16,7 @@ import { formatDate, isOverdue } from "../../domain/date";
 import { capitalize } from "../../lib/capitalize";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRequirements } from "../../hooks/useRequirements";
+import { useAllEmpReqHistories } from "../../hooks/useRequirementHistories";
 import { useEmployees } from "../../hooks/useEmployees";
 
 export default function HrDashboard() {
@@ -37,12 +38,14 @@ export default function HrDashboard() {
     isLoading: requirementsLoading,
     isError: requirementsError,
   } = useRequirements(app.session.accessToken);
-
-  //change when the notif api arrives
-  let notifications = [];
+  const {
+    data: empReqHistories = [],
+    isLoading: empReqHistoriesLoading,
+    isError: empReqHistoriesError,
+  } = useAllEmpReqHistories(app.session.accessToken, 5);
 
   ////
-  if (employeesLoading || requirementsLoading) {
+  if (employeesLoading || requirementsLoading || empReqHistoriesLoading) {
     return <p>Loading...</p>;
   }
 
@@ -51,6 +54,9 @@ export default function HrDashboard() {
   }
   if (requirementsError) {
     return <p>Failed loading requirements</p>;
+  }
+  if (empReqHistoriesError) {
+    return <p>Failed loading employee requirements history</p>;
   }
 
   return (
@@ -200,10 +206,10 @@ export default function HrDashboard() {
 
         <Card className="gap-3.5">
           <h4 className="text-[20px]">Recent onboarding activity</h4>
-          {notifications.length > 0 ? (
-            <EventList items={app.activity.slice(0, 6)} round />
+          {empReqHistories.length > 0 ? (
+            <EventList items={empReqHistories} round />
           ) : (
-            "Notifications not implemented yet."
+            "No current onboarding activities"
           )}
         </Card>
       </AutoGrid>

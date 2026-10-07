@@ -21,10 +21,20 @@ export async function createHistory(req, res) {
 
 //
 export async function getAllEmpReqHistory(req, res) {
+  const { limit } = req.query;
+
+  //if theres a limit query
+  const historyLimit = parseInt(limit) || 5;
+
   //get all
-  const allEmpReqHistory = await EmployeeRequirementHistory.find().populate({
-    path: "changedBy",
-  });
+  const allEmpReqHistory = await EmployeeRequirementHistory.find()
+    .populate({
+      path: "changedBy",
+    })
+    .sort({
+      createdAt: -1,
+    })
+    .limit(historyLimit);
 
   res.status(200).send(allEmpReqHistory);
 }
