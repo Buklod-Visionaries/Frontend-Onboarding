@@ -25,8 +25,8 @@ function ConfirmActivityDialogBody({
           <Button onClick={onClose}>Cancel</Button>
           <Button
             variant="primary"
-            onClick={() => {
-              app.confirmActivity(
+            onClick={async () => {
+              await app.confirmActivity(
                 empReq,
                 setDepRequirements,
                 setConfirmLoading,
