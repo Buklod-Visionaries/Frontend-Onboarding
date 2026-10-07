@@ -32,8 +32,8 @@ export default function Notifications() {
     <Card className="gap-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3 ">
         <h4 className="text-[20px]">
-          Notifications
-          <span className="ml-auto text-meta text-ink/55">
+          Notifications{" "}
+          <span className="ml-2 text-meta text-ink/55">
             {notifications.filter((notif) => !notif.isRead).length
               ? `${notifications.filter((notif) => !notif.isRead).length} unread`
               : " All caught up"}

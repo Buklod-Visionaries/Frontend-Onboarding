@@ -4,6 +4,7 @@ import Employee from "../models/employeeModel.js";
 import Document from "../models/documentModel.js";
 import Requirement from "../models/requirementModel.js";
 import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+import Notification from "../models/notificationModel.js";
 import supabase from "../lib/supabase.js";
 
 export async function getAllEmpReq(req, res) {
@@ -215,7 +216,9 @@ export async function editEmpReq(req, res) {
         verifiedAt: currentDate,
       },
       { returnDocument: "after" }, //return the edited
-    );
+    )
+      .populate({ path: "employee", populate: { path: "user" } })
+      .populate("requirement");
 
     const doc = await Document.findOne({ employeeRequirement: editedReq._id });
     if (!doc) {
@@ -254,9 +257,18 @@ export async function editEmpReq(req, res) {
 
     await empReqHistory.save();
 
+    //create notif to employee
+    const notif = new Notification({
+      user: editedReq.employee.user._id,
+      title: `${editedReq.requirement.name} needs resubmission`,
+      message: "Please review the feedback and submit a new document.",
+    });
+    await notif.save();
+
     return res.send({
       message: `successfully changed status of empReq ${editedReq}`,
       deletedDocument: `${deletedDocs}`,
+      notif: notif,
     });
   }
 
@@ -271,7 +283,9 @@ export async function editEmpReq(req, res) {
         verifiedAt: currentDate,
       },
       { returnDocument: "after" }, //return the edited
-    );
+    )
+      .populate({ path: "employee", populate: { path: "user" } })
+      .populate("requirement");
 
     //creates a history/audit log
     const empReqHistory = new EmployeeRequirementHistory({
@@ -282,6 +296,14 @@ export async function editEmpReq(req, res) {
     });
 
     await empReqHistory.save();
+
+    //create notif to employee
+    const notif = new Notification({
+      user: editedReq.employee.user._id,
+      title: `${editedReq.requirement.name} was approved`,
+      message: "Your submitted document has been verified successfully.",
+    });
+    await notif.save();
 
     return res.send(editedReq);
   }
