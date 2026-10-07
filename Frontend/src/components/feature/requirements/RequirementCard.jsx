@@ -2,7 +2,6 @@ import Card from "../../ui/Card";
 import Button from "../../ui/Button";
 import Badge, { OverdueBadge } from "../../ui/Badge";
 import { formatDate, isOverdue } from "../../../domain/date";
-// import { isOverdue } from "../../../domain/requirements";
 import { SUB_LABELS } from "../../../domain/constants";
 import { formatStatus } from "../../../lib/formatter";
 
@@ -55,7 +54,7 @@ export default function RequirementCard({ requirement, onOpen }) {
           requirement.status !== "completed" && (
             <>
               <span>Due {formatDate(requirement.dueDate)}</span>
-              <OverdueBadge when={isOverdue(requirement.dueDate)} />
+              <OverdueBadge when={isOverdue(formatDate(requirement.dueDate))} />
             </>
           )}
       </div>

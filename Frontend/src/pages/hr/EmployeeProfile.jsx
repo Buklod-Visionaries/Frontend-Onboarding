@@ -7,8 +7,7 @@ import ProgressBar from "../../components/ui/ProgressBar";
 import { TCell, THead, TRow, Table } from "../../components/ui/Table";
 import ReviewDialog from "../../components/feature/requirements/ReviewDialog";
 import { useApp } from "../../hooks/useApp";
-import { isOverdue } from "../../domain/requirements";
-import { formatDate } from "../../domain/date";
+import { formatDate, isOverdue } from "../../domain/date";
 //
 import { formatStatus } from "../../lib/formatter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -78,7 +77,7 @@ export default function EmployeeProfile() {
                 {formatStatus(employee.onboardingStatus)}
               </Badge>
               <span className="text-meta text-ink/55">
-                Started {formatDate(employee.start)} &middot;{" "}
+                Started {formatDate(employee.startDate)} &middot;{" "}
                 {
                   empRequirements.filter(
                     (req) =>
@@ -148,7 +147,12 @@ export default function EmployeeProfile() {
                   </TCell>
                   <TCell>
                     <div>{formatDate(req.dueDate)}</div>
-                    <OverdueBadge when={isOverdue(req.dueDate)} />
+                    {req.status !== "completed" &&
+                      isOverdue(formatDate(req.dueDate)) && (
+                        <OverdueBadge
+                          when={isOverdue(formatDate(req.dueDate))}
+                        />
+                      )}
                   </TCell>
                   <TCell>
                     <Badge

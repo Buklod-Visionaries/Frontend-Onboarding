@@ -111,7 +111,7 @@ export default function HrDashboard() {
             return requirements.some(
               (req) =>
                 req.employee._id === employee._id &&
-                (req.status === "pending" ||
+                (req.status !== "pending" ||
                   isOverdue(formatDate(req.dueDate))),
             );
           }).length ? (
@@ -160,6 +160,7 @@ export default function HrDashboard() {
                               requirements.filter(
                                 (req) =>
                                   req.employee._id === employee._id &&
+                                  req.status !== "completed" &&
                                   isOverdue(formatDate(req.dueDate)),
                               ).length
                             }

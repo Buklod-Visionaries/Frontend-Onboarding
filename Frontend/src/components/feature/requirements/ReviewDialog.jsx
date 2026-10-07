@@ -29,12 +29,10 @@ function ReviewDialogBody({
   const queryClient = useQueryClient();
   const [resubmitMode, setResubmitMode] = useState(false);
   const [reason, setReason] = useState("");
-  // const [documentPreview, setDocumentPreview] = useState(null);
-  // const [reqHistory, setReqHistory] = useState([]);
-  // const [docLoading, setDocLoading] = useState(false);
+
   const [approveLoading, setApproveLoading] = useState(false);
   const [resubmitLoading, setResubmitLoading] = useState(false);
-  // const [historyLoading, setHistoryLoading] = useState(false);
+
   const {
     data: existingDocument = [],
     isLoading: existingDocumentLoading,
@@ -45,54 +43,6 @@ function ReviewDialogBody({
     isLoading: specificEmpReqHistoriesLoading,
     isError: specificEmpReqHistoriesError,
   } = useSpecificEmpReqHistories(app.session.accessToken, empReq._id);
-
-  // async function getSpecificDocument() {
-  //   try {
-  //     setDocLoading(true);
-  //     const res = await api.get(
-  //       `/documents/employee-requirement/${empReq._id}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       },
-  //     );
-  //     setDocumentPreview(res.data);
-  //   } catch (error) {
-  //     console.log(error.response.data.message);
-  //   } finally {
-  //     setDocLoading(false);
-  //   }
-  // }
-
-  // async function getRequirementHistory() {
-  //   try {
-  //     setHistoryLoading(true);
-  //     const res = await api.get(
-  //       `/employee-requirement-history/employee-requirement/${empReq._id}`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       },
-  //     );
-  //     setReqHistory(res.data);
-  //   } catch (error) {
-  //     console.log(error.response.data.message);
-  //   } finally {
-  //     setHistoryLoading(false);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   getSpecificDocument();
-  // }, []);
-
-  // useEffect(() => {
-  //   if (empReq) {
-  //     getRequirementHistory();
-  //   }
-  // }, [empReq]);
 
   const approve = async () => {
     await app.approveRequirement(empReq, setApproveLoading);
