@@ -305,6 +305,21 @@ export async function editEmpReq(req, res) {
     });
     await notif.save();
 
+    if (editedReq.requirement.type === "activity") {
+      const hr = await User.find({ role: "hr" }); //get all HR
+      //create notif for all HR
+      const hrNotif = hr.map((hrUser) => {
+        return new Notification({
+          user: hrUser._id,
+          title: `${editedReq.employee.user.username} completed ${editedReq.requirement.name}`,
+          message: `The requirement has been marked as completed by the department representative.`,
+        });
+      });
+
+      //save to DB the notif
+      await Notification.insertMany(hrNotif);
+    }
+
     return res.send(editedReq);
   }
 }

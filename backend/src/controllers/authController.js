@@ -205,6 +205,20 @@ export async function firstLogin(req, res) {
   user.lastSignIn = new Date();
   await user.save();
 
+  //create notif to HR
+  const hr = await User.find({ role: "hr" });
+
+  const notif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: `${user.username} has successfully set up a new password`,
+      message:
+        "Their account is now active and they can login with their new password.",
+    });
+  });
+
+  await Notification.insertMany(notif);
+
   res.status(200).send({
     accessToken: accessToken,
     user: {
@@ -289,8 +303,8 @@ export async function requestPasswordReset(req, res) {
   const notif = hr.map((hrUser) => {
     return new Notification({
       user: hrUser._id,
-      title: "Password Reset Request",
-      message: `${existingUser.username} forgot their password and asking for password reset.`,
+      title: `${existingUser.username} requested a password reset`,
+      message: `A password reset request requires your attention.`,
     });
   });
 
