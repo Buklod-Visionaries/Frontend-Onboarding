@@ -1,4 +1,4 @@
-import { useRef, useState} from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Upload } from "lucide-react";
 import Card from "../../components/ui/Card";
@@ -9,8 +9,7 @@ import Notice from "../../components/ui/Notice";
 import { EventList } from "../../components/ui/Timeline";
 import { cx } from "../../lib/cx";
 import { useApp } from "../../hooks/useApp";
-import { isOverdue } from "../../domain/requirements";
-import { formatDate } from "../../domain/date";
+import { formatDate, isOverdue } from "../../domain/date";
 import { REQUIREMENT_DESCRIPTIONS } from "../../data/positions";
 //
 import { useQueryClient } from "@tanstack/react-query";
@@ -174,7 +173,7 @@ export default function RequirementDetail() {
                 </span>
               </>
             )}
-            <OverdueBadge when={isOverdue(myRequirement.dueDate)} />
+            <OverdueBadge when={isOverdue(formatDate(myRequirement.dueDate))} />
           </div>
         </div>
 
