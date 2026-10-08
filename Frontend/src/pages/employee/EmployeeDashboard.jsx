@@ -10,7 +10,7 @@ import { EmptyState } from "../../components/ui/Notice";
 import { cx } from "../../lib/cx";
 import { useApp } from "../../hooks/useApp";
 import { countRequirements } from "../../domain/requirements";
-import { formatDate, isOverdue } from "../../domain/date";
+import { formatDate, formatRelativeDate, isOverdue } from "../../domain/date";
 //
 import { useState, useEffect } from "react";
 import { SUB_LABELS } from "../../domain/constants.js";
@@ -18,6 +18,7 @@ import api from "../../lib/axios.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentEmployee } from "../../hooks/useEmployees.js";
 import { useMyRequirements } from "../../hooks/useRequirements.js";
+import { useAllOwnNotif } from "../../hooks/useNotifications.js";
 import { capitalize } from "../../lib/capitalize.js";
 import { formatStatus } from "../../lib/formatter.js";
 
@@ -37,18 +38,23 @@ export default function EmployeeDashboard() {
     isLoading: myRequirementsLoading,
     isError: myRequirementsError,
   } = useMyRequirements(app.session.accessToken);
-
+  //from notif Hook
+  const {
+    data: notifications = [],
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+  } = useAllOwnNotif(app.session.accessToken);
 
   const actionable = myRequirements
     .filter((requirement) => requirement.status !== "completed")
     .slice(0, 5);
 
-  const notifications = app.notifications
-    .filter((notification) => notification.to === "Employee")
-    .slice(0, 3);
+  // const notifications = app.notifications
+  //   .filter((notification) => notification.to === "Employee")
+  //   .slice(0, 3);
 
   //avoid rendering when currentUser is not yet fetched
-  if (currentUserLoading || myRequirementsLoading) {
+  if (currentUserLoading || myRequirementsLoading || notificationsLoading) {
     return <p>Loading...</p>;
   }
 
@@ -57,6 +63,9 @@ export default function EmployeeDashboard() {
   }
   if (myRequirementsError) {
     return <p>Failed loading requirements.</p>;
+  }
+  if (notificationsError) {
+    return <p>Failed loading notifications.</p>;
   }
 
   return (
@@ -238,18 +247,18 @@ export default function EmployeeDashboard() {
                     <span
                       className={cx(
                         "mt-1.5 h-[7px] w-[7px] rounded-full",
-                        notification.unread ? "bg-accent" : "bg-neutral-400",
+                        !notification.isRead ? "bg-accent" : "bg-neutral-400",
                       )}
                     />
                     <div>
                       <div className="text-field font-medium">
                         {notification.title}
                       </div>
-                      <div className="text-cell text-ink/60">
-                        {notification.body}
+                      <div className="text-cell text-ink/60 line-clamp-1">
+                        {notification.message}
                       </div>
                       <div className="mt-0.5 text-[11px] text-ink/45">
-                        {notification.time}
+                        {formatRelativeDate(notification.createdAt)}
                       </div>
                     </div>
                   </li>
