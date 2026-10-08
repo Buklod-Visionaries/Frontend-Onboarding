@@ -25,7 +25,7 @@ const employeeSchema = new mongoose.Schema({
   },
   onboardingStatus: {
     type: String,
-    enum: ["in_progress", "completed"],
+    enum: ["in_progress", "completed", "deactivated"],
     default: "in_progress",
     required: true,
   },

@@ -110,3 +110,45 @@ export async function updateOwnUserPassword(req, res) {
 
   res.send({ message: "Successfully edited user" });
 }
+
+//
+export async function changeUserStatus(req, res) {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  //validation
+  if (!id) {
+    return res.status(404).send({ message: "No user id provided" });
+  }
+  if (!status) {
+    return res.status(404).send({ message: "No status provided" });
+  }
+
+  //if the status is deactivated
+  if (status === "deactivated" || status === "active") {
+    //find specific user
+    const user = await User.findOne({ _id: id });
+
+    // also set active employee data if user is an employee
+    if (user.role === "employee") {
+      await Employee.findOneAndUpdate(
+        { user: user._id },
+        {
+          $set: {
+            onboardingStatus:
+              status === "active" ? "in_progress" : "deactivated", //if active then in_progress
+          },
+        },
+      );
+    }
+
+    //set user data status
+    user.status = status;
+    user.save();
+
+    return res.send({
+      message: `Successfully set ${user.username} user${user.role === "employee" ? " and employee" : ""} status to ${status}`,
+    });
+  }
+  res.send({ message: "Error, not a valid status" });
+}

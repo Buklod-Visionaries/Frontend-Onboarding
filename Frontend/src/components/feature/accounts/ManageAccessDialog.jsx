@@ -48,7 +48,7 @@ function ManageAccessDialogBody({ target, onClose }) {
       width="max-w-[520px]"
       kicker="Manage user access"
       title={target.username}
-      subtitle={`${formatRole(target.role)} ${target.department ? ` · ${capitalize(target.department)}` : ""}`}
+      subtitle={`${formatRole(target.role)} ${target.position ? ` · ${capitalize(target.position)}` : target.department ? ` · ${capitalize(target.department)}` : ""}`}
       actions={
         <>
           <Button onClick={onClose} disabled={resetPasswordMutation.isPending}>
@@ -78,7 +78,9 @@ function ManageAccessDialogBody({ target, onClose }) {
               app.showToast(`Access updated for ${target.name}`);
               onClose();
             }}
-            disabled={resetPasswordMutation.isPending}
+            disabled={
+              resetPasswordMutation.isPending || status === target.status
+            }
           >
             Save changes
           </Button>

@@ -15,9 +15,9 @@ export const ROLES = ["HR Staff", "Department Representative", "Employee"];
 export const STATUSES = ["Pending", "In Progress", "Completed"];
 
 export const ACCOUNT_STATUSES = [
-  "Active",
-  "Pending first login",
-  "Deactivated",
+  { value: "active", label: "Active" },
+  { value: "deactivated", label: "Deactivated" },
+  // "Pending first login", // redundant when theres reset to temporary password
 ];
 
 export const SUB_LABELS = [

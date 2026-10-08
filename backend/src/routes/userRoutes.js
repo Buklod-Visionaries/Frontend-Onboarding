@@ -8,6 +8,7 @@ import {
   updateOwnUserPassword,
   resetUserPassword,
   deleteUser,
+  changeUserStatus,
 } from "../controllers/userController.js";
 //
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
@@ -47,6 +48,14 @@ router.patch(
   verifyToken,
   authorizeRoles("hr"),
   asyncHandler(resetUserPassword),
+);
+
+//change users status
+router.patch(
+  "/:id/status",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(changeUserStatus),
 );
 
 export default router;

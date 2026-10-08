@@ -135,9 +135,19 @@ export default function UserManagement() {
                       </TCell>
                       <TCell>
                         <Badge
-                          variant={user.isFirstLogin ? "in-progress" : "active"}
+                          variant={
+                            user.isFirstLogin
+                              ? "in-progress"
+                              : user.status === "active"
+                                ? "active"
+                                : "deactivated"
+                          }
                         >
-                          {user.isFirstLogin ? "Pending First Login" : "Active"}
+                          {user.isFirstLogin
+                            ? "Pending First Login"
+                            : user.status === "active"
+                              ? "Active"
+                              : "Deactivated"}
                         </Badge>
                       </TCell>
                       <TCell>

@@ -139,12 +139,18 @@ export default function EmployeeList() {
                       variant={
                         employee.onboardingStatus === "in_progress"
                           ? "active"
-                          : "completed"
+                          : employee.onboardingStatus === "completed"
+                            ? "completed"
+                            : employee.onboardingStatus === "deactivated" &&
+                              "deactivated"
                       }
                     >
                       {employee.onboardingStatus === "in_progress"
                         ? "In Progress"
-                        : "Completed"}
+                        : employee.onboardingStatus === "completed"
+                          ? "Completed"
+                          : employee.onboardingStatus === "deactivated" &&
+                            "Deactivated"}
                     </Badge>
                   </TCell>
                   <TCell align="right">

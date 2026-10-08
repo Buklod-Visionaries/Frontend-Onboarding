@@ -219,6 +219,7 @@ function ReviewDialogBody({
                       ? specificEmpReqHistories
                       : [{ note: "No submissions yet", time: "—" }]
                   }
+                  history
                 />
               </Card>
             )}
