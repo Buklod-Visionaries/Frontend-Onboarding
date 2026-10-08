@@ -9,12 +9,10 @@ import { StatStrip } from "../../components/ui/StatCard";
 import { EmptyState } from "../../components/ui/Notice";
 import { cx } from "../../lib/cx";
 import { useApp } from "../../hooks/useApp";
-import { countRequirements } from "../../domain/requirements";
 import { formatDate, formatRelativeDate, isOverdue } from "../../domain/date";
 //
-import { useState, useEffect } from "react";
 import { SUB_LABELS } from "../../domain/constants.js";
-import api from "../../lib/axios.js";
+import { OverdueBadge } from "../../components/ui/Badge";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentEmployee } from "../../hooks/useEmployees.js";
 import { useMyRequirements } from "../../hooks/useRequirements.js";
@@ -215,7 +213,10 @@ export default function EmployeeDashboard() {
                           }
                         >
                           {formatStatus(requirement.status)}
-                        </Badge>
+                        </Badge>{" "}
+                        <OverdueBadge
+                          when={isOverdue(formatDate(requirement.dueDate))}
+                        />
                       </DividerRow>
                     ))}
                 </DividerList>
