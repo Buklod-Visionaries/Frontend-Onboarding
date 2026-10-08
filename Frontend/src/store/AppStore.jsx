@@ -230,7 +230,7 @@ export default function AppProvider({ children }) {
   );
 
   const sendReminder = useCallback(
-    (employee) => showToast(`Reminder sent to ${employee.name}`),
+    (employee) => showToast(`Reminder sent to ${employee.user.username}`),
     [showToast],
   );
 

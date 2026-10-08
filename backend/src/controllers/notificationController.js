@@ -9,6 +9,10 @@ export async function createNotification(req, res) {
     message,
   });
 
+  if (!newNotification) {
+    return res.status(404).send({ message: "No notification created" });
+  }
+
   await newNotification.save();
   res.status(201).send(newNotification);
 }

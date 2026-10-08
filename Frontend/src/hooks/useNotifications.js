@@ -1,10 +1,17 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
+  createNotification,
   fetchAllOwnNotifications,
   readAllOwnNotifications,
   deleteAllOwnNotifications,
 } from "../api/notifications";
 
+export function useCreateNotif(token) {
+  return useMutation({
+    mutationFn: ({ user, title, message }) =>
+      createNotification(token, user, title, message),
+  });
+}
 export function useAllOwnNotif(token) {
   return useQuery({
     queryKey: ["notifications"],

@@ -13,6 +13,7 @@ import { formatStatus } from "../../lib/formatter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSpecificEmployee } from "../../hooks/useEmployees";
 import { useSpecificEmployeeRequirements } from "../../hooks/useRequirements";
+import { useCreateNotif } from "../../hooks/useNotifications";
 import { capitalize } from "../../lib/capitalize";
 
 /** Employee record, scoped to onboarding requirements. */
@@ -34,6 +35,9 @@ export default function EmployeeProfile() {
     isLoading: empRequirementsLoading,
     isError: empRequirementsError,
   } = useSpecificEmployeeRequirements(app.session.accessToken, params.id);
+
+  //notif mutation
+  const createNotifMutation = useCreateNotif(app.session.accessToken);
 
   ////
   if (employeeLoading || empRequirementsLoading) {
@@ -60,6 +64,37 @@ export default function EmployeeProfile() {
       </Card>
     );
   }
+
+  //reminder message creation NOT USED
+  // const inProgressCount = empRequirements.filter(
+  //   (req) => req.status === "in-progress" && req.type === "document",
+  // ).length;
+  // const overdueCount = empRequirements.filter(
+  //   (req) =>
+  //     (req.status === "in-progress" ||
+  //       (req.status === "resubmission-required" && req.type === "document")) &&
+  //     isOverdue(formatDate(req.dueDate)),
+  // ).length;
+  // const resubmissionRequiredCount = empRequirements.filter(
+  //   (req) => req.status === "resubmission-required" && req.type === "document",
+  // ).length;
+
+  // const parts = [];
+  // if (inProgressCount > 0) {
+  //   parts.push(
+  //     `${inProgressCount} in progress requirement${inProgressCount > 1 ? "s" : ""}`,
+  //   );
+  // }
+  // if (overdueCount > 0) {
+  //   parts.push(
+  //     `${overdueCount} overdue requirement${overdueCount > 1 ? "s" : ""}`,
+  //   );
+  // }
+  // if (resubmissionRequiredCount > 0) {
+  //   parts.push(
+  //     `${resubmissionRequiredCount} resubmission required requirement${resubmissionRequiredCount > 1 ? "s" : ""}`,
+  //   );
+  // }
 
   return (
     <>
@@ -99,7 +134,29 @@ export default function EmployeeProfile() {
             <Button onClick={() => navigate("/hr/employees")}>
               Back to list
             </Button>
-            <Button onClick={() => app.sendReminder(employee)}>
+            <Button
+              onClick={async () => {
+                try {
+                  await createNotifMutation.mutateAsync({
+                    user: employee.user._id,
+                    title: "Onboarding Requirements Reminder",
+                    message:
+                      "You have onboarding requirements that need your attention. Please review your requirements and submit any in progress documents or resubmit documents that require changes",
+                  }); //user, title, message
+                  app.showToast(`Reminder sent to ${employee.user.username}`);
+                } catch (error) {
+                  console.log("Failed sending notif", error);
+                }
+              }}
+              disabled={
+                //disabled if all req are completed
+                empRequirements.filter(
+                  (req) =>
+                    req.status === "in-progress" ||
+                    req.status === "resubmission-required",
+                ).length === 0
+              }
+            >
               Send reminder
             </Button>
           </div>

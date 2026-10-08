@@ -15,6 +15,7 @@ import {
 
 const router = express.Router();
 
+//can be used to send reminder to employee
 router.post(
   "/",
   verifyToken,

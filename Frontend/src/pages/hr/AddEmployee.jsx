@@ -200,14 +200,17 @@ export default function AddEmployee() {
             </div>
             <h4 className="mt-1 text-[20px]">Requirements for this position</h4>
           </div>
-          <p className="m-0 text-cell text-ink/60">
-            {
-              requirements.filter((req) => req.department === dep.toLowerCase())
-                .length
-            }{" "}
-            requirements are assigned automatically for {position} in {dep}. HR
-            can adjust them afterwards on the employee record.
-          </p>
+          {dep !== "Select department" && (
+            <p className="m-0 text-cell text-ink/60">
+              {
+                requirements.filter(
+                  (req) => req.department === dep.toLowerCase(),
+                ).length
+              }{" "}
+              requirements are assigned automatically for {position} in {dep}.
+              HR can adjust them afterwards on the employee record.
+            </p>
+          )}
           <DividerList>
             {requirements
               .filter((req) => req.department === dep.toLowerCase())
