@@ -195,7 +195,7 @@ function ReviewDialogBody({
                 <>
                   <dt className="text-ink/50">Approved By</dt>
                   <dd className="m-0">
-                    {empReq.verifiedBy.username} -
+                    {empReq.verifiedBy.username} -{" "}
                     {formatRole(empReq.verifiedBy.role)}
                   </dd>
                 </>

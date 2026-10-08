@@ -313,6 +313,7 @@ export default function RequirementDetail() {
               ? specificEmpReqHistories
               : [{ note: "No submissions yet", time: "—" }]
           }
+          history
         />
       </Card>
     </AutoGrid>

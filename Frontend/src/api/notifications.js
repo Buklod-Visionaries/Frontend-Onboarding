@@ -13,10 +13,13 @@ export async function createNotification(token, user, title, message) {
   return res.data;
 }
 
-export async function fetchAllOwnNotifications(token) {
+export async function fetchAllOwnNotifications(token, limit) {
   const res = await api.get("/notifications/me", {
     headers: {
       Authorization: `Bearer ${token}`,
+    },
+    params: {
+      limit: limit, //set limit
     },
   });
   return res.data;

@@ -18,10 +18,17 @@ export async function createNotification(req, res) {
 }
 
 export async function getAllNotifications(req, res) {
-  const notif = await Notification.find().populate(
-    "user",
-    "username email _id", //only show these fields from users
-  );
+  const { limit } = req.query;
+
+  //if theres a limit query
+  const notifLimit = parseInt(limit) || 0;
+
+  const notif = await Notification.find()
+    .populate(
+      "user",
+      "username email _id", //only show these fields from users
+    )
+    .limit(notifLimit);
 
   if (!notif) {
     return res.status(404).send({ message: "No notifications" });
@@ -60,6 +67,11 @@ export async function deleteAllOwnNotifications(req, res) {
 }
 
 export async function getAllOwnNotifications(req, res) {
+  const { limit } = req.query;
+
+  //if theres a limit query
+  const notifLimit = parseInt(limit) || 0;
+
   const notifications = await Notification.find({ user: req.user.id })
     .populate(
       "user",
@@ -67,7 +79,9 @@ export async function getAllOwnNotifications(req, res) {
     )
     .sort({
       createdAt: -1,
-    });
+    })
+    .limit(notifLimit);
+
   res.send(notifications);
 }
 

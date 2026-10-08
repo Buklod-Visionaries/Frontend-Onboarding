@@ -16,7 +16,7 @@ import { formatDate, isOverdue } from "../../domain/date";
 import { capitalize } from "../../lib/capitalize";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRequirements } from "../../hooks/useRequirements";
-import { useAllEmpReqHistories } from "../../hooks/useRequirementHistories";
+import { useAllOwnNotif } from "../../hooks/useNotifications";
 import { useEmployees } from "../../hooks/useEmployees";
 
 export default function HrDashboard() {
@@ -39,13 +39,13 @@ export default function HrDashboard() {
     isError: requirementsError,
   } = useRequirements(app.session.accessToken);
   const {
-    data: empReqHistories = [],
-    isLoading: empReqHistoriesLoading,
-    isError: empReqHistoriesError,
-  } = useAllEmpReqHistories(app.session.accessToken, 4); // the number is how many history to show. already sorted newest
+    data: notifications = [],
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+  } = useAllOwnNotif(app.session.accessToken, 6);
 
   ////
-  if (employeesLoading || requirementsLoading || empReqHistoriesLoading) {
+  if (employeesLoading || requirementsLoading || notificationsLoading) {
     return <p>Loading...</p>;
   }
 
@@ -55,7 +55,7 @@ export default function HrDashboard() {
   if (requirementsError) {
     return <p>Failed loading requirements</p>;
   }
-  if (empReqHistoriesError) {
+  if (notificationsError) {
     return <p>Failed loading employee requirements history</p>;
   }
 
@@ -117,8 +117,9 @@ export default function HrDashboard() {
             return requirements.some(
               (req) =>
                 req.employee._id === employee._id &&
-                (req.status !== "pending" ||
-                  isOverdue(formatDate(req.dueDate))),
+                (req.status === "pending" ||
+                  (req.status !== "completed" &&
+                    isOverdue(formatDate(req.dueDate)))),
             );
           }).length ? (
             <div className="flex flex-col">
@@ -128,7 +129,8 @@ export default function HrDashboard() {
                     (req) =>
                       req.employee._id === employee._id &&
                       (req.status === "pending" ||
-                        isOverdue(formatDate(req.dueDate))),
+                        (req.status !== "completed" &&
+                          isOverdue(formatDate(req.dueDate)))),
                   );
                 })
                 .map((employee) => {
@@ -159,6 +161,7 @@ export default function HrDashboard() {
                         {requirements.filter(
                           (req) =>
                             req.employee._id === employee._id &&
+                            req.status !== "completed" &&
                             isOverdue(formatDate(req.dueDate)),
                         ).length > 0 && (
                           <span>
@@ -206,8 +209,8 @@ export default function HrDashboard() {
 
         <Card className="gap-3.5">
           <h4 className="text-[20px]">Recent onboarding activity</h4>
-          {empReqHistories.length > 0 ? (
-            <EventList items={empReqHistories} round />
+          {notifications.length > 0 ? (
+            <EventList items={notifications} notifications round />
           ) : (
             "No current onboarding activities"
           )}

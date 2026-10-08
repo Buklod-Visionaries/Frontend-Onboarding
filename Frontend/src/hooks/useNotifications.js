@@ -12,10 +12,10 @@ export function useCreateNotif(token) {
       createNotification(token, user, title, message),
   });
 }
-export function useAllOwnNotif(token) {
+export function useAllOwnNotif(token, limit) {
   return useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => fetchAllOwnNotifications(token),
+    queryKey: ["notifications", limit],
+    queryFn: () => fetchAllOwnNotifications(token, limit),
     enabled: !!token,
     refetchInterval: 10000, //every 10 seconds
   });

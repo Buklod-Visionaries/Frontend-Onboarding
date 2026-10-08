@@ -149,11 +149,12 @@ export default function EmployeeProfile() {
                 }
               }}
               disabled={
-                //disabled if all req are completed
+                //disabled if no requirements are overdue while in progress or resubmission required
                 empRequirements.filter(
                   (req) =>
-                    req.status === "in-progress" ||
-                    req.status === "resubmission-required",
+                    isOverdue(formatDate(req)) &&
+                    (req.status === "in-progress" ||
+                      req.status === "resubmission-required"),
                 ).length === 0
               }
             >
