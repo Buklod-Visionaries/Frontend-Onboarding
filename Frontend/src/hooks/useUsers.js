@@ -5,6 +5,7 @@ import {
   getCurrentEmployeeUser,
   resetTempPass,
   updateOwnUserPass,
+  changeUserStatus,
 } from "../api/users";
 
 export function useUsers(token) {
@@ -42,5 +43,11 @@ export function useResetTempPass(token) {
 export function useUpdateOwnUserPass(token) {
   return useMutation({
     mutationFn: (password) => updateOwnUserPass(token, password),
+  });
+}
+
+export function useChangeUserStatus(token) {
+  return useMutation({
+    mutationFn: ({ id, status }) => changeUserStatus(token, id, status),
   });
 }

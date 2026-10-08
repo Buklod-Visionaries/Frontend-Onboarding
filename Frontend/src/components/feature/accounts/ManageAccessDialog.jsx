@@ -9,6 +9,7 @@ import { capitalize } from "../../../lib/capitalize";
 //
 import { useQueryClient } from "@tanstack/react-query";
 import { useResetTempPass } from "../../../hooks/useUsers";
+import { useChangeUserStatus } from "../../../hooks/useUsers";
 import { generatePassword } from "../../../lib/generateTempPassword";
 
 const NOTES = {
@@ -28,6 +29,8 @@ function ManageAccessDialogBody({ target, onClose }) {
 
   //pass the user token on reset pass hook
   const resetPasswordMutation = useResetTempPass(app.session.accessToken);
+  //change user status mutation variable
+  const changeUserStatusMutation = useChangeUserStatus(app.session.accessToken);
 
   //sends the userId and generated tempPass to the hook patch request
   const resetTempPass = async () => {
@@ -73,10 +76,22 @@ function ManageAccessDialogBody({ target, onClose }) {
           </Button>
           <Button
             variant="primary"
-            onClick={() => {
-              app.updateAccount(target, { status, department });
-              app.showToast(`Access updated for ${target.name}`);
-              onClose();
+            onClick={async () => {
+              try {
+                await changeUserStatusMutation.mutateAsync({
+                  //change status by passing id and status to API
+                  id: target._id,
+                  status: status.toLowerCase(),
+                });
+                queryClient.invalidateQueries({
+                  //reloads user list
+                  queryKey: ["users"],
+                });
+                app.showToast(`Access updated for ${target.username}`);
+                onClose();
+              } catch (error) {
+                console.log("Failed saving changes", error);
+              }
             }}
             disabled={
               resetPasswordMutation.isPending || status === target.status

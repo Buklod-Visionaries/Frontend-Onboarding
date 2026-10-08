@@ -16,7 +16,7 @@ import { EM_DASH, TEMP_PASSWORD } from "../../domain/constants";
 //
 import { formatRole } from "../../lib/formatter";
 import { capitalize } from "../../lib/capitalize";
-import { formatDate, formatRelativeDate } from "../../domain/date";
+import { formatRelativeDate } from "../../domain/date";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUsers } from "../../hooks/useUsers";
 

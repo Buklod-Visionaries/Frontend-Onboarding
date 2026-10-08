@@ -108,7 +108,15 @@ export default function EmployeeProfile() {
               {employee.user.username}
             </h2>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={"in-progress"}>
+              <Badge
+                variant={
+                  employee.onboardingStatus === "in_progress"
+                    ? "in-progress"
+                    : employee.onboardingStatus === "completed"
+                      ? "completed"
+                      : "deactivated"
+                }
+              >
                 {formatStatus(employee.onboardingStatus)}
               </Badge>
               <span className="text-meta text-ink/55">

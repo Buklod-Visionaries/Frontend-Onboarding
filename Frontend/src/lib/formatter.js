@@ -15,6 +15,7 @@ export function formatStatus(status) {
     completed: "Completed",
     "resubmission-required": "Resubmission Required",
     pending: "Pending",
+    deactivated: "Deactivated",
   };
 
   return statuses[status] || status;

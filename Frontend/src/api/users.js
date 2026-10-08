@@ -52,3 +52,16 @@ export async function updateOwnUserPass(token, password) {
   );
   return res.data;
 }
+
+export async function changeUserStatus(token, id, status) {
+  const res = await api.patch(
+    `/users/${id}/status`,
+    { status },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return res.data;
+}
