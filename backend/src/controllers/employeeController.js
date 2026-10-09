@@ -5,6 +5,7 @@ import Requirement from "../models/requirementModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
 import Document from "../models/documentModel.js";
 import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+import Notification from "../models/notificationModel.js";
 import supabase from "../lib/supabase.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -109,6 +110,37 @@ export async function addEmployee(req, res) {
   await newUser.save();
   await newEmployee.save();
   await EmployeeRequirement.insertMany(newEmployeeReq); // insert multiple employeeRequirements using model itself
+
+  //create notification to dept rep
+
+  //find all dept rep on same department as employee
+  const deptRep = await User.find({
+    role: "dept-rep",
+    department: newEmployee.department,
+  });
+
+  //create notif to depReps
+  const depRepNotif = deptRep.map((deptRepUser) => {
+    return new Notification({
+      user: deptRepUser._id,
+      title: "New Employee Assigned",
+      message: `A new employee, ${newUser.username}, has been assigned to your department. Please review their assigned onboarding activities.`,
+    });
+  });
+  //save dept rep notif to DB
+  await Notification.insertMany(depRepNotif);
+
+  //create notif to all HR
+  const hr = await User.find({ role: "hr" });
+  const hrNotif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: `${newUser.username} added as an Employee`,
+      message: `A new employee has been assigned to the ${department} department. Their onboarding requirements are ready for tracking.`,
+    });
+  });
+  //save hr notif to DB
+  await Notification.insertMany(hrNotif);
 
   res.send({
     message: "successfully created new employee",

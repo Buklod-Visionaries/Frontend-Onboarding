@@ -164,6 +164,22 @@ export async function firstLogin(req, res) {
 
   //hashed the new password typed in form
   const newHashedPass = await bcrypt.hash(newPass, 10);
+  //create notif message for pending firstLogin
+  if (user.isFirstLogin) {
+    const notif = new Notification({
+      user: user._id,
+      title:
+        user.role === "employee" ? "Welcome Aboard!" : "Welcome to the system",
+      message:
+        user.role === "employee"
+          ? `Welcome, ${user.username}, to Premiere Medical and Cardiovascular Laboratory Inc.! We look forward to having you on our team. You can use this system to track your onboarding progress and complete your required onboarding documents.`
+          : user.role === "hr"
+            ? `Welcome, ${user.username}! You can use this system to manage employee onboarding, monitor requirements, review submitted documents, and track onboarding progress.`
+            : `Welcome, ${user.username}! You can use this system to review and verify the onboarding activities assigned to your department and help ensure that new employees complete their requirements.`,
+    });
+    //save to DB
+    await notif.save();
+  }
   //set new pass and the account to active
   user.password = newHashedPass;
   user.isFirstLogin = false;
