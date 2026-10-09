@@ -5,6 +5,7 @@ import User from "../models/userModel.js";
 import Task from "../models/requirementModel.js";
 import Employee from "../models/employeeModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
+import Notification from "../models/notificationModel.js";
 
 export async function getAllUser(req, res) {
   //get all user from db
@@ -148,6 +149,18 @@ export async function changeUserStatus(req, res) {
     //set user data status
     user.status = status;
     await user.save();
+
+    if (status === "active") {
+      //create notification to the user
+      const notif = new Notification({
+        user: user._id,
+        title: "Account Reactivated",
+        message:
+          "Your account has been reactivated by HR. You can now access the system using your existing login credentials.",
+      });
+      //save to DB and send
+      await notif.save();
+    }
 
     return res.send({
       message: `Successfully set ${user.username} user${user.role === "employee" ? " and employee" : ""} status to ${status}`,
