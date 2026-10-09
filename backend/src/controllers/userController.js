@@ -129,7 +129,10 @@ export async function changeUserStatus(req, res) {
     //find specific user
     const user = await User.findOne({ _id: id });
 
-    // also set active employee data if user is an employee
+    if (!user) {
+      return res.status(404).send({ message: "No user found" });
+    }
+
     if (user.role === "employee") {
       await Employee.findOneAndUpdate(
         { user: user._id },
@@ -144,7 +147,7 @@ export async function changeUserStatus(req, res) {
 
     //set user data status
     user.status = status;
-    user.save();
+    await user.save();
 
     return res.send({
       message: `Successfully set ${user.username} user${user.role === "employee" ? " and employee" : ""} status to ${status}`,

@@ -13,9 +13,9 @@ export function EventList({ items, round, history, notifications }) {
         >
           <span
             className={cx(
-              "mt-1.5 h-[7px] w-[7px] bg-accent",
+              "mt-1.5 h-[7px] w-[7px]",
               round && "rounded-full",
-              notifications && !event.isRead === "bg-accent-200",
+              notifications && !event.isRead ? "bg-accent" : "bg-neutral-400",
             )}
           />
           <div>

@@ -70,7 +70,9 @@ function ManageAccessDialogBody({ target, onClose }) {
                 app.showToast("Failed to reset temporary password");
               }
             }}
-            disabled={resetPasswordMutation.isPending}
+            disabled={
+              resetPasswordMutation.isPending || !target.passwordResetRequested
+            }
           >
             Reset to temporary password
           </Button>
@@ -83,14 +85,14 @@ function ManageAccessDialogBody({ target, onClose }) {
                   id: target._id,
                   status: status.toLowerCase(),
                 });
-                queryClient.invalidateQueries({
-                  //reloads user list
+                await queryClient.invalidateQueries({
                   queryKey: ["users"],
                 });
-                app.showToast(`Access updated for ${target.username}`);
-                onClose();
+                app.showToast(`Access set to ${status} for ${target.username}`);
               } catch (error) {
                 console.log("Failed saving changes", error);
+              } finally {
+                onClose();
               }
             }}
             disabled={
@@ -130,7 +132,7 @@ export default function ManageAccessDialog({ target, onClose }) {
   if (!target) return null;
   return (
     <ManageAccessDialogBody
-      key={`${target.kind}-${target.id}`}
+      key={`${target.username}-${target._id}`}
       target={target}
       onClose={onClose}
     />
