@@ -73,12 +73,18 @@ export async function login(req, res) {
       .status(404)
       .send({ message: "First-time login user needs to setup new password" });
   }
+  //deactivated account forbidden access
+  if (user.status === "deactivated") {
+    return res
+      .status(403)
+      .send({ message: "Account deactivated. Contact HR for help." });
+  }
   //compares the hashed password to the requested user password
   const userMatch = await bcrypt.compare(password, user.password);
 
   //when the password does not match
   if (!userMatch) {
-    return res.status(400).send({ message: `Invalid credentials` });
+    return res.status(400).send({ message: `Invalid email or password.` });
   }
 
   // creates an access token for the user
@@ -245,8 +251,16 @@ export async function refresh(req, res) {
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select(
-      "_id email username role",
+      "_id email username role status",
     );
+
+    //deactivated account forbidden access
+    if (user.status === "deactivated") {
+      return res
+        .status(403)
+        .send({ message: "Account deactivated. Contact HR for help." });
+    }
+
     const accessToken = jwt.sign(
       {
         id: user._id,
