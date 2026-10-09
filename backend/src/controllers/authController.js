@@ -122,6 +122,7 @@ export async function login(req, res) {
   res.status(200).send({
     accessToken: accessToken,
     user: {
+      //explicitly return specific fields
       id: user._id,
       username: user.username,
       email: user.email,
@@ -259,7 +260,16 @@ export async function refresh(req, res) {
       },
     );
 
-    res.send({ accessToken, user });
+    res.status(200).send({
+      accessToken: accessToken,
+      user: {
+        //explicitly return specific fields
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     return res.status(403).json({
       message: "Invalid refresh token",

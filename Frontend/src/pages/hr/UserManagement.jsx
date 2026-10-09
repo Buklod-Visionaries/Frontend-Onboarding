@@ -170,7 +170,7 @@ export default function UserManagement() {
                         )}
                       </TCell>
                       <TCell>{formatRelativeDate(user.lastSignIn)}</TCell>
-                      {app.session._id !== user._id && (
+                      {app.session.id !== user._id && (
                         <TCell align="right">
                           <Button onClick={() => setManage(user)}>
                             Manage access
