@@ -125,12 +125,15 @@ export default function HrDashboard() {
             <div className="flex flex-col">
               {employees
                 .filter((employee) => {
-                  return requirements.some(
-                    (req) =>
-                      req.employee._id === employee._id &&
-                      (req.status === "pending" ||
-                        (req.status !== "completed" &&
-                          isOverdue(formatDate(req.dueDate)))),
+                  return (
+                    employee.onboardingStatus !== "deactivated" && //exclude deactivated employees requirement
+                    requirements.some(
+                      (req) =>
+                        req.employee._id === employee._id &&
+                        (req.status === "pending" ||
+                          (req.status !== "completed" &&
+                            isOverdue(formatDate(req.dueDate)))),
+                    )
                   );
                 })
                 .map((employee) => {
@@ -221,8 +224,18 @@ export default function HrDashboard() {
         <div className="flex flex-wrap items-center gap-3">
           <h4 className="text-[20px]">Awaiting verification</h4>
           <span className="text-meta text-ink/55">
-            {requirements.filter((req) => req.status === "pending").length}{" "}
-            {queue.filter((req) => req.status === "pending") === 1
+            {
+              requirements.filter(
+                (req) =>
+                  req.status === "pending" &&
+                  req.employee.onboardingStatus !== "deactivated",
+              ).length
+            }{" "}
+            {queue.filter(
+              (req) =>
+                req.status === "pending" &&
+                req.employee.onboardingStatus !== "deactivated",
+            ) === 1
               ? "submission"
               : "submissions"}{" "}
             in queue
@@ -234,7 +247,11 @@ export default function HrDashboard() {
             Open verification queue
           </Button>
         </div>
-        {requirements.length > 0 ? (
+        {requirements.filter(
+          (req) =>
+            req.status === "pending" &&
+            req.employee.onboardingStatus !== "deactivated",
+        ).length > 0 ? (
           <Table>
             <THead
               columns={[
@@ -247,7 +264,11 @@ export default function HrDashboard() {
             />
             <tbody>
               {requirements
-                .filter((req) => req.status === "pending")
+                .filter(
+                  (req) =>
+                    req.status === "pending" &&
+                    req.employee.onboardingStatus !== "deactivated", //exclude deactivated employees requirement
+                )
                 .map((row) => (
                   <TRow key={row.requirement.id}>
                     <TCell strong>{row.employee.user.username}</TCell>
