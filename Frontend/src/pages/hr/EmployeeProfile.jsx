@@ -163,7 +163,7 @@ export default function EmployeeProfile() {
                     isOverdue(formatDate(req)) &&
                     (req.status === "in-progress" ||
                       req.status === "resubmission-required"),
-                ).length === 0
+                ).length === 0 || employee.onboardingStatus === "deactivated" //disabled if employee is deactivated
               }
             >
               Send reminder

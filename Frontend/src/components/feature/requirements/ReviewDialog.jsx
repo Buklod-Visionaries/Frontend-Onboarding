@@ -109,7 +109,13 @@ function ReviewDialogBody({
                 <Button onClick={onClose}>Cancel</Button>
                 {existingDocument && (
                   <>
-                    <Button onClick={resubmit} disabled={resubmitLoading}>
+                    <Button
+                      onClick={resubmit}
+                      disabled={
+                        resubmitLoading ||
+                        employee.onboardingStatus === "deactivated"
+                      }
+                    >
                       {resubmitMode
                         ? resubmitLoading
                           ? "Sending request..."
@@ -119,7 +125,10 @@ function ReviewDialogBody({
                     {!resubmitMode && (
                       <Button
                         variant="primary"
-                        disabled={approveLoading}
+                        disabled={
+                          approveLoading ||
+                          employee.onboardingStatus === "deactivated" //disabled if employee is deactivated
+                        }
                         onClick={approve}
                       >
                         {approveLoading
