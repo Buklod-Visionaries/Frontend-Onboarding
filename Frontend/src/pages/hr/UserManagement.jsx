@@ -81,7 +81,9 @@ export default function UserManagement() {
             />
             <StatCard
               label="Deactivated"
-              value={users.filter((user) => !user).length}
+              value={
+                users.filter((user) => user.status === "deactivated").length
+              }
               note="Access withdrawn"
             />
           </AutoGrid>
@@ -128,7 +130,9 @@ export default function UserManagement() {
                       <TCell strong>{user.username}</TCell>
                       <TCell>{formatRole(user.role)}</TCell>
                       <TCell>
-                        {user.role === "hr" ? "-" : capitalize(user.department)}
+                        {user.role === "hr"
+                          ? "Administration"
+                          : capitalize(user.department)}
                       </TCell>
                       <TCell muted className="text-cell">
                         {user.email}
