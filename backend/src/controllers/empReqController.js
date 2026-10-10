@@ -320,6 +320,58 @@ export async function editEmpReq(req, res) {
       await Notification.insertMany(hrNotif);
     }
 
+    // MARKS onboarding status as completed if all requirements are completed //
+    //find specific employee
+    const employee = await Employee.findOne({
+      _id: editedReq.employee._id,
+    }).populate("user");
+
+    if (!employee) {
+      return res.status(404).send({ message: "No employee found" });
+    }
+
+    //find all empReqs of that employee
+    const allEmpReqs = await EmployeeRequirement.find({
+      employee: employee._id,
+    });
+
+    if (allEmpReqs.length === 0) {
+      return res.status(404).send("No employee requirements for the employee.");
+    }
+
+    //checks if all requirements are completed
+    const allCompleted = allEmpReqs.every(
+      (empReq) => empReq.status === "completed",
+    );
+
+    //set employee onboarding as completed
+    if (allCompleted && employee.onboardingStatus !== "completed") {
+      //mark specific employee as completed
+      employee.onboardingStatus = "completed";
+      await employee.save();
+
+      //find all HR
+      const hr = await User.find({ role: "hr" });
+      //create notif for each HR
+      const hrNotif = hr.map((hrUser) => {
+        return new Notification({
+          user: hrUser._id,
+          title: `${employee.user.username} Completed Onboarding`,
+          message: `${employee.user.username} has completed all assigned onboarding requirements. Their onboarding process is now complete.`,
+        });
+      });
+      //create notif to the completed onboarding employee
+      const employeeNotif = new Notification({
+        user: employee.user._id,
+        title: "Onboarding Completed Successfully",
+        message: `Congratulations! You have completed all your onboarding requirements. Your onboarding process is now complete.`,
+      });
+
+      //save notif to DB
+      await Notification.insertMany(hrNotif);
+      await employeeNotif.save();
+    }
+
     return res.send(editedReq);
   }
 }
