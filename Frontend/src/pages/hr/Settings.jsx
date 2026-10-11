@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import AutoGrid from "../../components/ui/AutoGrid";
@@ -7,17 +7,21 @@ import { useApp } from "../../hooks/useApp";
 //
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateOwnUserPass } from "../../hooks/useUsers";
+import {
+  useFetchSystemSettings,
+  useUpdateSystemSettings,
+} from "../../hooks/useSystemSettings";
 
 const DEADLINE_OPTIONS = [
-  { value: "7", label: "7 days from start date" },
-  { value: "10", label: "10 days from start date" },
-  { value: "14", label: "14 days from start date" },
+  { value: 7, label: "7 days from start date" },
+  { value: 10, label: "10 days from start date" },
+  { value: 14, label: "14 days from start date" },
 ];
 
 const REMINDER_OPTIONS = [
-  { value: "1", label: "1 day before" },
-  { value: "3", label: "3 days before" },
-  { value: "5", label: "5 days before" },
+  { value: 1, label: "1 day before" },
+  { value: 3, label: "3 days before" },
+  { value: 5, label: "5 days before" },
 ];
 
 export default function Settings() {
@@ -25,10 +29,25 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
-
+  //fetch system settings hook
+  const {
+    data: systemSettings = [],
+    isLoading: systemSettingsLoading,
+    isError: systemSettingsError,
+  } = useFetchSystemSettings(app.session.accessToken);
+  const [deadlineDays, setDeadlineDays] = useState(systemSettings.deadlineDays);
+  const [reminderDaysBefore, setReminderDaysBefore] = useState(
+    systemSettings.reminderDaysBefore,
+  );
+  //update own user pass hook
   const updateOwnUserPasswordMutation = useUpdateOwnUserPass(
     app.session.accessToken,
   );
+  //update system settings hook
+  const {
+    mutateAsync: updateSystemSettingsMutation,
+    isPending: updateSystemSettingsPending,
+  } = useUpdateSystemSettings(app.session.accessToken);
 
   const save = async () => {
     if (next.length < 6) {
@@ -51,6 +70,15 @@ export default function Settings() {
     app.setSettings((current) => ({ ...current, [key]: value }));
   };
 
+  if (systemSettingsLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (systemSettingsError) {
+    return <p>Failed loading system settings.</p>;
+  }
+
+  console.log(systemSettings);
   return (
     <AutoGrid min={320} className="items-start">
       <Card padding="lg" className="gap-4">
@@ -88,18 +116,18 @@ export default function Settings() {
       </Card>
 
       <Card padding="lg" className="gap-4">
-        <h4 className="text-[20px]">System settings</h4>
+        <h4 className="text-[20px]">System Settings</h4>
         <Field label="Default deadline for document requirements">
           <Select
-            value={app.settings.deadline}
-            onChange={setSetting("deadline")}
+            value={deadlineDays}
+            onChange={(e) => setDeadlineDays(Number(e.target.value))}
             options={DEADLINE_OPTIONS}
           />
         </Field>
         <Field label="Reminder notice before a deadline">
           <Select
-            value={app.settings.reminder}
-            onChange={setSetting("reminder")}
+            value={reminderDaysBefore}
+            onChange={(e) => setReminderDaysBefore(Number(e.target.value))}
             options={REMINDER_OPTIONS}
           />
         </Field>
@@ -107,6 +135,27 @@ export default function Settings() {
           Applies to newly assigned requirements. Existing deadlines are
           unchanged.
         </p>
+        <Button
+          variant="primary"
+          className="self-start"
+          onClick={async () => {
+            try {
+              await updateSystemSettingsMutation({
+                deadlineDays,
+                reminderDaysBefore,
+              });
+            } catch (error) {
+              app.showToast("Failed updating system settings");
+              console.log("Error updating system settings, ", error);
+            }
+          }}
+          disabled={
+            deadlineDays === systemSettings.deadlineDays &&
+            reminderDaysBefore === systemSettings.reminderDaysBefore
+          }
+        >
+          Save Settings
+        </Button>
       </Card>
     </AutoGrid>
   );

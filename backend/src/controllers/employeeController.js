@@ -6,6 +6,7 @@ import EmployeeRequirement from "../models/employeeRequirement.js";
 import Document from "../models/documentModel.js";
 import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
 import Notification from "../models/notificationModel.js";
+import SystemSettings from "../models/systemSettingsModel.js";
 import supabase from "../lib/supabase.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -98,6 +99,11 @@ export async function addEmployee(req, res) {
       message: "Username or email already exist in the database",
     });
   }
+  //find current system settings
+  let settings = await SystemSettings.findOne({});
+  if (!settings) {
+    settings = await SystemSettings.create({});
+  }
 
   //create User first before passing it to Employee model
   const newUser = new User({
@@ -126,7 +132,7 @@ export async function addEmployee(req, res) {
   const newEmployeeReq = depRequirements.map((requirements) => {
     let currentDate = new Date();
     let reqDueDate = currentDate.setDate(
-      currentDate.getDate() + requirements.deadlineDays,
+      currentDate.getDate() + settings.deadlineDays, //from settings
     );
     return new EmployeeRequirement({
       employee: newEmployee._id,
