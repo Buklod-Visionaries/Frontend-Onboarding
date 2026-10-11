@@ -9,7 +9,44 @@ import Notification from "../models/notificationModel.js";
 
 export async function getAllUser(req, res) {
   //get all user from db
-  const users = await User.find();
+  const users = await User.aggregate([
+    {
+      $addFields: {
+        statusPriority: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $and: [
+                    { $eq: ["$status", "active"] },
+                    { $eq: ["$isFirstLogin", true] },
+                  ],
+                },
+                then: 0,
+              },
+              {
+                case: { $eq: ["$status", "active"] },
+                then: 1,
+              },
+            ],
+            default: 2,
+          },
+        },
+      },
+    },
+    {
+      $sort: {
+        statusPriority: 1,
+        lastSignIn: -1,
+        createdAt: -1,
+      },
+    },
+    {
+      $project: {
+        statusPriority: 0,
+      },
+    },
+  ]);
   res.status(200).send(users);
 }
 

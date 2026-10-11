@@ -146,19 +146,19 @@ export default function UserManagement() {
                           variant={
                             user.status === "deactivated"
                               ? "deactivated"
-                              : user.status === "active"
-                                ? "active"
-                                : user.isFirstLogin
-                                  ? "in-progress"
+                              : user.isFirstLogin
+                                ? "in-progress"
+                                : user.status === "active"
+                                  ? "active"
                                   : ""
                           }
                         >
                           {user.status === "deactivated"
                             ? "Deactivated"
-                            : user.status === "active"
-                              ? "Active"
-                              : user.isFirstLogin
-                                ? "Pending first login"
+                            : user.isFirstLogin
+                              ? "Pending first login"
+                              : user.status === "active"
+                                ? "Active"
                                 : ""}
                         </Badge>
                       </TCell>
