@@ -13,6 +13,29 @@ import jwt from "jsonwebtoken";
 export async function getAllEmployees(req, res) {
   //get all employees
   const employees = await Employee.find({}).populate("user");
+
+  const statusPriority = {
+    in_progress: 1,
+    completed: 2,
+    deactivated: 3,
+  };
+
+  employees.sort((a, b) => {
+    // Prioritize onboarding status
+    const statusA =
+      a.user?.status === "deactivated" ? "deactivated" : a.onboardingStatus;
+
+    const statusB =
+      b.user?.status === "deactivated" ? "deactivated" : b.onboardingStatus;
+
+    const priorityDifference =
+      (statusPriority[statusA] ?? 4) - (statusPriority[statusB] ?? 4);
+
+    if (priorityDifference !== 0) return priorityDifference;
+
+    // Within the same status, sort by start date
+    return new Date(a.startDate ?? 0) - new Date(b.startDate ?? 0);
+  });
   res.status(200).send(employees);
 }
 
