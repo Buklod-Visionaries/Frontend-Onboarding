@@ -64,7 +64,7 @@ export default function AddEmployee() {
   const submit = async () => {
     if (
       !name.trim() ||
-      !phone.trim() ||
+      // !phone.trim() ||
       !position.trim() ||
       !email ||
       !tempPass
@@ -78,20 +78,20 @@ export default function AddEmployee() {
       (req) => req.department === dep.toLowerCase(),
     ).length;
     //validate phone num
-    const phoneRegExp = /^(09|\+639|639)\d{9}$/;
-    if (!phoneRegExp.test(phone.trim())) {
-      app.showToast(
-        "Please enter a valid PH mobile number starting with 09, 639, or +639 followed by 9 digits.",
-      );
-      return;
-    }
+    // const phoneRegExp = /^(09|\+639|639)\d{9}$/;
+    // if (!phoneRegExp.test(phone.trim())) {
+    //   app.showToast(
+    //     "Please enter a valid PH mobile number starting with 09, 639, or +639 followed by 9 digits.",
+    //   );
+    //   return;
+    // }
 
     //format date
     const formattedIsoDate = new Date(startDate).toISOString();
 
     const payload = {
       name: name.trim(),
-      phone: phone.trim(),
+      // phone: phone.trim(),
       startDate: formattedIsoDate, // Sent in full ISO format
       position: position.trim(),
       department: dep,
@@ -116,13 +116,13 @@ export default function AddEmployee() {
                 placeholder="e.g. Maria Santos"
               />
             </Field>
-            <Field label="Mobile number">
+            {/* <Field label="Mobile number">
               <Input
                 value={phone}
                 onChange={(e) => handlePhoneChange(e, setPhone)}
                 placeholder="+63 9XX XXX XXXX"
               />
-            </Field>
+            </Field> */}
             <Field label="Start date">
               <Input
                 type="date"

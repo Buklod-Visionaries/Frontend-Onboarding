@@ -172,11 +172,31 @@ export async function getEmpReqByEmpId(req, res) {
   const { id: paramsId } = req.params; //the id of employee
 
   const empReq = await EmployeeRequirement.find({
-    employee: paramsId, //find empReq by employeeId
+    employee: paramsId,
   })
     .populate({ path: "employee", populate: { path: "user" } })
     .populate("verifiedBy")
-    .populate("requirement");
+    .populate("requirement")
+    .sort({ dueDate: 1, updatedAt: -1 });
+
+  const now = new Date();
+
+  const statusPriority = (req) => {
+    if (req.status !== "completed" && req.dueDate < now) return 0; // Overdue
+    if (req.status === "resubmission-required") return 1;
+    if (req.status === "pending") return 2;
+    if (req.status === "in-progress") return 3;
+    if (req.status === "completed") return 4;
+    return 5;
+  };
+
+  empReq.sort((a, b) => {
+    const priorityDiff = statusPriority(a) - statusPriority(b);
+
+    if (priorityDiff !== 0) return priorityDiff;
+
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
   if (!empReq) {
     return res
       .status(404)

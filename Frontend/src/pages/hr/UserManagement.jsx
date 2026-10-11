@@ -76,7 +76,11 @@ export default function UserManagement() {
             />
             <StatCard
               label="Pending first login"
-              value={users.filter((user) => user.isFirstLogin).length}
+              value={
+                users.filter(
+                  (user) => user.status === "active" && user.isFirstLogin,
+                ).length
+              }
               note="Temporary password issued"
             />
             <StatCard
@@ -140,18 +144,22 @@ export default function UserManagement() {
                       <TCell>
                         <Badge
                           variant={
-                            user.isFirstLogin
-                              ? "in-progress"
+                            user.status === "deactivated"
+                              ? "deactivated"
                               : user.status === "active"
                                 ? "active"
-                                : "deactivated"
+                                : user.isFirstLogin
+                                  ? "in-progress"
+                                  : ""
                           }
                         >
-                          {user.isFirstLogin
-                            ? "Pending First Login"
+                          {user.status === "deactivated"
+                            ? "Deactivated"
                             : user.status === "active"
                               ? "Active"
-                              : "Deactivated"}
+                              : user.isFirstLogin
+                                ? "Pending first login"
+                                : ""}
                         </Badge>
                       </TCell>
                       <TCell>

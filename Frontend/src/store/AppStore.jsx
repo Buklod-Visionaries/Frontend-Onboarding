@@ -250,7 +250,7 @@ export default function AppProvider({ children }) {
             email: payload.email,
             tempPass: payload.tempPass,
             startDate: payload.startDate,
-            phone: payload.phone,
+            // phone: payload.phone,
             department: payload.department.toLowerCase(),
             position: payload.position,
           },
