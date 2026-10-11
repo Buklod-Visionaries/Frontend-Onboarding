@@ -15,7 +15,7 @@ export async function generateReports(req, res) {
   //cardiovascular
   //administration
   const employees = await Employee.find(
-    {},
+    { onboardingStatus: { $ne: "deactivated" } }, //show all except deactivated employees
     { startDate: 0, phone: 0 }, //exclude fields
   ).populate({
     path: "user",
@@ -74,6 +74,10 @@ export async function generateReports(req, res) {
           pending,
           total,
           onboardingStatus: employee.onboardingStatus,
+          completedDate:
+            employee.onboardingStatus !== "completed" //set completedDate as empty if not yet completed
+              ? "—"
+              : employee.completedDate,
         };
       }),
   );

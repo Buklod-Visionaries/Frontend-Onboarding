@@ -120,7 +120,13 @@ export default function EmployeeProfile() {
                 {formatStatus(employee.onboardingStatus)}
               </Badge>
               <span className="text-meta text-ink/55">
-                Started {formatDate(employee.startDate)} &middot;{" "}
+                Started at {formatDate(employee.startDate)}{" "}
+                {employee.onboardingStatus === "completed" ? (
+                  <span className="mx-auto">{` · Completed at ${formatDate(employee.completedDate)}`}</span>
+                ) : (
+                  ""
+                )}{" "}
+                &middot;{" "}
                 {
                   empRequirements.filter(
                     (req) =>

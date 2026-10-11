@@ -9,8 +9,9 @@ import { Field, Select } from "../../components/ui/Field";
 import { TCell, THead, TRow, Table } from "../../components/ui/Table";
 import { DEPARTMENTS } from "../../domain/constants";
 import { useApp } from "../../hooks/useApp";
-import { formatDepartment } from "../../lib/formatter";
+import { formatDepartment, formatStatus } from "../../lib/formatter";
 import { useReports } from "../../hooks/useReports";
+import { formatDate, formatRelativeDate } from "../../domain/date";
 
 export default function Reports() {
   const app = useApp();
@@ -53,16 +54,17 @@ export default function Reports() {
       Employee: employee.employee,
       Position: employee.position,
       Department: formatDepartment(employee.department),
-      Completed: employee.completed,
       "In Progress": employee.inProgress,
       Pending: employee.pending,
+      Completed: employee.completed,
       Total: employee.total,
+      "Completed Date": formatDate(employee.completedDate),
       Status:
         employee.onboardingStatus === "in_progress"
           ? "In Progress"
-          : employee.onboardingStatus === "resubmission-required"
-            ? "Resubmission Required"
-            : employee.onboardingStatus,
+          : employee.onboardingStatus === "completed"
+            ? "Completed"
+            : "",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -174,10 +176,11 @@ export default function Reports() {
                       "Employee",
                       "Position",
                       "Department",
-                      "Completed",
                       "In progress",
                       "Pending",
+                      "Completed",
                       "Total",
+                      "Completed Date",
                       "Status",
                     ]}
                   />
@@ -191,25 +194,25 @@ export default function Reports() {
 
                         <TCell>{formatDepartment(employee.department)}</TCell>
 
-                        <TCell>{employee.completed}</TCell>
-
                         <TCell>{employee.inProgress}</TCell>
 
                         <TCell>{employee.pending}</TCell>
 
+                        <TCell>{employee.completed}</TCell>
+
                         <TCell>{employee.total}</TCell>
+
+                        <TCell>{formatDate(employee.completedDate)}</TCell>
 
                         <TCell>
                           <Badge
                             variant={
-                              employee.onboardingStatus === "in_progress" ||
-                              employee.onboardingStatus ===
-                                "resubmission-required"
-                                ? "pending"
+                              employee.onboardingStatus === "in_progress"
+                                ? "in-progress"
                                 : employee.onboardingStatus === "completed"
                                   ? "completed"
-                                  : employee.onboardingStatus === "pending"
-                                    ? "in-progress"
+                                  : employee.onboardingStatus === "deactivated"
+                                    ? "deactivated"
                                     : undefined
                             }
                           >
@@ -218,7 +221,7 @@ export default function Reports() {
                               : employee.onboardingStatus ===
                                   "resubmission-required"
                                 ? "Resubmission Required"
-                                : employee.onboardingStatus}
+                                : formatStatus(employee.onboardingStatus)}
                           </Badge>
                         </TCell>
                       </TRow>

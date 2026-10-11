@@ -138,7 +138,7 @@ export default function EmployeeList() {
                     <Badge
                       variant={
                         employee.onboardingStatus === "in_progress"
-                          ? "active"
+                          ? "in-progress"
                           : employee.onboardingStatus === "completed"
                             ? "completed"
                             : employee.onboardingStatus === "deactivated" &&

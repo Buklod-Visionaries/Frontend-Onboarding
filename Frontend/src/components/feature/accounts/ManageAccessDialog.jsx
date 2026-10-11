@@ -96,10 +96,14 @@ function ManageAccessDialogBody({ target, onClose }) {
               }
             }}
             disabled={
-              resetPasswordMutation.isPending || status === target.status
+              changeUserStatusMutation.isPending ||
+              resetPasswordMutation.isPending ||
+              status === target.status
             }
           >
-            Save changes
+            {changeUserStatusMutation.isPending
+              ? "Saving changes..."
+              : "Save changes"}
           </Button>
         </>
       }
