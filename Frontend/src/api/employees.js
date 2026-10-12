@@ -1,0 +1,38 @@
+import api from "../lib/axios";
+
+export async function fetchAllEmployees(token) {
+  const res = await api.get("/employees", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
+
+//for dep rep RBAC only see their own employees with same department
+export async function fetchAllDepEmployees(token) {
+  const res = await api.get("/employees/department", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchCurrentEmployee(token) {
+  const res = await api.get("/employees/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchSpecificEmployee(token, paramsId) {
+  const res = await api.get(`/employees/${paramsId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

@@ -67,7 +67,7 @@ router.put(
 
 //deleting specific employee
 router.delete(
-  "/:id",
+  "/user/:id",
   verifyToken,
   authorizeRoles("hr", "dept-rep"),
   asyncHandler(deleteSpecificEmployee),

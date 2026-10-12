@@ -3,6 +3,8 @@ import Document from "../models/documentModel.js";
 import User from "../models/userModel.js";
 import Employee from "../models/employeeModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
+import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+import Notification from "../models/notificationModel.js";
 import supabase from "../lib/supabase.js";
 
 export async function getAllDocuments(req, res) {
@@ -25,7 +27,9 @@ export async function submitDocument(req, res) {
   }
 
   const currentUser = await User.findOne({ _id: id });
-  const currentEmployee = await Employee.findOne({ user: currentUser._id });
+  const currentEmployee = await Employee.findOne({
+    user: currentUser._id,
+  }).populate("user");
 
   //find the current requirements
   const currentEmpReq = await EmployeeRequirement.findOne({
@@ -86,7 +90,176 @@ export async function submitDocument(req, res) {
   await docs.save();
 
   //set status in progress
-  currentEmpReq.status = "in-progress";
+  currentEmpReq.status = "pending";
   await currentEmpReq.save();
+
+  //creates a history/audit log
+  const empReqHistory = new EmployeeRequirementHistory({
+    employeeRequirement: currentEmpReq._id,
+    status: `pending`,
+    changedBy: currentUser._id,
+    note: `Document submitted - ${file.originalname}`,
+  });
+
+  await empReqHistory.save();
+
+  //notif
+  //find all HR
+  const hr = await User.find({ role: "hr" });
+
+  //create notification for each HR
+  const notif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: `${currentEmployee.user.username} submitted ${currentEmpReq.requirement.name}`,
+      message: `A new document is ready for your review.`,
+    });
+  });
+
+  // save notifications
+  await Notification.insertMany(notif);
+
   res.send({ message: "Document uploaded successfully", document: docs });
+}
+
+export async function getEmpReqSpecificDocument(req, res) {
+  const { id } = req.params;
+  const empReq = await EmployeeRequirement.findOne({ _id: id }).populate(
+    "requirement",
+  );
+  if (!empReq) {
+    return res.send(`empReq doesn't exist with id ${id}`);
+  }
+
+  const empReqDocument = await Document.findOne({
+    employeeRequirement: empReq._id,
+  })
+    .populate({
+      path: "employee",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "employeeRequirement",
+      populate: {
+        path: "requirement",
+      },
+    });
+
+  if (!empReqDocument) {
+    return res.send(`documents doesn't exist with empReq id ${id}`);
+  }
+
+  //create a signed URL to be viewable since its stored in a private bucket
+  const { data, error } = await supabase.storage
+    .from("employee-files")
+    .createSignedUrl(empReqDocument.fileUrl, 60 * 10);
+
+  if (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+
+  //return a json where the fileUrl is signed so its viewable
+  res.json({
+    ...empReqDocument.toObject(),
+    fileUrl: data.signedUrl,
+  });
+}
+
+//
+export async function deleteSpecificDocByEmpReqId(req, res) {
+  const { id: paramsId } = req.params;
+  const empReq = await EmployeeRequirement.findOne({ _id: paramsId });
+  if (!empReq) {
+    return res.status("404").send(`No emp req with id ${empReq._id}`);
+  }
+
+  const doc = await Document.findOne({ employeeRequirement: empReq._id });
+  if (!doc) {
+    return res
+      .status("404")
+      .send(`No document found with employee requirements id ${empReq._id}`);
+  }
+
+  //actual deletion
+
+  //delete file from supabase
+  const { error: uploadError } = await supabase.storage
+    .from("employee-files") //supabase bucket name
+    .remove([doc.fileUrl]);
+
+  if (uploadError) {
+    console.log(uploadError);
+    return res.send({ message: "Failed to delete file" });
+  }
+
+  //delete the document file after
+  const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
+  if (!deletedDocs) {
+    return res.send("Failed deleting document");
+  }
+  res.send(`successfully deleted document with id: ${doc._id}`);
+}
+
+export async function getSpecificDocument(req, res) {
+  const { id } = req.params;
+
+  const doc = await Document.findOne({ _id: id })
+    .populate({
+      path: "employee",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "employeeRequirement",
+      populate: {
+        path: "requirement",
+      },
+    });
+  if (!doc) {
+    return res.send("document doesn't exist");
+  }
+  res.send(doc);
+}
+
+export async function deleteSpecificDocument(req, res) {
+  const { id: paramsId } = req.params;
+
+  const doc = await Document.findOne({ _id: paramsId })
+    .populate({
+      path: "employee",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "employeeRequirement",
+      populate: {
+        path: "requirement",
+      },
+    });
+  if (!doc) {
+    return res.send("document doesn't exist");
+  }
+
+  //delete file from supabase
+  const { error: uploadError } = await supabase.storage
+    .from("employee-files") //supabase bucket name
+    .remove([doc.fileUrl]);
+
+  if (uploadError) {
+    console.log(uploadError);
+    return res.send({ message: "Failed to delete file" });
+  }
+
+  //delete the document file after
+  const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
+  if (!deletedDocs) {
+    return res.send("Failed deleting document");
+  }
+  res.send(`successfully deleted document with id: ${doc._id}`);
 }

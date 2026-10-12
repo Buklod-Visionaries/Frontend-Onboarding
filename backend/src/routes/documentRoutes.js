@@ -2,6 +2,10 @@ import express from "express";
 import {
   getAllDocuments,
   submitDocument,
+  getEmpReqSpecificDocument,
+  getSpecificDocument,
+  deleteSpecificDocument,
+  deleteSpecificDocByEmpReqId,
 } from "../controllers/documentController.js";
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
@@ -18,6 +22,37 @@ router.post(
   authorizeRoles("employee"),
   upload.single("file"),
   asyncHandler(submitDocument),
+);
+//get documents of specific empReq
+router.get(
+  "/employee-requirement/:id",
+  verifyToken,
+  authorizeRoles("hr", "employee"),
+  asyncHandler(getEmpReqSpecificDocument),
+);
+
+//
+//delete specific document using employeeRequirements id
+router.delete(
+  "/employee-requirement/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(deleteSpecificDocByEmpReqId),
+);
+
+//get specific doc
+router.get(
+  "/:id",
+  verifyToken,
+  authorizeRoles("hr", "employee"),
+  asyncHandler(getSpecificDocument),
+);
+//delete specific doc
+router.delete(
+  "/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(deleteSpecificDocument),
 );
 
 export default router;

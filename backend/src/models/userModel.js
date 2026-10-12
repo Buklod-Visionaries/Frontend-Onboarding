@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      enum: ["laboratory", "cardiovascular", "admin"],
+      enum: ["laboratory", "imaging", "cardiovascular", "administration"],
       required: function () {
         // not required if role is hr
         return this.role !== "hr";
@@ -33,6 +33,24 @@ const userSchema = new mongoose.Schema(
     isFirstLogin: {
       type: Boolean,
       default: true, // true on production
+    },
+    passwordResetRequested: {
+      type: Boolean,
+      default: false,
+    },
+    tempPass: {
+      type: String,
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ["active", "deactivated"],
+      default: "active",
+      required: true,
+    },
+    lastSignIn: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true },

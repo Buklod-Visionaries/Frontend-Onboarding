@@ -2,14 +2,21 @@ import express from "express";
 import {
   getAllEmpReq,
   getOwnEmpReq,
+  getOwnSpecificEmpReq,
   getSpecificEmpReq,
   getDepEmpReq,
   getSpecificDepEmpReq,
+  getEmpReqByEmpId,
   editEmpReq,
+  deleteSpecificEmpReq,
 } from "../controllers/empReqController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
+//
+import User from "../models/userModel.js";
+import Employee from "../models/employeeModel.js";
+import EmployeeRequirement from "../models/employeeRequirement.js";
 
 const router = express.Router();
 
@@ -22,6 +29,13 @@ router.get(
   authorizeRoles("employee"),
   asyncHandler(getOwnEmpReq),
 );
+//get users own specific requirements
+router.get(
+  "/me/:id",
+  verifyToken,
+  authorizeRoles("employee"),
+  asyncHandler(getOwnSpecificEmpReq),
+);
 //get dep reps all employee requirements
 router.get(
   "/department",
@@ -29,6 +43,7 @@ router.get(
   authorizeRoles("dept-rep"),
   asyncHandler(getDepEmpReq),
 );
+
 //
 router.get(
   "/department/:id",
@@ -36,11 +51,18 @@ router.get(
   authorizeRoles("dept-rep"),
   asyncHandler(getSpecificDepEmpReq),
 );
-//for dep rep edit employee requirements
-router.put(
-  "/department/:id",
+//get empReq using employee id
+router.get(
+  "/employee/:id",
   verifyToken,
-  authorizeRoles("dept-rep"),
+  authorizeRoles("hr"),
+  asyncHandler(getEmpReqByEmpId),
+);
+//for authorized roles marking employee requirements completion
+router.put(
+  "/:id",
+  verifyToken,
+  authorizeRoles("hr", "dept-rep"),
   asyncHandler(editEmpReq),
 );
 //get specific emp req
@@ -50,4 +72,12 @@ router.get(
   authorizeRoles("hr"),
   asyncHandler(getSpecificEmpReq),
 );
+//delete specific emp req
+router.delete(
+  "/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(deleteSpecificEmpReq),
+);
+
 export default router;

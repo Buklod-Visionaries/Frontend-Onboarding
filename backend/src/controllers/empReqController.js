@@ -1,12 +1,18 @@
 import EmployeeRequirement from "../models/employeeRequirement.js";
 import User from "../models/userModel.js";
 import Employee from "../models/employeeModel.js";
+import Document from "../models/documentModel.js";
+import Requirement from "../models/requirementModel.js";
+import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+import Notification from "../models/notificationModel.js";
+import supabase from "../lib/supabase.js";
+//
+import SystemSettings from "../models/systemSettingsModel.js";
 
 export async function getAllEmpReq(req, res) {
   const allEmpReq = await EmployeeRequirement.find()
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -15,7 +21,8 @@ export async function getAllEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
   res.send(allEmpReq);
 }
 
@@ -32,13 +39,17 @@ export async function getOwnEmpReq(req, res) {
     user: myUser._id,
   });
 
+  let settings = await SystemSettings.findOne({});
+  if (!settings) {
+    settings = await SystemSettings.create({});
+  }
+
   //get the specific emprequirements from employee id
   const myEmpReq = await EmployeeRequirement.find({
     employee: myEmployee._id,
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -47,19 +58,94 @@ export async function getOwnEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    }); // populate replace objectId with the actual documents :D
+    })
+    .populate("verifiedBy"); // populate replace objectId with the actual documents :D
+
+  const now = new Date();
+
+  const reminderDaysBefore = settings.reminderDaysBefore;
+
+  const notifications = [];
+
+  for (const empReq of myEmpReq) {
+    // Skip requirements that don't need action
+    if (["completed", "pending"].includes(empReq.status)) {
+      continue;
+    }
+
+    // Check if the requirement is overdue
+    if (empReq.dueDate && now >= empReq.dueDate && !empReq.overdueNotifiedAt) {
+      const updatedReq = await EmployeeRequirement.findOneAndUpdate(
+        {
+          _id: empReq._id,
+          overdueNotifiedAt: null,
+          dueDate: { $lte: now },
+          status: { $nin: ["completed", "pending"] },
+        },
+        { overdueNotifiedAt: now },
+        { new: true },
+      );
+
+      if (updatedReq) {
+        notifications.push({
+          user: myUser._id,
+          title: `${empReq.requirement.name} Is Overdue`,
+          message: `Your ${empReq.requirement.name} was due on ${new Date(
+            empReq.dueDate,
+          ).toLocaleDateString()}. Please submit it as soon as possible.`,
+        });
+      }
+
+      // No need to check the approaching-deadline reminder after the deadline
+      continue;
+    }
+
+    // Check if a deadline reminder should be sent
+    if (empReq.reminderSentAt || !empReq.dueDate) {
+      continue;
+    }
+
+    const reminderDate = new Date(empReq.dueDate);
+    reminderDate.setDate(reminderDate.getDate() - reminderDaysBefore);
+
+    if (now >= reminderDate && now < empReq.dueDate) {
+      const updatedReq = await EmployeeRequirement.findOneAndUpdate(
+        {
+          _id: empReq._id,
+          reminderSentAt: null,
+          dueDate: { $gt: now },
+          status: { $nin: ["completed", "pending"] },
+        },
+        { reminderSentAt: now },
+        { new: true },
+      );
+
+      if (!updatedReq) continue;
+
+      notifications.push({
+        user: myUser._id,
+        title: `${empReq.requirement.name} Deadline Approaching`,
+        message: `Your ${empReq.requirement.name} is due on ${new Date(
+          empReq.dueDate,
+        ).toLocaleDateString()}. Please complete it before the deadline.`,
+      });
+    }
+  }
+
+  if (notifications.length > 0) {
+    await Notification.insertMany(notifications);
+  }
 
   res.send(myEmpReq);
 }
-
-export async function getSpecificEmpReq(req, res) {
+//for employee access
+export async function getOwnSpecificEmpReq(req, res) {
   const { id } = req.params;
-  const empReq = await EmployeeRequirement.find({
+  const empReq = await EmployeeRequirement.findOne({
     _id: id,
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -68,7 +154,33 @@ export async function getSpecificEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
+  if (!empReq) {
+    return res.send(`employee requirements doesnt exist with id ${id}`);
+  }
+
+  res.send(empReq);
+}
+
+//for hr access
+export async function getSpecificEmpReq(req, res) {
+  const { id } = req.params;
+  const empReq = await EmployeeRequirement.findOne({
+    _id: id,
+  })
+    .populate({
+      path: "requirement",
+    })
+    .populate({
+      //populate 1st level
+      path: "employee",
+      populate: {
+        // populate 2nd level
+        path: "user",
+      },
+    })
+    .populate("verifiedBy");
 
   res.send(empReq);
 }
@@ -93,7 +205,6 @@ export async function getDepEmpReq(req, res) {
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -102,10 +213,13 @@ export async function getDepEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
 
   //filter only show task not documents
-  const taskEmpReq = allEmpReq.filter((req) => req.requirement !== null);
+  const taskEmpReq = allEmpReq.filter(
+    (req) => req.requirement.type === "activity",
+  );
 
   res.send(taskEmpReq);
 }
@@ -118,7 +232,6 @@ export async function getSpecificDepEmpReq(req, res) {
   })
     .populate({
       path: "requirement",
-      match: { type: "task" },
     })
     .populate({
       //populate 1st level
@@ -127,7 +240,8 @@ export async function getSpecificDepEmpReq(req, res) {
         // populate 2nd level
         path: "user",
       },
-    });
+    })
+    .populate("verifiedBy");
 
   if (!depEmpReq) {
     return res.send("Employee Requirement doesnt exist");
@@ -136,22 +250,244 @@ export async function getSpecificDepEmpReq(req, res) {
   res.send(depEmpReq);
 }
 
+export async function getEmpReqByEmpId(req, res) {
+  const { id: paramsId } = req.params; //the id of employee
+
+  const empReq = await EmployeeRequirement.find({
+    employee: paramsId,
+  })
+    .populate({ path: "employee", populate: { path: "user" } })
+    .populate("verifiedBy")
+    .populate("requirement")
+    .sort({ dueDate: 1, updatedAt: -1 });
+
+  const now = new Date();
+
+  const statusPriority = (req) => {
+    if (req.status !== "completed" && req.dueDate < now) return 0; // Overdue
+    if (req.status === "resubmission-required") return 1;
+    if (req.status === "pending") return 2;
+    if (req.status === "in-progress") return 3;
+    if (req.status === "completed") return 4;
+    return 5;
+  };
+
+  empReq.sort((a, b) => {
+    const priorityDiff = statusPriority(a) - statusPriority(b);
+
+    if (priorityDiff !== 0) return priorityDiff;
+
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
+  if (!empReq) {
+    return res
+      .status(404)
+      .send(
+        `Employee Requirement doesnt exist with employee with id ${paramsId}`,
+      );
+  }
+
+  //
+  res.send(empReq);
+}
+
 export async function editEmpReq(req, res) {
   const { id: userId } = req.user;
   const { id: paramsId } = req.params;
-  const { status } = req.body;
+  const { status, resubmissionReason } = req.body;
 
   const currentDate = new Date();
 
-  const editedReq = await EmployeeRequirement.findByIdAndUpdate(
-    paramsId,
-    {
-      status,
-      verifiedBy: userId,
-      verifiedAt: currentDate,
-    },
-    { returnDocument: "after" }, //return the edited
-  );
+  if (status === "resubmission-required" && !resubmissionReason) {
+    return res.status(400).send({
+      message: "resubmission reason is required",
+    });
+  }
 
-  res.send(editedReq);
+  // if employee requirement is set to resubmission
+  if (status === "resubmission-required") {
+    const newResubDueDate = new Date();
+    newResubDueDate.setDate(newResubDueDate.getDate() + 7);
+    const editedReq = await EmployeeRequirement.findByIdAndUpdate(
+      paramsId,
+      {
+        status,
+        resubmissionReason,
+        dueDate: newResubDueDate,
+        reminderSentAt: null, // Reset reminder for the new deadline
+        overdueNotifiedAt: null, //reset reminder for overdue
+        verifiedBy: userId,
+        verifiedAt: currentDate,
+      },
+      { returnDocument: "after" }, //return the edited
+    )
+      .populate({ path: "employee", populate: { path: "user" } })
+      .populate("requirement");
+
+    const doc = await Document.findOne({ employeeRequirement: editedReq._id });
+    if (!doc) {
+      return res
+        .status(404)
+        .send(
+          `No document found with employee requirements id ${editedReq._id}`,
+        );
+    }
+
+    //actual deletion
+
+    //delete document file from supabase
+    const { error: uploadError } = await supabase.storage
+      .from("employee-files") //supabase bucket name
+      .remove([doc.fileUrl]);
+
+    if (uploadError) {
+      console.log(uploadError);
+      return res.send({ message: "Failed to delete file" });
+    }
+
+    //delete the document file after
+    const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
+    if (!deletedDocs) {
+      return res.send("Failed deleting document");
+    }
+
+    //creates a history/audit log
+    const empReqHistory = new EmployeeRequirementHistory({
+      employeeRequirement: editedReq._id,
+      status: `resubmission-required`,
+      changedBy: userId,
+      note: "Resubmission Requested by HR",
+    });
+
+    await empReqHistory.save();
+
+    //create notif to employee
+    const notif = new Notification({
+      user: editedReq.employee.user._id,
+      title: `${editedReq.requirement.name} needs resubmission`,
+      message: "Please review the feedback and submit a new document.",
+    });
+    await notif.save();
+
+    return res.send({
+      message: `successfully changed status of empReq ${editedReq}`,
+      deletedDocument: `${deletedDocs}`,
+      notif: notif,
+    });
+  }
+
+  //if employee requirement is set to complete
+  if (status === "completed") {
+    const editedReq = await EmployeeRequirement.findByIdAndUpdate(
+      paramsId,
+      {
+        status,
+        $unset: { resubmissionReason: 1 }, // remove the resubmissionReason if any
+        verifiedBy: userId,
+        verifiedAt: currentDate,
+      },
+      { returnDocument: "after" }, //return the edited
+    )
+      .populate({ path: "employee", populate: { path: "user" } })
+      .populate("requirement");
+
+    //creates a history/audit log
+    const empReqHistory = new EmployeeRequirementHistory({
+      employeeRequirement: editedReq._id,
+      status: `completed`,
+      changedBy: userId,
+      note: "Mark completed",
+    });
+
+    await empReqHistory.save();
+
+    //create notif to employee
+    const notif = new Notification({
+      user: editedReq.employee.user._id,
+      title: `${editedReq.requirement.name} was approved`,
+      message: "Your submitted document has been verified successfully.",
+    });
+    await notif.save();
+
+    if (editedReq.requirement.type === "activity") {
+      const hr = await User.find({ role: "hr" }); //get all HR
+      //create notif for all HR
+      const hrNotif = hr.map((hrUser) => {
+        return new Notification({
+          user: hrUser._id,
+          title: `${editedReq.employee.user.username} completed ${editedReq.requirement.name}`,
+          message: `The requirement has been marked as completed by the department representative.`,
+        });
+      });
+
+      //save to DB the notif
+      await Notification.insertMany(hrNotif);
+    }
+
+    // MARKS onboarding status as completed if all requirements are completed //
+    //find specific employee
+    const employee = await Employee.findOne({
+      _id: editedReq.employee._id,
+    }).populate("user");
+
+    if (!employee) {
+      return res.status(404).send({ message: "No employee found" });
+    }
+
+    //find all empReqs of that employee
+    const allEmpReqs = await EmployeeRequirement.find({
+      employee: employee._id,
+    });
+
+    if (allEmpReqs.length === 0) {
+      return res.status(404).send("No employee requirements for the employee.");
+    }
+
+    //checks if all requirements are completed
+    const allCompleted = allEmpReqs.every(
+      (empReq) => empReq.status === "completed",
+    );
+
+    //set employee onboarding as completed
+    if (allCompleted && employee.onboardingStatus !== "completed") {
+      //mark specific employee as completed
+      employee.onboardingStatus = "completed";
+      await employee.save();
+
+      //find all HR
+      const hr = await User.find({ role: "hr" });
+      //create notif for each HR
+      const hrNotif = hr.map((hrUser) => {
+        return new Notification({
+          user: hrUser._id,
+          title: `${employee.user.username} Completed Onboarding`,
+          message: `${employee.user.username} has completed all assigned onboarding requirements. Their onboarding process is now complete.`,
+        });
+      });
+      //create notif to the completed onboarding employee
+      const employeeNotif = new Notification({
+        user: employee.user._id,
+        title: "Onboarding Completed Successfully",
+        message: `Congratulations! You have completed all your onboarding requirements. Your onboarding process is now complete.`,
+      });
+
+      //save notif to DB
+      await Notification.insertMany(hrNotif);
+      await employeeNotif.save();
+    }
+
+    return res.send(editedReq);
+  }
+}
+
+export async function deleteSpecificEmpReq(req, res) {
+  const { id: paramsId } = req.params;
+
+  const delEmpReq = await EmployeeRequirement.findByIdAndDelete(paramsId);
+
+  if (!delEmpReq) {
+    return res.send("Can't delete employee requirement it might not exist");
+  }
+
+  res.send(delEmpReq);
 }

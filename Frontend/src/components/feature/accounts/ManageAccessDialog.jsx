@@ -1,22 +1,48 @@
-import { useState } from 'react';
-import Modal from '../../ui/Modal';
-import Button from '../../ui/Button';
-import { Field, Segmented, Select } from '../../ui/Field';
-import { ACCOUNT_STATUSES, DEPARTMENTS } from '../../../domain/constants';
-import { useApp } from '../../../hooks/useApp';
+import { useState } from "react";
+import Modal from "../../ui/Modal";
+import Button from "../../ui/Button";
+import { Field, Segmented, Select } from "../../ui/Field";
+import { ACCOUNT_STATUSES, DEPARTMENTS } from "../../../domain/constants";
+import { useApp } from "../../../hooks/useApp";
+import { formatRole } from "../../../lib/formatter";
+import { capitalize } from "../../../lib/capitalize";
+//
+import { useQueryClient } from "@tanstack/react-query";
+import { useResetTempPass } from "../../../hooks/useUsers";
+import { useChangeUserStatus } from "../../../hooks/useUsers";
+import { generatePassword } from "../../../lib/generateTempPassword";
 
 const NOTES = {
   Employee:
-    'Employee records, requirements and verification remain with HR. Deactivating an account only removes sign-in access.',
-  'Department Representative':
-    'Department representatives can confirm department activities for their assigned department only.',
-  'HR Staff': 'HR staff have full administrative access to onboarding records.'
+    "Employee records, requirements and verification remain with HR. Deactivating an account only removes sign-in access.",
+  "Department Representative":
+    "Department representatives can confirm department activities for their assigned department only.",
+  "HR Staff": "HR staff have full administrative access to onboarding records.",
 };
 
 function ManageAccessDialogBody({ target, onClose }) {
   const app = useApp();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState(target.status);
   const [department, setDepartment] = useState(target.department);
+  const [tempPass, setTempPass] = useState(generatePassword());
+
+  //pass the user token on reset pass hook
+  const resetPasswordMutation = useResetTempPass(app.session.accessToken);
+  //change user status mutation variable
+  const changeUserStatusMutation = useChangeUserStatus(app.session.accessToken);
+
+  //sends the userId and generated tempPass to the hook patch request
+  const resetTempPass = async () => {
+    await resetPasswordMutation.mutateAsync({
+      userId: target._id,
+      tempPass,
+    });
+    //reloads users
+    await queryClient.invalidateQueries({
+      queryKey: ["users"],
+    });
+  };
 
   return (
     <Modal
@@ -24,34 +50,65 @@ function ManageAccessDialogBody({ target, onClose }) {
       onClose={onClose}
       width="max-w-[520px]"
       kicker="Manage user access"
-      title={target.name}
-      subtitle={`${target.role} · ${target.department}`}
+      title={target.username}
+      subtitle={`${formatRole(target.role)} ${target.position ? ` · ${capitalize(target.position)}` : target.department ? ` · ${capitalize(target.department)}` : ""}`}
       actions={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose} disabled={resetPasswordMutation.isPending}>
+            Cancel
+          </Button>
           <Button
-            onClick={() => {
-              app.updateAccount(target, { status: 'Pending first login' });
-              app.showToast(`Temporary password issued for ${target.name}`);
-              onClose();
+            onClick={async () => {
+              try {
+                await resetTempPass();
+                app.showToast(
+                  `Temporary password issued for ${target.username}`,
+                );
+                onClose();
+              } catch (error) {
+                console.error(error);
+                app.showToast("Failed to reset temporary password");
+              }
             }}
+            disabled={
+              resetPasswordMutation.isPending || !target.passwordResetRequested
+            }
           >
             Reset to temporary password
           </Button>
           <Button
             variant="primary"
-            onClick={() => {
-              app.updateAccount(target, { status, department });
-              app.showToast(`Access updated for ${target.name}`);
-              onClose();
+            onClick={async () => {
+              try {
+                await changeUserStatusMutation.mutateAsync({
+                  //change status by passing id and status to API
+                  id: target._id,
+                  status: status.toLowerCase(),
+                });
+                await queryClient.invalidateQueries({
+                  queryKey: ["users"],
+                });
+                app.showToast(`Access set to ${status} for ${target.username}`);
+              } catch (error) {
+                console.log("Failed saving changes", error);
+              } finally {
+                onClose();
+              }
             }}
+            disabled={
+              changeUserStatusMutation.isPending ||
+              resetPasswordMutation.isPending ||
+              status === target.status
+            }
           >
-            Save changes
+            {changeUserStatusMutation.isPending
+              ? "Saving changes..."
+              : "Save changes"}
           </Button>
         </>
       }
     >
-      {target.role === 'Department Representative' && (
+      {target.role === "Department Representative" && (
         <Field label="Assigned department">
           <Select
             value={department}
@@ -61,9 +118,15 @@ function ManageAccessDialogBody({ target, onClose }) {
         </Field>
       )}
       <Field label="Account status">
-        <Segmented value={status} onChange={setStatus} options={ACCOUNT_STATUSES} />
+        <Segmented
+          value={status}
+          onChange={setStatus}
+          options={ACCOUNT_STATUSES}
+        />
       </Field>
-      <p className="m-0 text-meta leading-relaxed text-ink/55">{NOTES[target.role]}</p>
+      <p className="m-0 text-meta leading-relaxed text-ink/55">
+        {NOTES[target.role]}
+      </p>
     </Modal>
   );
 }
@@ -71,5 +134,11 @@ function ManageAccessDialogBody({ target, onClose }) {
 /** Manage user access: account status, and department for representatives. */
 export default function ManageAccessDialog({ target, onClose }) {
   if (!target) return null;
-  return <ManageAccessDialogBody key={`${target.kind}-${target.id}`} target={target} onClose={onClose} />;
+  return (
+    <ManageAccessDialogBody
+      key={`${target.username}-${target._id}`}
+      target={target}
+      onClose={onClose}
+    />
+  );
 }

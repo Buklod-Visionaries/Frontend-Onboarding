@@ -9,18 +9,33 @@ export async function getAllRequirements(req, res) {
 
 export async function addRequirement(req, res) {
   //destructure data from json
-  const { name, type, department, hasDeadline, deadlineDays } = req.body;
+  const { name, type, department, activity, deadlineDays } = req.body;
+
+  //
+  const existingReq = await Requirement.findOne({
+    name,
+    department,
+  });
+  //avoid duplicates
+  if (existingReq) {
+    return res.status(409).send({
+      message: "ERROR ADDING REQUIREMENTS: duplicate requirements found",
+      duplicate: existingReq,
+    });
+  }
   //creates new requirement from the data requested
   const newRequirement = new Requirement({
     name,
     type,
+    activity,
     department,
-    hasDeadline,
     deadlineDays,
   });
   //saved to DB
   await newRequirement.save();
   res.status(201).send(newRequirement);
+
+  res.send(newRequirement);
 }
 
 export async function getSpecificRequirement(req, res) {
@@ -30,12 +45,16 @@ export async function getSpecificRequirement(req, res) {
   const requirement = await Requirement.findOne({
     _id: id,
   });
-  res.send({ requirement });
+  if (!requirement) {
+    return res.send("requirement doesn't exist");
+  }
+  res.send( requirement );
 }
 
 export async function updateRequirement(req, res) {
   //destructure data from json
-  const { name, type, department, hasDeadline, deadlineDays } = req.body;
+  const { name, type, activity, department, hasDeadline, deadlineDays } =
+    req.body;
   //gets the params ID
   const { id } = req.params;
   //update the requirement with the same ID as params
@@ -44,6 +63,7 @@ export async function updateRequirement(req, res) {
     {
       name,
       type,
+      activity,
       department,
       hasDeadline,
       deadlineDays,
@@ -58,6 +78,13 @@ export async function updateRequirement(req, res) {
 
 export async function deleteRequirement(req, res) {
   const { id } = req.params;
+
   const deletedRequirement = await Requirement.findByIdAndDelete(id);
-  res.send("Deleted requirement with id:", id);
+  if (!deletedRequirement) {
+    return res.send("cannot delete, requirement doesn't exist");
+  }
+  res.send({
+    message: "successfully deleted requirement",
+    deleted: deletedRequirement,
+  });
 }

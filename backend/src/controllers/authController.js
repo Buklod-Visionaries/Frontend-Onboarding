@@ -2,13 +2,15 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import Notification from "../models/notificationModel.js";
+import crypto from "crypto";
 
 export async function register(req, res) {
   //takes the destructured value from json
-  const { username, email, password, role, department, isFirstLogin } =
+  const { username, email, tempPass, role, department, isFirstLogin } =
     req.body;
   // set the password as hashed also adds 10 as the random data added to password to add security
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // const hashedPassword = await bcrypt.hash(password, 10);
 
   //
   const existingUser = await User.findOne({
@@ -41,15 +43,16 @@ export async function register(req, res) {
   const newUser = new User({
     username,
     email,
-    password: hashedPassword,
+    password: tempPass, //unhashed
     role,
     department,
     isFirstLogin,
   });
   await newUser.save();
-  res
-    .status(200)
-    .send({ message: `New ${role} registered with username: ${username}` });
+  res.status(200).send({
+    message: `New ${role} registered with username: ${username}`,
+    user: newUser,
+  });
 }
 
 export async function login(req, res) {
@@ -64,19 +67,24 @@ export async function login(req, res) {
       .status(404)
       .send({ message: `User with email ${email} not found` });
   }
-  //compares the hashed password to the requested user password
-  const userMatch = await bcrypt.compare(password, user.password);
-
   //doesnt allow users with temporaryPassword
-  if (user.isFirstLogin) {
+  if (user.isFirstLogin || user.tempPass || user.passwordResetRequested) {
     return res
       .status(404)
       .send({ message: "First-time login user needs to setup new password" });
   }
+  //deactivated account forbidden access
+  if (user.status === "deactivated") {
+    return res
+      .status(403)
+      .send({ message: "Account deactivated. Contact HR for help." });
+  }
+  //compares the hashed password to the requested user password
+  const userMatch = await bcrypt.compare(password, user.password);
 
   //when the password does not match
   if (!userMatch) {
-    return res.status(400).send({ message: `Invalid credentials` });
+    return res.status(400).send({ message: `Invalid email or password.` });
   }
 
   // creates an access token for the user
@@ -113,9 +121,14 @@ export async function login(req, res) {
     maxAge: 7 * 24 * 60 * 60 * 1000, //
   });
 
+  // set up sign in time
+  user.lastSignIn = new Date();
+  await user.save();
+
   res.status(200).send({
     accessToken: accessToken,
     user: {
+      //explicitly return specific fields
       id: user._id,
       username: user.username,
       email: user.email,
@@ -139,27 +152,44 @@ export async function firstLogin(req, res) {
       .status(404)
       .send({ message: `User with email ${email} not found` });
   }
-  //if account already active
-  if (!user.isFirstLogin) {
-    return res.send({ message: "First-time login not applicable" });
+  //if account already active and not requesting password reset
+  if (!user.isFirstLogin && !user.passwordResetRequested) {
+    return res.status(400).send({ message: "First-time login not applicable" });
   }
   //if password do not match
-  const userMatch = await bcrypt.compare(tempPass, user.password);
-  if (!userMatch) {
+  if (tempPass !== user.password) {
     console.log(`Invalid credentials`);
-    return res.status(404).send({ message: `Password do not match` });
+    return res.status(400).send({ message: `Invalid temporary password` });
   }
 
   //hashed the new password typed in form
   const newHashedPass = await bcrypt.hash(newPass, 10);
+  //create notif message for pending firstLogin
+  if (user.isFirstLogin) {
+    const notif = new Notification({
+      user: user._id,
+      title:
+        user.role === "employee" ? "Welcome Aboard!" : "Welcome to the system",
+      message:
+        user.role === "employee"
+          ? `Welcome, ${user.username}, to Premiere Medical and Cardiovascular Laboratory Inc.! We look forward to having you on our team. You can use this system to track your onboarding progress and complete your required onboarding documents.`
+          : user.role === "hr"
+            ? `Welcome, ${user.username}! You can use this system to manage employee onboarding, monitor requirements, review submitted documents, and track onboarding progress.`
+            : `Welcome, ${user.username}! You can use this system to review and verify the onboarding activities assigned to your department and help ensure that new employees complete their requirements.`,
+    });
+    //save to DB
+    await notif.save();
+  }
   //set new pass and the account to active
   user.password = newHashedPass;
   user.isFirstLogin = false;
+  user.tempPass = null; //should only be used on password reset
+  user.passwordResetRequested = false; //set to false so the tempPass wont show on frontend
   //saves to DB
   await user.save();
 
-  // creates a token for the user
-  const token = jwt.sign(
+  // creates a quick expiry token for the user
+  const accessToken = jwt.sign(
     {
       id: user._id,
       username: user.username,
@@ -171,8 +201,56 @@ export async function firstLogin(req, res) {
       expiresIn: "1h",
     },
   );
+
+  //creates another token but longer
+  const refreshToken = jwt.sign(
+    {
+      id: user._id,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  // put the refreshToken on cookies
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true, //cant be access by javascript
+    //secure: process.env.NODE_ENV === "production",
+    secure: false,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, //
+  });
+
   console.log(`Successfully activated account of: ${user.username}`);
-  res.send({ token });
+
+  // set up sign in time
+  user.lastSignIn = new Date();
+  await user.save();
+
+  //create notif to HR
+  const hr = await User.find({ role: "hr" });
+
+  const notif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: `${user.username} has successfully set up a new password`,
+      message:
+        "Their account is now active and they can login with their new password.",
+    });
+  });
+
+  await Notification.insertMany(notif);
+
+  res.status(200).send({
+    accessToken: accessToken,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  });
 }
 
 export async function refresh(req, res) {
@@ -189,8 +267,16 @@ export async function refresh(req, res) {
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select(
-      "_id email username role",
+      "_id email username role status",
     );
+
+    //deactivated account forbidden access
+    if (user.status === "deactivated") {
+      return res
+        .status(403)
+        .send({ message: "Account deactivated. Contact HR for help." });
+    }
+
     const accessToken = jwt.sign(
       {
         id: user._id,
@@ -204,7 +290,16 @@ export async function refresh(req, res) {
       },
     );
 
-    res.send({ accessToken, user });
+    res.status(200).send({
+      accessToken: accessToken,
+      user: {
+        //explicitly return specific fields
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     return res.status(403).json({
       message: "Invalid refresh token",
@@ -218,4 +313,46 @@ export function logout(req, res) {
   //temp
   console.log("REFRESH COOKIE:", req.cookies.refreshToken);
   res.send({ message: "Logout" });
+}
+
+//request password reset controller
+export async function requestPasswordReset(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).send({ message: "No email" });
+  }
+
+  //find the user with email and set Password reset requested field to true
+  const existingUser = await User.findOneAndUpdate(
+    { email: email },
+    { passwordResetRequested: true },
+    { returnDocument: "after" },
+  );
+
+  if (!existingUser) {
+    return res
+      .status(400)
+      .send({ message: `No existing user with email ${email}` });
+  }
+
+  //find all HR
+  const hr = await User.find({ role: "hr" });
+
+  //create notification for each HR
+  const notif = hr.map((hrUser) => {
+    return new Notification({
+      user: hrUser._id,
+      title: `${existingUser.username} requested a password reset`,
+      message: `A password reset request requires your attention.`,
+    });
+  });
+
+  // save notifications
+  await Notification.insertMany(notif);
+
+  res.status(200).send({
+    message: `Password reset for ${email} requested to HR.`,
+    notifCreated: notif.length,
+  });
 }

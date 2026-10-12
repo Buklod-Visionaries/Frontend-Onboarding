@@ -1,89 +1,216 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import StatCard from '../../components/ui/StatCard';
-import AutoGrid from '../../components/ui/AutoGrid';
-import { EventList } from '../../components/ui/Timeline';
-import { TCell, THead, TRow, Table } from '../../components/ui/Table';
-import { EmptyState } from '../../components/ui/Notice';
-import ReviewDialog from '../../components/feature/requirements/ReviewDialog';
-import { useApp } from '../../hooks/useApp';
-import { useVerificationQueue } from '../../hooks/useVerificationQueue';
-import { countRequirements } from '../../domain/requirements';
-import { employeeStatus } from '../../domain/employees';
-import { formatDate } from '../../domain/date';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import StatCard from "../../components/ui/StatCard";
+import AutoGrid from "../../components/ui/AutoGrid";
+import { EventList } from "../../components/ui/Timeline";
+import { TCell, THead, TRow, Table } from "../../components/ui/Table";
+import { EmptyState } from "../../components/ui/Notice";
+import ReviewDialog from "../../components/feature/requirements/ReviewDialog";
+import { useApp } from "../../hooks/useApp";
+import { useVerificationQueue } from "../../hooks/useVerificationQueue";
+import { formatDate, isOverdue } from "../../domain/date";
+//
+import { capitalize } from "../../lib/capitalize";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRequirements } from "../../hooks/useRequirements";
+import { useAllOwnNotif } from "../../hooks/useNotifications";
+import { useEmployees } from "../../hooks/useEmployees";
 
 export default function HrDashboard() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const queue = useVerificationQueue();
   const [review, setReview] = useState(null);
+  //from employee hooks
+  const {
+    data: employees = [],
+    isLoading: employeesLoading,
+    isError: employeesError,
+  } = useEmployees(app.session.accessToken);
 
-  let pending = 0;
-  let overdue = 0;
-  let inProgress = 0;
-  let completed = 0;
+  //from requirement hooks
+  const {
+    data: requirements = [],
+    isLoading: requirementsLoading,
+    isError: requirementsError,
+  } = useRequirements(app.session.accessToken);
+  const {
+    data: notifications = [],
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+  } = useAllOwnNotif(app.session.accessToken, 6);
 
-  for (const employee of app.employees) {
-    const counts = countRequirements(employee);
-    pending += counts.pending;
-    overdue += counts.overdue;
-    if (employeeStatus(employee) === 'Completed') completed += 1;
-    else inProgress += 1;
+  ////
+  if (employeesLoading || requirementsLoading || notificationsLoading) {
+    return <p>Loading...</p>;
   }
 
-  const attention = app.employees
-    .filter((employee) => {
-      const counts = countRequirements(employee);
-      return counts.overdue > 0 || counts.pending > 3;
-    })
-    .slice(0, 5);
+  if (employeesError) {
+    return <p>Failed loading employees.</p>;
+  }
+  if (requirementsError) {
+    return <p>Failed loading requirements</p>;
+  }
+  if (notificationsError) {
+    return <p>Failed loading employee requirements history</p>;
+  }
 
   return (
     <>
       <AutoGrid min={190} gap="gap-4">
-        <StatCard label="Total employees" value={app.employees.length} note="Onboarding records on file" />
-        <StatCard label="In progress" value={inProgress} note="Onboarding not yet complete" />
-        <StatCard label="Pending requirements" value={pending} note="Not yet submitted" />
-        <StatCard label="Overdue" value={overdue} note="Past deadline" />
-        <StatCard label="Completed" value={completed} note="Fully onboarded" />
+        <StatCard
+          label="Total employees"
+          value={employees.length}
+          note="Onboarding records on file"
+        />
+        <StatCard
+          label="Employees In progress"
+          value={
+            employees.filter((emp) => emp.onboardingStatus === "in_progress")
+              .length
+          }
+          note="Onboarding not yet complete"
+        />
+        <StatCard
+          label="Requirements In progress"
+          value={
+            requirements.filter(
+              (req) =>
+                req.status === "in-progress" &&
+                req.employee.onboardingStatus === "in_progress",
+            ).length
+          }
+          note="Not yet submitted"
+        />
+        <StatCard
+          label="Requirements Overdue"
+          value={
+            requirements.filter(
+              (req) =>
+                (req.status === "in-progress" ||
+                  req.status === "resubmission-required") &&
+                isOverdue(formatDate(req.dueDate)),
+            ).length
+          }
+          note="Past deadline"
+        />
+        <StatCard
+          label="Onboarding Completed" // is the completed referring to employees onboarding itself?
+          value={
+            employees.filter((emp) => emp.onboardingStatus === "completed")
+              .length
+          }
+          note="Fully onboarded"
+        />
       </AutoGrid>
 
       <AutoGrid min={340}>
         <Card className="gap-3.5">
           <div className="flex items-baseline gap-2.5">
             <h4 className="text-[20px]">Employees requiring attention</h4>
-            <Button variant="ghost" className="ml-auto" onClick={() => navigate('/hr/employees')}>
+            <Button
+              variant="ghost"
+              className="ml-auto"
+              onClick={() => navigate("/hr/employees")}
+            >
               View all
             </Button>
           </div>
-          {attention.length ? (
+          {employees.filter((employee) => {
+            return requirements.some(
+              (req) =>
+                req.employee._id === employee._id &&
+                (req.status === "pending" ||
+                  (req.status !== "completed" &&
+                    isOverdue(formatDate(req.dueDate)))),
+            );
+          }).length ? (
             <div className="flex flex-col">
-              {attention.map((employee) => {
-                const counts = countRequirements(employee);
-                return (
-                  <button
-                    key={employee.id}
-                    type="button"
-                    onClick={() => navigate(`/hr/employees/${employee.id}`)}
-                    className="grid items-center gap-x-3 gap-y-1 border-b border-ink/[0.08] px-2 py-3 text-left last:border-0 hover:bg-ink/[0.03]"
-                    style={{ gridTemplateColumns: '1fr auto' }}
-                  >
-                    <span className="text-field font-medium">{employee.name}</span>
-                    <Badge>{employeeStatus(employee)}</Badge>
-                    <span className="text-meta text-ink/55">
-                      {counts.overdue
-                        ? `${counts.overdue} overdue · ${counts.pending} pending`
-                        : `${counts.pending} requirements pending`}
-                    </span>
-                    <span className="text-[11px] text-ink/45">
-                      {employee.department} &middot; {employee.position}
-                    </span>
-                  </button>
-                );
-              })}
+              {employees
+                .filter((employee) => {
+                  return (
+                    employee.onboardingStatus !== "deactivated" && //exclude deactivated employees requirement
+                    requirements.some(
+                      (req) =>
+                        req.employee._id === employee._id &&
+                        (req.status === "pending" ||
+                          (req.status !== "completed" &&
+                            isOverdue(formatDate(req.dueDate)))),
+                    )
+                  );
+                })
+                .map((employee) => {
+                  return (
+                    <button
+                      key={employee._id}
+                      type="button"
+                      onClick={() => navigate(`/hr/employees/${employee._id}`)}
+                      className="grid items-center gap-x-3 gap-y-1 border-b border-ink/[0.08] px-2 py-3 text-left last:border-0 hover:bg-ink/[0.03]"
+                      style={{ gridTemplateColumns: "1fr auto" }}
+                    >
+                      <span className="text-field font-medium">
+                        {employee.user.username}
+                      </span>
+
+                      <Badge
+                        variant={
+                          employee.onboardingStatus === "in_progress"
+                            ? "in-progress"
+                            : "completed"
+                        }
+                      >
+                        {employee.onboardingStatus === "in_progress"
+                          ? "In Progress"
+                          : "Completed"}
+                      </Badge>
+                      <span className="text-meta text-ink/55">
+                        {requirements.filter(
+                          (req) =>
+                            req.employee._id === employee._id &&
+                            req.status !== "completed" &&
+                            isOverdue(formatDate(req.dueDate)),
+                        ).length > 0 && (
+                          <span>
+                            {
+                              requirements.filter(
+                                (req) =>
+                                  req.employee._id === employee._id &&
+                                  req.status !== "completed" &&
+                                  isOverdue(formatDate(req.dueDate)),
+                              ).length
+                            }
+                            {" overdue ·"}
+                          </span>
+                        )}
+                        {requirements.filter(
+                          (req) =>
+                            req.employee._id === employee._id &&
+                            req.status === "pending",
+                        ).length > 0 && (
+                          <span>
+                            {
+                              requirements.filter(
+                                (req) =>
+                                  req.employee._id === employee._id &&
+                                  req.status === "pending",
+                              ).length
+                            }{" "}
+                            pending
+                          </span>
+                        )}
+                      </span>
+
+                      <span className="text-[11px] text-ink/45">
+                        {capitalize(employee.department)} &middot;{" "}
+                        {capitalize(employee.position)}
+                      </span>
+                    </button>
+                  );
+                })}
             </div>
           ) : (
             <EmptyState>No employees need attention right now.</EmptyState>
@@ -92,7 +219,11 @@ export default function HrDashboard() {
 
         <Card className="gap-3.5">
           <h4 className="text-[20px]">Recent onboarding activity</h4>
-          <EventList items={app.activity.slice(0, 6)} round />
+          {notifications.length > 0 ? (
+            <EventList items={notifications} notifications round />
+          ) : (
+            "No current onboarding activities"
+          )}
         </Card>
       </AutoGrid>
 
@@ -100,35 +231,62 @@ export default function HrDashboard() {
         <div className="flex flex-wrap items-center gap-3">
           <h4 className="text-[20px]">Awaiting verification</h4>
           <span className="text-meta text-ink/55">
-            {queue.length} {queue.length === 1 ? 'submission' : 'submissions'} in queue
+            {
+              requirements.filter(
+                (req) =>
+                  req.status === "pending" &&
+                  req.employee.onboardingStatus !== "deactivated",
+              ).length
+            }{" "}
+            {queue.filter(
+              (req) =>
+                req.status === "pending" &&
+                req.employee.onboardingStatus !== "deactivated",
+            ) === 1
+              ? "submission"
+              : "submissions"}{" "}
+            in queue
           </span>
-          <Button className="ml-auto" onClick={() => navigate('/hr/requirements')}>
+          <Button
+            className="ml-auto"
+            onClick={() => navigate("/hr/requirements")}
+          >
             Open verification queue
           </Button>
         </div>
-        {queue.length ? (
+        {requirements.filter(
+          (req) =>
+            req.status === "pending" &&
+            req.employee.onboardingStatus !== "deactivated",
+        ).length > 0 ? (
           <Table>
             <THead
               columns={[
-                'Employee',
-                'Requirement',
-                'Submitted',
-                'Deadline',
-                { label: '', align: 'right' }
+                "Employee",
+                "Requirement",
+                "Submitted",
+                "Deadline",
+                { label: "", align: "right" },
               ]}
             />
             <tbody>
-              {queue.slice(0, 4).map((row) => (
-                <TRow key={row.requirement.id}>
-                  <TCell strong>{row.employee.name}</TCell>
-                  <TCell>{row.requirement.name}</TCell>
-                  <TCell>{formatDate(row.requirement.submitted)}</TCell>
-                  <TCell>{formatDate(row.requirement.deadline)}</TCell>
-                  <TCell align="right">
-                    <Button onClick={() => setReview(row)}>Review</Button>
-                  </TCell>
-                </TRow>
-              ))}
+              {requirements
+                .filter(
+                  (req) =>
+                    req.status === "pending" &&
+                    req.employee.onboardingStatus !== "deactivated", //exclude deactivated employees requirement
+                )
+                .map((row) => (
+                  <TRow key={row.requirement.id}>
+                    <TCell strong>{row.employee.user.username}</TCell>
+                    <TCell>{row.requirement.name}</TCell>
+                    <TCell>{formatDate(row.updatedAt)}</TCell>
+                    <TCell>{formatDate(row.dueDate)}</TCell>
+                    <TCell align="right">
+                      <Button onClick={() => setReview(row)}>Review</Button>
+                    </TCell>
+                  </TRow>
+                ))}
             </tbody>
           </Table>
         ) : (
@@ -136,7 +294,13 @@ export default function HrDashboard() {
         )}
       </Card>
 
-      <ReviewDialog target={review} onClose={() => setReview(null)} />
+      <ReviewDialog
+        target={review}
+        getReqFromDashboard={() => {
+          queryClient.invalidateQueries({ queryKey: ["requirements"] }); //triggers a refresh
+        }}
+        onClose={() => setReview(null)}
+      />
     </>
   );
 }

@@ -17,7 +17,7 @@ const employeeRequirementSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["in-progress", "completed", "resubmission_required"],
+      enum: ["in-progress", "pending", "completed", "resubmission-required"],
       default: "in-progress",
       required: true,
     },
@@ -28,10 +28,17 @@ const employeeRequirementSchema = new mongoose.Schema(
     verifiedBy: {
       type: mongoose.Schema.ObjectId,
       ref: User,
-      required: true,
     },
     verifiedAt: {
       type: Date,
+    },
+    reminderSentAt: {
+      type: Date,
+      default: null,
+    },
+    overdueNotifiedAt: {
+      type: Date,
+      default: null,
     },
     resubmissionReason: {
       type: String,
