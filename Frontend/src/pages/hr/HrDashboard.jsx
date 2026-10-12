@@ -78,7 +78,11 @@ export default function HrDashboard() {
         <StatCard
           label="Requirements In progress"
           value={
-            requirements.filter((req) => req.status === "in-progress").length
+            requirements.filter(
+              (req) =>
+                req.status === "in-progress" &&
+                req.employee.onboardingStatus === "in_progress",
+            ).length
           }
           note="Not yet submitted"
         />
@@ -96,7 +100,10 @@ export default function HrDashboard() {
         />
         <StatCard
           label="Onboarding Completed" // is the completed referring to employees onboarding itself?
-          value={employees.filter((emp) => emp.status === "completed").length}
+          value={
+            employees.filter((emp) => emp.onboardingStatus === "completed")
+              .length
+          }
           note="Fully onboarded"
         />
       </AutoGrid>

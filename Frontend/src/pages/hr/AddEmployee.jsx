@@ -13,6 +13,7 @@ import { RefreshCcw } from "lucide-react";
 import { generatePassword } from "../../lib/generateTempPassword";
 import { handlePhoneChange } from "../../lib/validator";
 import api from "../../lib/axios";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Add Employee: employee information, position + department, account information.
@@ -20,6 +21,7 @@ import api from "../../lib/axios";
  */
 export default function AddEmployee() {
   const app = useApp();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [receipt, setReceipt] = useState(null);
   const [name, setName] = useState("");
@@ -67,7 +69,8 @@ export default function AddEmployee() {
       // !phone.trim() ||
       !position.trim() ||
       !email ||
-      !tempPass
+      !tempPass ||
+      !startDate
     ) {
       app.showToast("Please complete all missing information");
       return;
@@ -89,6 +92,10 @@ export default function AddEmployee() {
     //format date
     const formattedIsoDate = new Date(startDate).toISOString();
 
+    if (!formattedIsoDate) {
+      return app.showToast("Please select start date");
+    }
+
     const payload = {
       name: name.trim(),
       // phone: phone.trim(),
@@ -101,6 +108,10 @@ export default function AddEmployee() {
     };
     // console.log(payload);
     setReceipt(await app.createEmployee({ setLoadingSubmit, ...payload }));
+    //reload employees list
+    await queryClient.invalidateQueries({
+      queryKey: ["employees"],
+    });
   };
 
   return (
@@ -207,8 +218,8 @@ export default function AddEmployee() {
                   (req) => req.department === dep.toLowerCase(),
                 ).length
               }{" "}
-              requirements are assigned automatically for {position} in {dep}.
-              HR can adjust them afterwards on the employee record.
+              requirements are assigned automatically for employees in {dep}{" "}
+              department. HR can adjust them afterwards on the employee record.
             </p>
           )}
           <DividerList>

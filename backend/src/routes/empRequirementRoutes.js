@@ -13,6 +13,10 @@ import {
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import { asyncHandler } from "../middlewares/asyncHandlerMiddleware.js";
+//
+import User from "../models/userModel.js";
+import Employee from "../models/employeeModel.js";
+import EmployeeRequirement from "../models/employeeRequirement.js";
 
 const router = express.Router();
 
@@ -39,6 +43,7 @@ router.get(
   authorizeRoles("dept-rep"),
   asyncHandler(getDepEmpReq),
 );
+
 //
 router.get(
   "/department/:id",
@@ -74,4 +79,5 @@ router.delete(
   authorizeRoles("hr"),
   asyncHandler(deleteSpecificEmpReq),
 );
+
 export default router;

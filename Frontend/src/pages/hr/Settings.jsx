@@ -70,6 +70,13 @@ export default function Settings() {
     app.setSettings((current) => ({ ...current, [key]: value }));
   };
 
+  useEffect(() => {
+    if (systemSettings) {
+      setDeadlineDays(systemSettings.deadlineDays);
+      setReminderDaysBefore(systemSettings.reminderDaysBefore);
+    }
+  }, [systemSettings]);
+
   if (systemSettingsLoading) {
     return <p>Loading...</p>;
   }
@@ -150,8 +157,9 @@ export default function Settings() {
             }
           }}
           disabled={
-            deadlineDays === systemSettings.deadlineDays &&
-            reminderDaysBefore === systemSettings.reminderDaysBefore
+            (deadlineDays === systemSettings.deadlineDays &&
+              reminderDaysBefore === systemSettings.reminderDaysBefore) ||
+            updateSystemSettingsPending
           }
         >
           Save Settings

@@ -130,14 +130,15 @@ export async function addEmployee(req, res) {
 
   //maps through all department requirements to create multiple EmployeeRequirements
   const newEmployeeReq = depRequirements.map((requirements) => {
-    let currentDate = new Date();
-    let reqDueDate = currentDate.setDate(
-      currentDate.getDate() + settings.deadlineDays, //from settings
+    //convert startdate
+    let baseDate = new Date(startDate);
+    baseDate.setDate(
+      baseDate.getDate() + settings.deadlineDays, //from settings
     );
     return new EmployeeRequirement({
       employee: newEmployee._id,
       requirement: requirements._id, //pass the depRequirements id from map
-      dueDate: reqDueDate, // current date plus deadline days
+      dueDate: baseDate, // start date plus deadline days
     });
   });
 

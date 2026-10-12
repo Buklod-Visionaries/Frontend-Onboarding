@@ -32,6 +32,10 @@ const employeeRequirementSchema = new mongoose.Schema(
     verifiedAt: {
       type: Date,
     },
+    reminderSentAt: {
+      type: Date,
+      default: null,
+    },
     resubmissionReason: {
       type: String,
     },
