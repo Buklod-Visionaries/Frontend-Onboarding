@@ -68,32 +68,58 @@ export async function getOwnEmpReq(req, res) {
   const notifications = [];
 
   for (const empReq of myEmpReq) {
-    // Skip completed requirements and requirements already reminded
-    if (
-      ["completed", "pending"].includes(empReq.status) ||
-      empReq.reminderSentAt
-    ) {
+    // Skip requirements that don't need action
+    if (["completed", "pending"].includes(empReq.status)) {
+      continue;
+    }
+
+    // Check if the requirement is overdue
+    if (empReq.dueDate && now >= empReq.dueDate && !empReq.overdueNotifiedAt) {
+      const updatedReq = await EmployeeRequirement.findOneAndUpdate(
+        {
+          _id: empReq._id,
+          overdueNotifiedAt: null,
+          dueDate: { $lte: now },
+          status: { $nin: ["completed", "pending"] },
+        },
+        { overdueNotifiedAt: now },
+        { new: true },
+      );
+
+      if (updatedReq) {
+        notifications.push({
+          user: myUser._id,
+          title: `${empReq.requirement.name} Is Overdue`,
+          message: `Your ${empReq.requirement.name} was due on ${new Date(
+            empReq.dueDate,
+          ).toLocaleDateString()}. Please submit it as soon as possible.`,
+        });
+      }
+
+      // No need to check the approaching-deadline reminder after the deadline
+      continue;
+    }
+
+    // Check if a deadline reminder should be sent
+    if (empReq.reminderSentAt || !empReq.dueDate) {
       continue;
     }
 
     const reminderDate = new Date(empReq.dueDate);
     reminderDate.setDate(reminderDate.getDate() - reminderDaysBefore);
 
-    // Send when the reminder date has arrived,
-    // but before the requirement deadline.
     if (now >= reminderDate && now < empReq.dueDate) {
       const updatedReq = await EmployeeRequirement.findOneAndUpdate(
         {
           _id: empReq._id,
           reminderSentAt: null,
+          dueDate: { $gt: now },
           status: { $nin: ["completed", "pending"] },
         },
         { reminderSentAt: now },
         { new: true },
       );
 
-      // Prevent duplicate reminders if another request
-      // already marked this requirement as reminded.
       if (!updatedReq) continue;
 
       notifications.push({
@@ -265,193 +291,194 @@ export async function getEmpReqByEmpId(req, res) {
   res.send(empReq);
 }
 
-  export async function editEmpReq(req, res) {
-    const { id: userId } = req.user;
-    const { id: paramsId } = req.params;
-    const { status, resubmissionReason } = req.body;
+export async function editEmpReq(req, res) {
+  const { id: userId } = req.user;
+  const { id: paramsId } = req.params;
+  const { status, resubmissionReason } = req.body;
 
-    const currentDate = new Date();
+  const currentDate = new Date();
 
-    if (status === "resubmission-required" && !resubmissionReason) {
-      return res.status(400).send({
-        message: "resubmission reason is required",
-      });
-    }
-
-    // if employee requirement is set to resubmission
-    if (status === "resubmission-required") {
-      const newResubDueDate = new Date();
-      newResubDueDate.setDate(newResubDueDate.getDate() + 7);
-      const editedReq = await EmployeeRequirement.findByIdAndUpdate(
-        paramsId,
-        {
-          status,
-          resubmissionReason,
-          dueDate: newResubDueDate,
-          reminderSentAt: null, // Reset reminder for the new deadline
-          verifiedBy: userId,
-          verifiedAt: currentDate,
-        },
-        { returnDocument: "after" }, //return the edited
-      )
-        .populate({ path: "employee", populate: { path: "user" } })
-        .populate("requirement");
-
-      const doc = await Document.findOne({ employeeRequirement: editedReq._id });
-      if (!doc) {
-        return res
-          .status(404)
-          .send(
-            `No document found with employee requirements id ${editedReq._id}`,
-          );
-      }
-
-      //actual deletion
-
-      //delete document file from supabase
-      const { error: uploadError } = await supabase.storage
-        .from("employee-files") //supabase bucket name
-        .remove([doc.fileUrl]);
-
-      if (uploadError) {
-        console.log(uploadError);
-        return res.send({ message: "Failed to delete file" });
-      }
-
-      //delete the document file after
-      const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
-      if (!deletedDocs) {
-        return res.send("Failed deleting document");
-      }
-
-      //creates a history/audit log
-      const empReqHistory = new EmployeeRequirementHistory({
-        employeeRequirement: editedReq._id,
-        status: `resubmission-required`,
-        changedBy: userId,
-        note: "Resubmission Requested by HR",
-      });
-
-      await empReqHistory.save();
-
-      //create notif to employee
-      const notif = new Notification({
-        user: editedReq.employee.user._id,
-        title: `${editedReq.requirement.name} needs resubmission`,
-        message: "Please review the feedback and submit a new document.",
-      });
-      await notif.save();
-
-      return res.send({
-        message: `successfully changed status of empReq ${editedReq}`,
-        deletedDocument: `${deletedDocs}`,
-        notif: notif,
-      });
-    }
-
-    //if employee requirement is set to complete
-    if (status === "completed") {
-      const editedReq = await EmployeeRequirement.findByIdAndUpdate(
-        paramsId,
-        {
-          status,
-          $unset: { resubmissionReason: 1 }, // remove the resubmissionReason if any
-          verifiedBy: userId,
-          verifiedAt: currentDate,
-        },
-        { returnDocument: "after" }, //return the edited
-      )
-        .populate({ path: "employee", populate: { path: "user" } })
-        .populate("requirement");
-
-      //creates a history/audit log
-      const empReqHistory = new EmployeeRequirementHistory({
-        employeeRequirement: editedReq._id,
-        status: `completed`,
-        changedBy: userId,
-        note: "Mark completed",
-      });
-
-      await empReqHistory.save();
-
-      //create notif to employee
-      const notif = new Notification({
-        user: editedReq.employee.user._id,
-        title: `${editedReq.requirement.name} was approved`,
-        message: "Your submitted document has been verified successfully.",
-      });
-      await notif.save();
-
-      if (editedReq.requirement.type === "activity") {
-        const hr = await User.find({ role: "hr" }); //get all HR
-        //create notif for all HR
-        const hrNotif = hr.map((hrUser) => {
-          return new Notification({
-            user: hrUser._id,
-            title: `${editedReq.employee.user.username} completed ${editedReq.requirement.name}`,
-            message: `The requirement has been marked as completed by the department representative.`,
-          });
-        });
-
-        //save to DB the notif
-        await Notification.insertMany(hrNotif);
-      }
-
-      // MARKS onboarding status as completed if all requirements are completed //
-      //find specific employee
-      const employee = await Employee.findOne({
-        _id: editedReq.employee._id,
-      }).populate("user");
-
-      if (!employee) {
-        return res.status(404).send({ message: "No employee found" });
-      }
-
-      //find all empReqs of that employee
-      const allEmpReqs = await EmployeeRequirement.find({
-        employee: employee._id,
-      });
-
-      if (allEmpReqs.length === 0) {
-        return res.status(404).send("No employee requirements for the employee.");
-      }
-
-      //checks if all requirements are completed
-      const allCompleted = allEmpReqs.every(
-        (empReq) => empReq.status === "completed",
-      );
-
-      //set employee onboarding as completed
-      if (allCompleted && employee.onboardingStatus !== "completed") {
-        //mark specific employee as completed
-        employee.onboardingStatus = "completed";
-        await employee.save();
-
-        //find all HR
-        const hr = await User.find({ role: "hr" });
-        //create notif for each HR
-        const hrNotif = hr.map((hrUser) => {
-          return new Notification({
-            user: hrUser._id,
-            title: `${employee.user.username} Completed Onboarding`,
-            message: `${employee.user.username} has completed all assigned onboarding requirements. Their onboarding process is now complete.`,
-          });
-        });
-        //create notif to the completed onboarding employee
-        const employeeNotif = new Notification({
-          user: employee.user._id,
-          title: "Onboarding Completed Successfully",
-          message: `Congratulations! You have completed all your onboarding requirements. Your onboarding process is now complete.`,
-        });
-
-        //save notif to DB
-        await Notification.insertMany(hrNotif);
-        await employeeNotif.save();
-      }
-
-      return res.send(editedReq);
-    }
+  if (status === "resubmission-required" && !resubmissionReason) {
+    return res.status(400).send({
+      message: "resubmission reason is required",
+    });
   }
+
+  // if employee requirement is set to resubmission
+  if (status === "resubmission-required") {
+    const newResubDueDate = new Date();
+    newResubDueDate.setDate(newResubDueDate.getDate() + 7);
+    const editedReq = await EmployeeRequirement.findByIdAndUpdate(
+      paramsId,
+      {
+        status,
+        resubmissionReason,
+        dueDate: newResubDueDate,
+        reminderSentAt: null, // Reset reminder for the new deadline
+        overdueNotifiedAt: null, //reset reminder for overdue
+        verifiedBy: userId,
+        verifiedAt: currentDate,
+      },
+      { returnDocument: "after" }, //return the edited
+    )
+      .populate({ path: "employee", populate: { path: "user" } })
+      .populate("requirement");
+
+    const doc = await Document.findOne({ employeeRequirement: editedReq._id });
+    if (!doc) {
+      return res
+        .status(404)
+        .send(
+          `No document found with employee requirements id ${editedReq._id}`,
+        );
+    }
+
+    //actual deletion
+
+    //delete document file from supabase
+    const { error: uploadError } = await supabase.storage
+      .from("employee-files") //supabase bucket name
+      .remove([doc.fileUrl]);
+
+    if (uploadError) {
+      console.log(uploadError);
+      return res.send({ message: "Failed to delete file" });
+    }
+
+    //delete the document file after
+    const deletedDocs = await Document.findOneAndDelete({ _id: doc._id });
+    if (!deletedDocs) {
+      return res.send("Failed deleting document");
+    }
+
+    //creates a history/audit log
+    const empReqHistory = new EmployeeRequirementHistory({
+      employeeRequirement: editedReq._id,
+      status: `resubmission-required`,
+      changedBy: userId,
+      note: "Resubmission Requested by HR",
+    });
+
+    await empReqHistory.save();
+
+    //create notif to employee
+    const notif = new Notification({
+      user: editedReq.employee.user._id,
+      title: `${editedReq.requirement.name} needs resubmission`,
+      message: "Please review the feedback and submit a new document.",
+    });
+    await notif.save();
+
+    return res.send({
+      message: `successfully changed status of empReq ${editedReq}`,
+      deletedDocument: `${deletedDocs}`,
+      notif: notif,
+    });
+  }
+
+  //if employee requirement is set to complete
+  if (status === "completed") {
+    const editedReq = await EmployeeRequirement.findByIdAndUpdate(
+      paramsId,
+      {
+        status,
+        $unset: { resubmissionReason: 1 }, // remove the resubmissionReason if any
+        verifiedBy: userId,
+        verifiedAt: currentDate,
+      },
+      { returnDocument: "after" }, //return the edited
+    )
+      .populate({ path: "employee", populate: { path: "user" } })
+      .populate("requirement");
+
+    //creates a history/audit log
+    const empReqHistory = new EmployeeRequirementHistory({
+      employeeRequirement: editedReq._id,
+      status: `completed`,
+      changedBy: userId,
+      note: "Mark completed",
+    });
+
+    await empReqHistory.save();
+
+    //create notif to employee
+    const notif = new Notification({
+      user: editedReq.employee.user._id,
+      title: `${editedReq.requirement.name} was approved`,
+      message: "Your submitted document has been verified successfully.",
+    });
+    await notif.save();
+
+    if (editedReq.requirement.type === "activity") {
+      const hr = await User.find({ role: "hr" }); //get all HR
+      //create notif for all HR
+      const hrNotif = hr.map((hrUser) => {
+        return new Notification({
+          user: hrUser._id,
+          title: `${editedReq.employee.user.username} completed ${editedReq.requirement.name}`,
+          message: `The requirement has been marked as completed by the department representative.`,
+        });
+      });
+
+      //save to DB the notif
+      await Notification.insertMany(hrNotif);
+    }
+
+    // MARKS onboarding status as completed if all requirements are completed //
+    //find specific employee
+    const employee = await Employee.findOne({
+      _id: editedReq.employee._id,
+    }).populate("user");
+
+    if (!employee) {
+      return res.status(404).send({ message: "No employee found" });
+    }
+
+    //find all empReqs of that employee
+    const allEmpReqs = await EmployeeRequirement.find({
+      employee: employee._id,
+    });
+
+    if (allEmpReqs.length === 0) {
+      return res.status(404).send("No employee requirements for the employee.");
+    }
+
+    //checks if all requirements are completed
+    const allCompleted = allEmpReqs.every(
+      (empReq) => empReq.status === "completed",
+    );
+
+    //set employee onboarding as completed
+    if (allCompleted && employee.onboardingStatus !== "completed") {
+      //mark specific employee as completed
+      employee.onboardingStatus = "completed";
+      await employee.save();
+
+      //find all HR
+      const hr = await User.find({ role: "hr" });
+      //create notif for each HR
+      const hrNotif = hr.map((hrUser) => {
+        return new Notification({
+          user: hrUser._id,
+          title: `${employee.user.username} Completed Onboarding`,
+          message: `${employee.user.username} has completed all assigned onboarding requirements. Their onboarding process is now complete.`,
+        });
+      });
+      //create notif to the completed onboarding employee
+      const employeeNotif = new Notification({
+        user: employee.user._id,
+        title: "Onboarding Completed Successfully",
+        message: `Congratulations! You have completed all your onboarding requirements. Your onboarding process is now complete.`,
+      });
+
+      //save notif to DB
+      await Notification.insertMany(hrNotif);
+      await employeeNotif.save();
+    }
+
+    return res.send(editedReq);
+  }
+}
 
 export async function deleteSpecificEmpReq(req, res) {
   const { id: paramsId } = req.params;

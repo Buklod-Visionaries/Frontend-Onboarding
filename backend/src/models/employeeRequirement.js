@@ -36,6 +36,10 @@ const employeeRequirementSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    overdueNotifiedAt: {
+      type: Date,
+      default: null,
+    },
     resubmissionReason: {
       type: String,
     },
