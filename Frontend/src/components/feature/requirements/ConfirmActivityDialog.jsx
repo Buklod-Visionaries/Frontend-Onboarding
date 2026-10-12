@@ -44,13 +44,13 @@ function ConfirmActivityDialogBody({
         {empReq.employee.user.username}? HR will be notified and the
         employee&rsquo;s onboarding record will be updated.
       </p>
-      <Field label="Note (optional)">
+      {/* <Field label="Note (optional)">
         <Input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="e.g. Completed on schedule with the laboratory team"
         />
-      </Field>
+      </Field> */}
     </Modal>
   );
 }
