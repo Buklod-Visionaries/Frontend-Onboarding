@@ -34,26 +34,6 @@ export default function DeptRequirements() {
     isError: depRequirementsError,
   } = useDepEmpReq(app.session.accessToken);
 
-  // useEffect(() => {
-  //   async function getRequirements() {
-  //     try {
-  //       setLoading(true);
-  //       const res = await api.get("/employee-requirements/department", {
-  //         headers: {
-  //           Authorization: `Bearer ${app.session.accessToken}`,
-  //         },
-  //       });
-  //       setDepRequirements(res.data);
-  //     } catch (error) {
-  //       console.log(error.response.data.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   getRequirements();
-  // }, []);
-
   if (depRequirementsError) {
     return <p>Failed loading department requirements.</p>;
   }
@@ -74,7 +54,9 @@ export default function DeptRequirements() {
             <AutoGrid min={300} gap="gap-4">
               {ACTIVITIES.map((title) => {
                 const rows = depRequirements.filter(
-                  (row) => row.requirement.name === title,
+                  (row) =>
+                    row.requirement.name === title &&
+                    row.employee.onboardingStatus !== "deactivated",
                 );
                 return (
                   <Card key={title} padding="sm" className="gap-3">

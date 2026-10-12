@@ -103,7 +103,11 @@ export default function DeptDashboard() {
               {confirmLoading
                 ? "Loading..."
                 : depRequirements
-                    .filter((depReq) => depReq.status === "in-progress")
+                    .filter(
+                      (depReq) =>
+                        depReq.status === "in-progress" &&
+                        depReq.employee.onboardingStatus === "in_progress",
+                    )
                     .map((req) => (
                       <TRow key={req._id}>
                         <TCell strong>{req.employee.user.username}</TCell>
