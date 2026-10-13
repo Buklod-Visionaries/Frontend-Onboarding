@@ -69,14 +69,14 @@ export default function FirstLogin() {
       <Card padding="lg" className="w-full max-w-[400px] gap-5">
         <div>
           <div className="font-heading text-kicker uppercase text-accent-700">
-            First-time login
+            Set Up / Reset Password
           </div>
-          <h2 className="mt-1.5 text-[30px]">Set your password</h2>
+          <h2 className="mt-1.5 text-[30px]">Set a new password</h2>
         </div>
 
         <p className="m-0 text-cell leading-relaxed text-ink/65">
-          Your account was created by HR with a temporary password. Set a new
-          password to continue to your onboarding requirements.
+          Enter your account credentials and choose a new password to activate
+          your account or complete a requested password reset.
         </p>
         <Field label="Work email">
           <Input

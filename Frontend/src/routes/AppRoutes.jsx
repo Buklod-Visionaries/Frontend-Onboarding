@@ -24,13 +24,17 @@ import DeptRequirements from "../pages/dept/DeptRequirements";
 
 import Notifications from "../pages/Notifications";
 
+import PublicOnlyRoute from "./PublicOnlyRoute";
+
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/first-login" element={<FirstLogin />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/first-login" element={<FirstLogin />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+      </Route>
 
       <Route path="/hr" element={<RoleGuard role="hr" />}>
         <Route element={<AppShell />}>

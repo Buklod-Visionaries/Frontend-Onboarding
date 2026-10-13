@@ -118,10 +118,10 @@ export default function Login() {
 
         <div className="flex flex-wrap justify-center gap-1.5">
           <Link to="/first-login">
-            <Button variant="ghost">First-time login</Button>
+            <Button variant="ghost">Set Up / Reset Password</Button>
           </Link>
           <Link to="/forgot-password">
-            <Button variant="ghost">Forgot password</Button>
+            <Button variant="ghost">Forgot password?</Button>
           </Link>
         </div>
       </Card>
