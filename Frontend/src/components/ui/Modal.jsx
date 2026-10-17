@@ -27,19 +27,26 @@ export default function Modal({ open, onClose, kicker, title, subtitle, actions,
         className={cx(
           // text-ink is set explicitly: a dialog can be mounted from anywhere,
           // including the accent-900 sidebar, and must not inherit its colour.
-          'flex max-h-full w-full flex-col gap-4 overflow-y-auto border border-divider bg-bg text-ink p-[22px] shadow-lg scroll-thin',
+          'flex max-h-[calc(100dvh-2rem)] w-full flex-col gap-4 overflow-hidden border border-divider bg-bg p-[22px] text-ink shadow-lg',
           width || 'max-w-[560px]'
         )}
       >
         {(kicker || title) && (
-          <header className="flex flex-col gap-1">
+          <header className="flex shrink-0 flex-col gap-1">
             {kicker && <span className="text-micro uppercase text-accent-700">{kicker}</span>}
             {title && <h3 className="text-[26px]">{title}</h3>}
             {subtitle && <p className="m-0 text-cell text-ink/55">{subtitle}</p>}
           </header>
         )}
-        {children}
-        {actions && <footer className="flex flex-wrap justify-end gap-2.5">{actions}</footer>}
+        <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
+  {children}
+</div>
+
+{actions && (
+  <footer className="flex shrink-0 flex-wrap justify-end gap-2.5">
+    {actions}
+  </footer>
+)}
       </div>
     </div>
   );

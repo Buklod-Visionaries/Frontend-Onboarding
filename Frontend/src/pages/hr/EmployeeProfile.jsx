@@ -166,7 +166,7 @@ export default function EmployeeProfile() {
                 //disabled if no requirements are overdue while in progress or resubmission required
                 empRequirements.filter(
                   (req) =>
-                    isOverdue(formatDate(req)) &&
+                    isOverdue(formatDate(req.dueDate)) &&
                     (req.status === "in-progress" ||
                       req.status === "resubmission-required"),
                 ).length === 0 || employee.onboardingStatus === "deactivated" //disabled if employee is deactivated

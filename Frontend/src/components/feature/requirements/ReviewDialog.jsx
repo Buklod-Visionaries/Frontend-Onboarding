@@ -154,7 +154,7 @@ function ReviewDialogBody({
       ) : (
         <div className="grid gap-4 sm:grid-cols-[1.1fr_1fr]">
           {requirement.type === "document" && (
-            <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2">
+            <div className="flex h-[55vh] min-h-[300px] flex-col items-center justify-center gap-2">
               {existingDocumentLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (
@@ -166,7 +166,7 @@ function ReviewDialogBody({
                 >
                   <iframe
                     src={`${existingDocument.fileUrl}#toolbar=0&navpanes=0`}
-                    className="pointer-events-none h-full w-full border-none"
+                    className="pointer-events-none block h-full w-full border-0"
                     title="Document preview"
                   />
                 </a>
