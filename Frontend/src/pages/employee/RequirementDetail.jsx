@@ -69,6 +69,10 @@ export default function RequirementDetail() {
     }
 
     setPendingFile(file);
+    //show toast saying to users that file is chosen
+    app.showToast(
+      `${file.name} is ready to upload. Please click Submit document to upload it.`,
+    );
   }
 
   async function uploadFile({ e, id }) {
