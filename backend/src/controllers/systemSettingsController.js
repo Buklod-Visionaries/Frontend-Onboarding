@@ -14,17 +14,27 @@ export async function updateSystemSettings(req, res) {
   const { deadlineDays, reminderDaysBefore } = req.body;
 
   if (!deadlineDays || !reminderDaysBefore) {
-    return res.send({
+    return res.status(400).send({
       message: "No deadline days or reminder days before provided.",
     });
   }
   //
+  // Ensure inputs are whole numbers (integers)
+  const deadline = parseInt(deadlineDays, 10);
+  const reminder = parseInt(reminderDaysBefore, 10);
+
   if (
-    ![7, 10, 14].includes(deadlineDays) ||
-    ![1, 3, 5].includes(reminderDaysBefore)
+    isNaN(deadline) ||
+    deadline < 1 ||
+    deadline > 90 ||
+    isNaN(reminder) ||
+    reminder < 1 ||
+    reminder > 30 ||
+    reminder >= deadline // 💡 Logic check: Reminder must happen BEFORE the deadline!
   ) {
     return res.status(400).json({
-      message: "Invalid deadline or reminder setting.",
+      message:
+        "Invalid settings. Deadline must be 1-90 days, and reminder must be 1-30 days (and less than the deadline).",
     });
   }
 
@@ -32,8 +42,8 @@ export async function updateSystemSettings(req, res) {
     {}, //since theres only one settings data
     {
       $set: {
-        deadlineDays, //set new deadline days
-        reminderDaysBefore, //set new  reminder days before
+        deadlineDays: deadline, //set new deadline days
+        reminderDaysBefore: reminder, //set new  reminder days before
       },
     },
     {

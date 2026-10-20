@@ -17,7 +17,7 @@ export default function Reports() {
   const app = useApp();
 
   const [department, setDepartment] = useState("All");
-  const [generated, setGenerated] = useState(false);
+  // const [generated, setGenerated] = useState(false);
 
   const {
     data: reports = [],
@@ -43,9 +43,9 @@ export default function Reports() {
   const totalRequirements =
     totals.completed + totals.inProgress + totals.pending;
 
-  const handleGenerate = () => {
-    setGenerated(true);
-  };
+  // const handleGenerate = () => {
+  //   setGenerated(true);
+  // };
 
   const handleExportExcel = () => {
     if (!reports.length) return;
@@ -95,144 +95,140 @@ export default function Reports() {
             ]}
             onChange={(e) => {
               setDepartment(e.target.value);
-              setGenerated(false);
+              // setGenerated(false);
             }}
           />
         </Field>
 
-        <Button variant="primary" onClick={handleGenerate} disabled={isLoading}>
+        {/* <Button variant="primary" onClick={handleGenerate} disabled={isLoading}>
           Generate Report
-        </Button>
+        </Button> */}
 
-        {generated && !isLoading && !isError && reports.length > 0 && (
+        {!isLoading && !isError && reports.length > 0 && (
           <Button variant="secondary" onClick={handleExportExcel}>
             Export Excel
           </Button>
         )}
       </div>
 
-      {generated && (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-baseline gap-2.5 border-t border-divider pt-4">
-            <h4 className="text-[20px]">
-              {department === "All"
-                ? "All departments"
-                : formatDepartment(department)}{" "}
-              Reports
-            </h4>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-baseline gap-2.5 border-t border-divider pt-4">
+          <h4 className="text-[20px]">
+            {department === "All"
+              ? "All departments"
+              : formatDepartment(department)}{" "}
+            Reports
+          </h4>
 
-            <span className="text-[11px] text-ink/50">
-              Generated {new Date().toLocaleString()}
-            </span>
-          </div>
-
-          {isLoading && (
-            <div className="py-8 text-center text-ink/50">
-              Loading report...
-            </div>
-          )}
-
-          {isError && (
-            <div className="py-8 text-center text-red-500">
-              Failed to load report.
-            </div>
-          )}
-
-          {!isLoading && !isError && (
-            <>
-              <StatStrip
-                items={[
-                  {
-                    label: "Employees",
-                    value: reports.length,
-                  },
-                  {
-                    label: "Completed requirements",
-                    value: totals.completed,
-                  },
-                  {
-                    label: "In progress",
-                    value: totals.inProgress,
-                  },
-                  {
-                    label: "Pending",
-                    value: totals.pending,
-                  },
-                  {
-                    label: "Total requirements",
-                    value: totalRequirements,
-                  },
-                ]}
-              />
-
-              {reports.length === 0 ? (
-                <div className="py-8 text-center text-ink/50">
-                  No employees found for this department.
-                </div>
-              ) : (
-                <Table>
-                  <THead
-                    columns={[
-                      "Employee",
-                      "Position",
-                      "Department",
-                      "In progress",
-                      "Pending",
-                      "Completed",
-                      "Total",
-                      "Completed Date",
-                      "Status",
-                    ]}
-                  />
-
-                  <tbody>
-                    {reports.map((employee) => (
-                      <TRow key={employee.employee}>
-                        <TCell strong>{employee.employee}</TCell>
-
-                        <TCell>{employee.position}</TCell>
-
-                        <TCell>{formatDepartment(employee.department)}</TCell>
-
-                        <TCell>{employee.inProgress}</TCell>
-
-                        <TCell>{employee.pending}</TCell>
-
-                        <TCell>{employee.completed}</TCell>
-
-                        <TCell>{employee.total}</TCell>
-
-                        <TCell>{formatDate(employee.completedDate)}</TCell>
-
-                        <TCell>
-                          <Badge
-                            variant={
-                              employee.onboardingStatus === "in_progress"
-                                ? "in-progress"
-                                : employee.onboardingStatus === "completed"
-                                  ? "completed"
-                                  : employee.onboardingStatus === "deactivated"
-                                    ? "deactivated"
-                                    : undefined
-                            }
-                          >
-                            {employee.onboardingStatus === "in_progress"
-                              ? "In Progress"
-                              : employee.onboardingStatus ===
-                                  "resubmission-required"
-                                ? "Resubmission Required"
-                                : formatStatus(employee.onboardingStatus)}
-                          </Badge>
-                        </TCell>
-                      </TRow>
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-            </>
-          )}
+          <span className="text-[11px] text-ink/50">
+            Generated {new Date().toLocaleString()}
+          </span>
         </div>
-      )}
+
+        {isLoading && (
+          <div className="py-8 text-center text-ink/50">Loading report...</div>
+        )}
+
+        {isError && (
+          <div className="py-8 text-center text-red-500">
+            Failed to load report.
+          </div>
+        )}
+
+        {!isLoading && !isError && (
+          <>
+            <StatStrip
+              items={[
+                {
+                  label: "Employees",
+                  value: reports.length,
+                },
+                {
+                  label: "Completed requirements",
+                  value: totals.completed,
+                },
+                {
+                  label: "In progress",
+                  value: totals.inProgress,
+                },
+                {
+                  label: "Pending",
+                  value: totals.pending,
+                },
+                {
+                  label: "Total requirements",
+                  value: totalRequirements,
+                },
+              ]}
+            />
+
+            {reports.length === 0 ? (
+              <div className="py-8 text-center text-ink/50">
+                No employees found for this department.
+              </div>
+            ) : (
+              <Table>
+                <THead
+                  columns={[
+                    "Employee",
+                    "Position",
+                    "Department",
+                    "In progress",
+                    "Pending",
+                    "Completed",
+                    "Total",
+                    "Completed Date",
+                    "Status",
+                  ]}
+                />
+
+                <tbody>
+                  {reports.map((employee) => (
+                    <TRow key={employee.employee}>
+                      <TCell strong>{employee.employee}</TCell>
+
+                      <TCell>{employee.position}</TCell>
+
+                      <TCell>{formatDepartment(employee.department)}</TCell>
+
+                      <TCell>{employee.inProgress}</TCell>
+
+                      <TCell>{employee.pending}</TCell>
+
+                      <TCell>{employee.completed}</TCell>
+
+                      <TCell>{employee.total}</TCell>
+
+                      <TCell>{formatDate(employee.completedDate)}</TCell>
+
+                      <TCell>
+                        <Badge
+                          variant={
+                            employee.onboardingStatus === "in_progress"
+                              ? "in-progress"
+                              : employee.onboardingStatus === "completed"
+                                ? "completed"
+                                : employee.onboardingStatus === "deactivated"
+                                  ? "deactivated"
+                                  : undefined
+                          }
+                        >
+                          {employee.onboardingStatus === "in_progress"
+                            ? "In Progress"
+                            : employee.onboardingStatus ===
+                                "resubmission-required"
+                              ? "Resubmission Required"
+                              : formatStatus(employee.onboardingStatus)}
+                        </Badge>
+                      </TCell>
+                    </TRow>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </>
+        )}
+      </div>
     </Card>
   );
 }
