@@ -18,5 +18,5 @@ the store — they need the session and the notification counts.
 
 Everything is driven by Tailwind's `lg:` breakpoint (1024px):
 
-- **≥1024px** — sidebar is a sticky full-height 236px rail; the account footer stacks name, title, then a full-width button.
-- **<1024px** — the shell becomes a single column, the sidebar sits at the top with its nav wrapping horizontally, and the account footer becomes one row with the name on the left and the sign-out button on the right.
+- **≥1024px** — sidebar is a sticky full-height 236px rail beside the content; the account footer stacks name, title, then a full-width button.
+- **<1024px** — the sidebar is the same vertical rail, but as a fixed drawer off-screen to the left. The header shows a hamburger that slides it in over a dimmed backdrop. The backdrop, the drawer's close button, Escape and choosing a nav link all close it; while open the page behind doesn't scroll and is inert, so focus stays in the drawer. Widening past 1024px resets it. `AppShell` owns the open state; it is never a horizontal top bar.

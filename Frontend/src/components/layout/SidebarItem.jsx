@@ -2,10 +2,11 @@ import { NavLink } from 'react-router-dom';
 import { cx } from '../../lib/cx';
 
 /** Sidebar row on the deep accent field: lucide icon, label, optional count badge. */
-export default function SidebarItem({ to, label, icon: Icon, badge }) {
+export default function SidebarItem({ to, label, icon: Icon, badge, onClick }) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         cx(
           'flex items-center gap-2.5 border px-3 py-[9px] font-heading text-[15px] text-bg transition-colors',
