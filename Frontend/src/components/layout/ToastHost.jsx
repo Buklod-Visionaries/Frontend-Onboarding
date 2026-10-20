@@ -1,8 +1,19 @@
-import Toast from '../ui/Toast';
-import { useApp } from '../../hooks/useApp';
+import { Toaster } from "react-hot-toast";
 
-/** Connects the presentational Toast to the store, so ui/ stays state-free. */
 export default function ToastHost() {
-  const app = useApp();
-  return <Toast message={app.toast} />;
+  return (
+    <Toaster
+      position="bottom-right"
+      toastOptions={{
+        duration: 3000,
+        style: {
+          background: "#3d1e1b",
+          color: "#ffffff",
+          borderRadius: "8px",
+          padding: "12px 16px",
+          fontSize: "14px",
+        },
+      }}
+    />
+  );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -43,6 +43,15 @@ export default function AddEmployee() {
   ];
   const [dep, setDep] = useState(departments[0]);
 
+  //
+  const nameRef = useRef(null);
+  const startDateRef = useRef(null);
+  const positionRef = useRef(null);
+  const departmentRef = useRef(null);
+  const emailRef = useRef(null);
+
+  const isValidWorkEmail = (value) => /^[^\s@]+@pmcl\.ph$/i.test(value.trim());
+
   async function getAllRequirementsTemplate() {
     try {
       setLoadingReq(true);
@@ -64,54 +73,95 @@ export default function AddEmployee() {
   }, []);
 
   const submit = async () => {
-    if (
-      !name.trim() ||
-      // !phone.trim() ||
-      !position.trim() ||
-      !email ||
-      !tempPass ||
-      !startDate
-    ) {
-      app.showToast("Please complete all missing information");
+    const validations = [
+      {
+        valid: !!name.trim(),
+        ref: nameRef,
+        message: "Please enter the employee's full name.",
+      },
+      {
+        valid: !!startDate && !Number.isNaN(new Date(startDate).getTime()),
+        ref: startDateRef,
+        message: !startDate
+          ? "Please select the employee's start date."
+          : "Please enter a valid start date.",
+      },
+      {
+        valid: !!position.trim(),
+        ref: positionRef,
+        message: "Please enter the employee's position.",
+      },
+      {
+        valid: dep !== "Select department",
+        ref: departmentRef,
+        message: "Please select a department.",
+      },
+      {
+        valid: isValidWorkEmail(email),
+        ref: emailRef,
+        message: !email.trim()
+          ? "Please enter the employee's work email."
+          : "Use a valid work email ending in @pmcl.ph.",
+      },
+    ];
+
+    const invalidField = validations.find((field) => !field.valid);
+
+    if (invalidField) {
+      app.showToast(invalidField.message);
+      invalidField.ref.current?.focus();
       return;
     }
 
-    //get the length of assigned requirements for specific department
+    if (!tempPass) {
+      app.showToast("Temporary password is missing. Generate a new password.");
+      return;
+    }
+
     const empReq = requirements.filter(
       (req) => req.department === dep.toLowerCase(),
     ).length;
-    //validate phone num
-    // const phoneRegExp = /^(09|\+639|639)\d{9}$/;
-    // if (!phoneRegExp.test(phone.trim())) {
-    //   app.showToast(
-    //     "Please enter a valid PH mobile number starting with 09, 639, or +639 followed by 9 digits.",
-    //   );
-    //   return;
-    // }
-
-    //format date
-    const formattedIsoDate = new Date(startDate).toISOString();
-
-    if (!formattedIsoDate) {
-      return app.showToast("Please select start date");
-    }
 
     const payload = {
       name: name.trim(),
-      // phone: phone.trim(),
-      startDate: formattedIsoDate, // Sent in full ISO format
+      startDate: new Date(startDate).toISOString(),
       position: position.trim(),
       department: dep,
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       tempPass,
-      empReq: empReq,
+      empReq,
     };
-    // console.log(payload);
-    setReceipt(await app.createEmployee({ setLoadingSubmit, ...payload }));
-    //reload employees list
-    await queryClient.invalidateQueries({
-      queryKey: ["employees"],
-    });
+
+    try {
+      const createdEmployee = await app.createEmployee({
+        setLoadingSubmit,
+        ...payload,
+      });
+
+      if (!createdEmployee) return;
+
+      setReceipt(createdEmployee);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["employees"],
+      });
+    } catch (error) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      if (status === 409) {
+        app.showToast(message || "An account with this email already exists.");
+        emailRef.current?.focus();
+      } else if (!error.response) {
+        app.showToast(
+          "Unable to connect to the server. Check your connection and try again.",
+        );
+      } else {
+        app.showToast(
+          message || "Failed to create the employee account. Please try again.",
+        );
+      }
+    }
   };
 
   return (
@@ -120,8 +170,9 @@ export default function AddEmployee() {
         <Card padding="lg" className="gap-4">
           <SectionHeading step="01">Employee information</SectionHeading>
           <div className="grid gap-3.5 sm:grid-cols-2">
-            <Field label="Full name">
+            <Field label="Full name *">
               <Input
+                ref={nameRef}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Maria Santos"
@@ -134,8 +185,9 @@ export default function AddEmployee() {
                 placeholder="+63 9XX XXX XXXX"
               />
             </Field> */}
-            <Field label="Start date">
+            <Field label="Start date *">
               <Input
+                ref={startDateRef}
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -145,15 +197,17 @@ export default function AddEmployee() {
 
           <SectionHeading step="02">Position &amp; department</SectionHeading>
           <div className="grid gap-3.5 sm:grid-cols-2">
-            <Field label="Position">
+            <Field label="Position *">
               <Input
+                ref={positionRef}
                 value={position}
                 placeholder="e.g. Medical Technologist"
                 onChange={(e) => setPosition(e.target.value)}
               />
             </Field>
-            <Field label="Department">
+            <Field label="Department *">
               <Select
+                ref={departmentRef}
                 value={dep}
                 options={departments}
                 onChange={(e) => setDep(e.target.value)}
@@ -167,8 +221,9 @@ export default function AddEmployee() {
 
           <SectionHeading step="03">Account information</SectionHeading>
           <div className="grid gap-3.5 sm:grid-cols-2">
-            <Field label="Work email">
+            <Field label="Work email *">
               <Input
+                ref={emailRef}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. name@pmcl.ph"

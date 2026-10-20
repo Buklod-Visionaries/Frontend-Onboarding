@@ -1,7 +1,7 @@
 export function formatRole(role) {
   const roles = {
     hr: "HR",
-    "dept-rep": "Department Representative",
+    "dept-rep": "Dept Rep",
     employee: "Employee",
   };
 
