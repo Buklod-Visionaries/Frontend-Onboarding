@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { Check, Copy } from 'lucide-react';
-import { cx } from '../../lib/cx';
+import { useEffect, useRef, useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { cx } from "../../lib/cx";
 
 /**
  * Fallback for when the async Clipboard API is unavailable or blocked — an
@@ -8,18 +8,18 @@ import { cx } from '../../lib/cx';
  * Deprecated, but still the only thing that works in those cases.
  */
 function legacyCopy(value) {
-  const field = document.createElement('textarea');
+  const field = document.createElement("textarea");
   field.value = value;
-  field.setAttribute('readonly', '');
-  field.style.position = 'fixed';
-  field.style.top = '0';
-  field.style.opacity = '0';
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.top = "0";
+  field.style.opacity = "0";
   document.body.appendChild(field);
   field.select();
 
   let copied;
   try {
-    copied = document.execCommand('copy');
+    copied = document.execCommand("copy");
   } catch {
     copied = false;
   }
@@ -34,7 +34,13 @@ function legacyCopy(value) {
  * still fail outright, so `onError` lets the caller surface that rather than
  * leaving the user with silent nothing.
  */
-export default function CopyField({ value, label = 'value', onError, className }) {
+export default function CopyField({
+  value,
+  displayValue,
+  label = "value",
+  onError,
+  className,
+}) {
   const [copied, setCopied] = useState(false);
   const timer = useRef(0);
 
@@ -60,22 +66,33 @@ export default function CopyField({ value, label = 'value', onError, className }
   };
 
   return (
-    <span className={cx('inline-flex items-center gap-2 whitespace-nowrap', className)}>
-      <span className="font-heading text-cell text-ink">{value}</span>
+    <span
+      className={cx(
+        "inline-flex items-center gap-2 whitespace-nowrap",
+        className,
+      )}
+    >
+      <span className="font-heading text-cell text-ink">
+        {displayValue ?? value}
+      </span>
       <button
         type="button"
         onClick={copy}
         aria-label={copied ? `${label} copied` : `Copy ${label}`}
         className={cx(
-          'inline-flex items-center gap-1 rounded-control border px-1.5 py-[2px]',
-          'font-heading text-[10px] uppercase tracking-[0.1em] transition-colors',
+          "inline-flex items-center gap-1 rounded-control border px-1.5 py-[2px]",
+          "font-heading text-[10px] uppercase tracking-[0.1em] transition-colors",
           copied
-            ? 'border-accent bg-accent-100 text-accent-700'
-            : 'border-divider text-ink/60 hover:bg-ink/[0.07] active:bg-ink/[0.14]'
+            ? "border-accent bg-accent-100 text-accent-700"
+            : "border-divider text-ink/60 hover:bg-ink/[0.07] active:bg-ink/[0.14]",
         )}
       >
-        {copied ? <Check size={12} strokeWidth={1.5} /> : <Copy size={12} strokeWidth={1.5} />}
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? (
+          <Check size={12} strokeWidth={1.5} />
+        ) : (
+          <Copy size={12} strokeWidth={1.5} />
+        )}
+        {copied ? "Copied" : "Copy"}
       </button>
     </span>
   );

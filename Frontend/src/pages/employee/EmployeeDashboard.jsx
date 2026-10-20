@@ -41,7 +41,7 @@ export default function EmployeeDashboard() {
     data: notifications = [],
     isLoading: notificationsLoading,
     isError: notificationsError,
-  } = useAllOwnNotif(app.session.accessToken);
+  } = useAllOwnNotif(app.session.accessToken, 5);
 
   const actionable = myRequirements
     .filter((requirement) => requirement.status !== "completed")

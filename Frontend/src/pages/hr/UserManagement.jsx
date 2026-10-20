@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -36,6 +36,8 @@ export default function UserManagement() {
   const [createOpen, setCreateOpen] = useState(false);
   const [manage, setManage] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   //from users hook
   const {
     data: users = [],
@@ -52,6 +54,17 @@ export default function UserManagement() {
       user.email.toLowerCase().includes(query);
     return byRole && byQuery;
   });
+
+  // Reset to page 1 when search or role filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter]);
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+
+  const startIndex = (page - 1) * pageSize;
+  const paginatedRows = rows.slice(startIndex, startIndex + pageSize);
 
   if (error) {
     return <p>Failed to load users.</p>;
@@ -129,7 +142,7 @@ export default function UserManagement() {
                   ]}
                 />
                 <tbody>
-                  {rows.map((user, index) => (
+                  {paginatedRows.map((user) => (
                     <TRow key={`${user.username}${user._id}`}>
                       <TCell strong>{user.username}</TCell>
                       <TCell>{formatRole(user.role)}</TCell>
@@ -170,6 +183,7 @@ export default function UserManagement() {
                         ) : user.isFirstLogin || user.tempPass ? (
                           <CopyField
                             value={user.password}
+                            displayValue="••••••••"
                             label={`temporary password for ${user.name}`}
                             onError={() =>
                               app.showToast(
@@ -197,15 +211,42 @@ export default function UserManagement() {
               <EmptyState>No accounts match this search.</EmptyState>
             )}
 
-            <div className="flex flex-wrap items-baseline gap-4 text-meta text-ink/50">
-              <span>
-                Showing {rows.length} of {users.length} accounts
-              </span>
-              <span>
-                Employee accounts are created through Employees &rarr; Add
-                employee, so onboarding requirements are assigned at the same
-                time.
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col gap-1 text-meta text-ink/50">
+                <span>
+                  Showing {rows.length === 0 ? 0 : startIndex + 1}
+                  {"–"}
+                  {Math.min(startIndex + pageSize, rows.length)}
+                  {" of "}
+                  {rows.length} matching accounts
+                </span>
+
+                <span>
+                  Employee accounts are created through Employees → Add
+                  employee, so onboarding requirements are assigned at the same
+                  time.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  disabled={page === 1}
+                  onClick={() => setPage((current) => current - 1)}
+                >
+                  Previous
+                </Button>
+
+                <span className="whitespace-nowrap text-meta text-ink/70">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </Card>
 

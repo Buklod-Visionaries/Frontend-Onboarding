@@ -22,7 +22,8 @@ export async function getAllEmpReq(req, res) {
         path: "user",
       },
     })
-    .populate("verifiedBy");
+    .populate("verifiedBy")
+    .sort({ updatedAt: -1 });
   res.send(allEmpReq);
 }
 

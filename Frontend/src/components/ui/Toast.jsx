@@ -1,3 +1,4 @@
+//not used anymore because we are now using react-hot-toast
 export default function Toast({ message }) {
   if (!message) return null;
   return (

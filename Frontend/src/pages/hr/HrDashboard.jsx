@@ -130,87 +130,92 @@ export default function HrDashboard() {
             );
           }).length ? (
             <div className="flex flex-col">
-              {employees
-                .filter((employee) => {
-                  return (
-                    employee.onboardingStatus !== "deactivated" && //exclude deactivated employees requirement
-                    requirements.some(
-                      (req) =>
-                        req.employee._id === employee._id &&
-                        (req.status === "pending" ||
-                          (req.status !== "completed" &&
-                            isOverdue(formatDate(req.dueDate)))),
-                    )
-                  );
-                })
-                .map((employee) => {
-                  return (
-                    <button
-                      key={employee._id}
-                      type="button"
-                      onClick={() => navigate(`/hr/employees/${employee._id}`)}
-                      className="grid items-center gap-x-3 gap-y-1 border-b border-ink/[0.08] px-2 py-3 text-left last:border-0 hover:bg-ink/[0.03]"
-                      style={{ gridTemplateColumns: "1fr auto" }}
-                    >
-                      <span className="text-field font-medium">
-                        {employee.user.username}
-                      </span>
-
-                      <Badge
-                        variant={
-                          employee.onboardingStatus === "in_progress"
-                            ? "in-progress"
-                            : "completed"
+              {
+                employees
+                  .filter((employee) => {
+                    return (
+                      employee.onboardingStatus !== "deactivated" && //exclude deactivated employees requirement
+                      requirements.some(
+                        (req) =>
+                          req.employee._id === employee._id &&
+                          (req.status === "pending" ||
+                            (req.status !== "completed" &&
+                              isOverdue(formatDate(req.dueDate)))),
+                      )
+                    );
+                  })
+                  .map((employee) => {
+                    return (
+                      <button
+                        key={employee._id}
+                        type="button"
+                        onClick={() =>
+                          navigate(`/hr/employees/${employee._id}`)
                         }
+                        className="grid items-center gap-x-3 gap-y-1 border-b border-ink/[0.08] px-2 py-3 text-left last:border-0 hover:bg-ink/[0.03]"
+                        style={{ gridTemplateColumns: "1fr auto" }}
                       >
-                        {employee.onboardingStatus === "in_progress"
-                          ? "In Progress"
-                          : "Completed"}
-                      </Badge>
-                      <span className="text-meta text-ink/55">
-                        {requirements.filter(
-                          (req) =>
-                            req.employee._id === employee._id &&
-                            req.status !== "completed" &&
-                            isOverdue(formatDate(req.dueDate)),
-                        ).length > 0 && (
-                          <span>
-                            {
-                              requirements.filter(
-                                (req) =>
-                                  req.employee._id === employee._id &&
-                                  req.status !== "completed" &&
-                                  isOverdue(formatDate(req.dueDate)),
-                              ).length
-                            }
-                            {" overdue ·"}
-                          </span>
-                        )}
-                        {requirements.filter(
-                          (req) =>
-                            req.employee._id === employee._id &&
-                            req.status === "pending",
-                        ).length > 0 && (
-                          <span>
-                            {
-                              requirements.filter(
-                                (req) =>
-                                  req.employee._id === employee._id &&
-                                  req.status === "pending",
-                              ).length
-                            }{" "}
-                            pending
-                          </span>
-                        )}
-                      </span>
+                        <span className="text-field font-medium">
+                          {employee.user.username}
+                        </span>
 
-                      <span className="text-[11px] text-ink/45">
-                        {capitalize(employee.department)} &middot;{" "}
-                        {capitalize(employee.position)}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <Badge
+                          variant={
+                            employee.onboardingStatus === "in_progress"
+                              ? "in-progress"
+                              : "completed"
+                          }
+                        >
+                          {employee.onboardingStatus === "in_progress"
+                            ? "In Progress"
+                            : "Completed"}
+                        </Badge>
+                        <span className="text-meta text-ink/55">
+                          {requirements.filter(
+                            (req) =>
+                              req.employee._id === employee._id &&
+                              req.status !== "completed" &&
+                              isOverdue(formatDate(req.dueDate)),
+                          ).length > 0 && (
+                            <span>
+                              {
+                                requirements.filter(
+                                  (req) =>
+                                    req.employee._id === employee._id &&
+                                    req.status !== "completed" &&
+                                    isOverdue(formatDate(req.dueDate)),
+                                ).length
+                              }
+                              {" overdue ·"}
+                            </span>
+                          )}
+                          {requirements.filter(
+                            (req) =>
+                              req.employee._id === employee._id &&
+                              req.status === "pending",
+                          ).length > 0 && (
+                            <span>
+                              {
+                                requirements.filter(
+                                  (req) =>
+                                    req.employee._id === employee._id &&
+                                    req.status === "pending",
+                                ).length
+                              }{" "}
+                              pending
+                            </span>
+                          )}
+                        </span>
+
+                        <span className="text-[11px] text-ink/45">
+                          {capitalize(employee.department)} &middot;{" "}
+                          {capitalize(employee.position)}
+                        </span>
+                      </button>
+                    );
+                  })
+                  .slice(0, 4) //only show 4 employees
+              }
             </div>
           ) : (
             <EmptyState>No employees need attention right now.</EmptyState>
@@ -270,23 +275,26 @@ export default function HrDashboard() {
               ]}
             />
             <tbody>
-              {requirements
-                .filter(
-                  (req) =>
-                    req.status === "pending" &&
-                    req.employee.onboardingStatus !== "deactivated", //exclude deactivated employees requirement
-                )
-                .map((row) => (
-                  <TRow key={row.requirement.id}>
-                    <TCell strong>{row.employee.user.username}</TCell>
-                    <TCell>{row.requirement.name}</TCell>
-                    <TCell>{formatDate(row.updatedAt)}</TCell>
-                    <TCell>{formatDate(row.dueDate)}</TCell>
-                    <TCell align="right">
-                      <Button onClick={() => setReview(row)}>Review</Button>
-                    </TCell>
-                  </TRow>
-                ))}
+              {
+                requirements
+                  .filter(
+                    (req) =>
+                      req.status === "pending" &&
+                      req.employee.onboardingStatus !== "deactivated", //exclude deactivated employees requirement
+                  )
+                  .map((row) => (
+                    <TRow key={row.requirement.id}>
+                      <TCell strong>{row.employee.user.username}</TCell>
+                      <TCell>{row.requirement.name}</TCell>
+                      <TCell>{formatDate(row.updatedAt)}</TCell>
+                      <TCell>{formatDate(row.dueDate)}</TCell>
+                      <TCell align="right">
+                        <Button onClick={() => setReview(row)}>Review</Button>
+                      </TCell>
+                    </TRow>
+                  ))
+                  .slice(0, 5) //only show 5
+              }
             </tbody>
           </Table>
         ) : (

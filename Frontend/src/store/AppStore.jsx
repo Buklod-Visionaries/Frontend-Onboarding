@@ -12,6 +12,8 @@ import { POSITIONS } from "../data/positions";
 import { buildRequirements } from "../domain/requirements";
 import { TEMP_PASSWORD } from "../domain/constants";
 import api from "../lib/axios";
+//
+import toast from "react-hot-toast";
 
 function workEmailFor(name, email) {
   return email.trim() || `${name.toLowerCase().split(" ").join(".")}@pmcl.ph`;
@@ -29,13 +31,17 @@ export default function AppProvider({ children }) {
   const [notifications, setNotifications] = useState(loadNotifications);
   const [activity] = useState(loadActivityLog);
   const [settings, setSettings] = useState({ deadline: "7", reminder: "3" });
-  const [toast, setToast] = useState("");
-  const toastTimer = useRef(0);
+  // const [toast, setToast] = useState("");
+  // const toastTimer = useRef(0);
 
-  const showToast = useCallback((text) => {
-    setToast(text);
-    window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(""), 3200);
+  // const showToast = useCallback((text) => {
+  //   setToast(text);
+  //   window.clearTimeout(toastTimer.current);
+  //   toastTimer.current = window.setTimeout(() => setToast(""), 3200);
+  // }, []);
+  const showToast = useCallback((message) => {
+    toast.dismiss();
+    toast(message);
   }, []);
 
   const notify = useCallback((to, title, body) => {
@@ -402,7 +408,7 @@ export default function AppProvider({ children }) {
       activity,
       settings,
       setSettings,
-      toast,
+      // toast,
       showToast,
       notify,
       submitDocument,

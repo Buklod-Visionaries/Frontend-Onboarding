@@ -86,7 +86,7 @@ export default function RequirementDetail() {
       await app.submitDocument(pendingFile, id);
       setPendingFile("");
       queryClient.invalidateQueries({
-        queryKey: ["myRequirement", params.id],
+        queryKey: ["myRequirements", params.id],
       });
       queryClient.invalidateQueries({
         queryKey: ["existingDocument", params.id],
@@ -293,7 +293,7 @@ export default function RequirementDetail() {
               >
                 <iframe
                   src={`${existingDocument.fileUrl}#toolbar=0&navpanes=0`}
-                  className="pointer-events-none h-full w-full border-none"
+                  className="pointer-events-auto h-full w-full border-none overflow-auto"
                   title="Document preview"
                 />
               </a>

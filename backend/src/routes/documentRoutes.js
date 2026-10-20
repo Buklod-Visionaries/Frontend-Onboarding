@@ -14,7 +14,12 @@ import { upload } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", asyncHandler(getAllDocuments));
+router.get(
+  "/",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(getAllDocuments),
+);
 //
 router.post(
   "/",
