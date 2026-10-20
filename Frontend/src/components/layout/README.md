@@ -10,7 +10,7 @@ the store — they need the session and the notification counts.
 | `Sidebar.jsx` | The deep accent rail. Brand block, numbered-free icon nav from `navigation.js`, and the account footer with the sign-out button. Holds the open/closed state for `SignOutDialog`. |
 | `SidebarItem.jsx` | One nav row: lucide icon, label, optional count badge. Uses `NavLink` so the active state comes from the router rather than manual path comparison. |
 | `Header.jsx` | Sticky page header — breadcrumb, page title, and the demo role switcher that calls `app.login(role)` and navigates to that role's home. |
-| `AuthLayout.jsx` | The signed-out frame. Accent-900 panel on the left with the organisation name and system title, centred card slot on the right. Shared by all three auth screens. |
+| `AuthLayout.jsx` | The signed-out frame shared by Login, Forgot Password, First Login and the auth placeholder. Split screen from 768px: the accent-900 brand panel (organisation name, system title, ruled-record texture and a decorative record-stack illustration) beside a vertically centred form column. Below 768px the panel is hidden and a one-line organisation label sits above the card. Also exports `AuthCard`, the folder-tab card every auth page renders its kicker, title, description and form into; `back` adds the "Back to sign in" link. |
 | `ToastHost.jsx` | Bridges the store to the presentational `ui/Toast`. Exists so `ui/` can stay free of app state. Mounted in both `AppShell` and `AuthLayout`. |
 | `navigation.js` | The single source of truth for the sidebar: `NAV` maps each role to its rows (path, label, lucide icon, optional badge key) and `ROLE_LABEL` maps a role to its display name. |
 
