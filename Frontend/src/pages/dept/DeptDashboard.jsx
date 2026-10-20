@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ClipboardCheck, Users } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -51,6 +52,18 @@ export default function DeptDashboard() {
     return <p>Failed loading department requirements.</p>;
   }
 
+  /** done/total for one activity; green once every one is done, amber until then. */
+  const activityStat = (activity) => {
+    const rows = depRequirements.filter((e) => e.requirement.activity === activity);
+    const done = rows.filter((e) => e.status === "completed").length;
+    return {
+      value: `${done}/${rows.length}`,
+      tone: rows.length && done === rows.length ? "success" : "warning",
+    };
+  };
+  const orientation = activityStat("orientation");
+  const training = activityStat("dept-training");
+
   return (
     <>
       <AutoGrid min={190} gap="gap-4">
@@ -58,21 +71,27 @@ export default function DeptDashboard() {
           label="Employees in department"
           value={depEmployees.length}
           note={scope.department}
+          icon={Users}
         />
         <StatCard
           label="Pending confirmations"
           value={pending.length}
           note="Activities awaiting you"
+          // Amber only while something is actually waiting.
+          tone={pending.length > 0 ? "warning" : "neutral"}
+          icon={ClipboardCheck}
         />
         <StatCard
           label="Orientation done"
-          value={`${depRequirements.filter((e) => e.requirement.activity === "orientation" && e.status === "completed").length}/${depRequirements.filter((e) => e.requirement.activity === "orientation").length}`}
+          value={orientation.value}
           note="Company orientation"
+          tone={orientation.tone}
         />
         <StatCard
           label="Training done"
-          value={`${depRequirements.filter((e) => e.requirement.activity === "dept-training" && e.status === "completed").length}/${depRequirements.filter((e) => e.requirement.activity === "dept-training").length}`}
+          value={training.value}
           note="One-month training"
+          tone={training.tone}
         />
       </AutoGrid>
 
