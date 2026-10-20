@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { CircleAlert } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -62,6 +63,13 @@ export default function EmployeeDashboard() {
   if (myRequirementsError) {
     return <p>Failed loading requirements.</p>;
   }
+  const myOverdue = myRequirements.filter(
+    (requirements) =>
+      (requirements.status === "in-progress" ||
+        requirements.status === "resubmission-required") &&
+      isOverdue(formatDate(requirements.dueDate)),
+  ).length;
+
   if (notificationsError) {
     return <p>Failed loading notifications.</p>;
   }
@@ -120,27 +128,28 @@ export default function EmployeeDashboard() {
                   value: myRequirements.filter(
                     (requirements) => requirements.status === "completed",
                   ).length,
+                  tone: "success",
                 },
                 {
                   label: "In progress",
                   value: myRequirements.filter(
                     (requirements) => requirements.status === "in-progress",
                   ).length,
+                  tone: "warning",
                 },
                 {
                   label: "Pending",
                   value: myRequirements.filter(
                     (requirements) => requirements.status === "pending",
                   ).length,
+                  tone: "warning",
                 },
                 {
                   label: "Overdue",
-                  value: myRequirements.filter(
-                    (requirements) =>
-                      (requirements.status === "in-progress" ||
-                        requirements.status === "resubmission-required") &&
-                      isOverdue(formatDate(requirements.dueDate)),
-                  ).length,
+                  value: myOverdue,
+                  // Red only when something is actually overdue.
+                  tone: myOverdue > 0 ? "danger" : "neutral",
+                  icon: CircleAlert,
                 },
               ]}
             />

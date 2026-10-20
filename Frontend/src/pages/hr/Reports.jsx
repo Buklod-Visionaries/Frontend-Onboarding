@@ -1,5 +1,6 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
+import { ClipboardList, Users } from "lucide-react";
 
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -142,22 +143,27 @@ export default function Reports() {
                 {
                   label: "Employees",
                   value: reports.length,
+                  icon: Users,
                 },
                 {
                   label: "Completed requirements",
                   value: totals.completed,
+                  tone: "success",
                 },
                 {
                   label: "In progress",
                   value: totals.inProgress,
+                  tone: "warning",
                 },
                 {
                   label: "Pending",
                   value: totals.pending,
+                  tone: "warning",
                 },
                 {
                   label: "Total requirements",
                   value: totalRequirements,
+                  icon: ClipboardList,
                 },
               ]}
             />

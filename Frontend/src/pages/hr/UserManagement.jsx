@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { KeyRound, UserCheck, Users, UserX } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -81,11 +82,14 @@ export default function UserManagement() {
               label="Total accounts"
               value={users.length}
               note="Across the three roles"
+              icon={Users}
             />
             <StatCard
               label="Active"
               value={users.filter((user) => !user.isFirstLogin).length}
               note="Signed in at least once"
+              tone="success"
+              icon={UserCheck}
             />
             <StatCard
               label="Pending first login"
@@ -95,6 +99,8 @@ export default function UserManagement() {
                 ).length
               }
               note="Temporary password issued"
+              tone="warning"
+              icon={KeyRound}
             />
             <StatCard
               label="Deactivated"
@@ -102,6 +108,7 @@ export default function UserManagement() {
                 users.filter((user) => user.status === "deactivated").length
               }
               note="Access withdrawn"
+              icon={UserX}
             />
           </AutoGrid>
 

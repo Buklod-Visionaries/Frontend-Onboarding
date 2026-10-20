@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CircleAlert, FileClock, Users } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -59,6 +60,13 @@ export default function HrDashboard() {
     return <p>Failed loading employee requirements history</p>;
   }
 
+  const overdueCount = requirements.filter(
+    (req) =>
+      (req.status === "in-progress" ||
+        req.status === "resubmission-required") &&
+      isOverdue(formatDate(req.dueDate)),
+  ).length;
+
   return (
     <>
       <AutoGrid min={190} gap="gap-4">
@@ -66,6 +74,7 @@ export default function HrDashboard() {
           label="Total employees"
           value={employees.length}
           note="Onboarding records on file"
+          icon={Users}
         />
         <StatCard
           label="Employees In progress"
@@ -74,6 +83,7 @@ export default function HrDashboard() {
               .length
           }
           note="Onboarding not yet complete"
+          tone="warning"
         />
         <StatCard
           label="Requirements In progress"
@@ -85,18 +95,16 @@ export default function HrDashboard() {
             ).length
           }
           note="Not yet submitted"
+          tone="warning"
+          icon={FileClock}
         />
         <StatCard
           label="Requirements Overdue"
-          value={
-            requirements.filter(
-              (req) =>
-                (req.status === "in-progress" ||
-                  req.status === "resubmission-required") &&
-                isOverdue(formatDate(req.dueDate)),
-            ).length
-          }
+          value={overdueCount}
           note="Past deadline"
+          // Red only when something is actually overdue.
+          tone={overdueCount > 0 ? "danger" : "neutral"}
+          icon={CircleAlert}
         />
         <StatCard
           label="Onboarding Completed" // is the completed referring to employees onboarding itself?
@@ -105,6 +113,7 @@ export default function HrDashboard() {
               .length
           }
           note="Fully onboarded"
+          tone="success"
         />
       </AutoGrid>
 
