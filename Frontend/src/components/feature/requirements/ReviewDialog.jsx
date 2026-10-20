@@ -95,7 +95,8 @@ function ReviewDialogBody({
     <Modal
       open
       onClose={onClose}
-      width="max-w-[800px]"
+      width="max-w-[1000px]"
+      height="85vh" //add height
       kicker="Requirement verification"
       title={requirement.name}
       subtitle={`${employee.user.username} · ${capitalize(employee.position)} · ${capitalize(employee.department)}`}
@@ -154,7 +155,7 @@ function ReviewDialogBody({
       ) : (
         <div className="grid gap-4 sm:grid-cols-[1.1fr_1fr]">
           {requirement.type === "document" && (
-            <div className="flex h-[55vh] min-h-[300px] flex-col items-center justify-center gap-2">
+            <div className="flex h-[60vh] min-h-[300px] flex-col items-center justify-center gap-2">
               {existingDocumentLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (
@@ -166,7 +167,7 @@ function ReviewDialogBody({
                 >
                   <iframe
                     src={`${existingDocument.fileUrl}#toolbar=0&navpanes=0`}
-                    className="pointer-events-none block h-full w-full border-0"
+                    className="pointer-events-auto h-full w-full border-none overflow-auto"
                     title="Document preview"
                   />
                 </a>

@@ -63,8 +63,6 @@
 // );
 // }
 
-
-
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cx } from "../../lib/cx";
@@ -77,6 +75,7 @@ export default function Modal({
   subtitle,
   actions,
   width,
+  height,
   children,
 }) {
   useEffect(() => {
@@ -102,9 +101,10 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
+        style={height ? { height } : undefined}
         className={cx(
           "flex max-h-[calc(100dvh-2rem)] w-full flex-col gap-4 overflow-hidden border border-divider bg-bg p-[22px] text-ink shadow-lg",
-          width || "max-w-[560px]"
+          width || "max-w-[560px]",
         )}
       >
         {(kicker || title) && (
@@ -132,7 +132,6 @@ export default function Modal({
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
-

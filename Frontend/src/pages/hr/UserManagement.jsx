@@ -170,6 +170,7 @@ export default function UserManagement() {
                         ) : user.isFirstLogin || user.tempPass ? (
                           <CopyField
                             value={user.password}
+                            displayValue="••••••••"
                             label={`temporary password for ${user.name}`}
                             onError={() =>
                               app.showToast(
