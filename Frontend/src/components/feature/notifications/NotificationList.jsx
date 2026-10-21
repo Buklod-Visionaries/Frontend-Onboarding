@@ -1,9 +1,11 @@
 import DividerList, { DividerRow } from "../../ui/DividerList";
 import { cx } from "../../../lib/cx";
 import { formatRelativeDate } from "../../../domain/date";
+import { useQueryClient } from "@tanstack/react-query";
 
 /** Notification rows, shared by all three roles. */
-export default function NotificationList({ items }) {
+export default function NotificationList({ items, readNotifByIdMutation }) {
+  const queryClient = useQueryClient();
   return (
     <DividerList>
       {items.map((notification) => (
@@ -11,9 +13,15 @@ export default function NotificationList({ items }) {
           key={notification._id}
           as="article"
           className={cx(
-            "flex items-start gap-3 px-4 py-3.5",
+            "flex items-start gap-3 px-4 py-3.5 hover:cursor-pointer",
             notification.isRead && "opacity-70",
           )}
+          onClick={async () => {
+            await readNotifByIdMutation.mutateAsync(notification._id);
+            await queryClient.invalidateQueries({
+              queryKey: ["notifications"],
+            });
+          }}
         >
           <span
             aria-hidden="true"
@@ -24,10 +32,14 @@ export default function NotificationList({ items }) {
           />
           <div className="min-w-0 flex-1">
             <div className="break-words text-field font-medium">
-              {!notification.isRead && <span className="sr-only">Unread: </span>}
+              {!notification.isRead && (
+                <span className="sr-only">Unread: </span>
+              )}
               {notification.title}
             </div>
-            <div className="break-words text-cell text-ink/65">{notification.message}</div>
+            <div className="break-words text-cell text-ink/65">
+              {notification.message}
+            </div>
             {/* Phones: the timestamp sits under the message. */}
             <div className="mt-1 text-[11px] text-ink/55 sm:hidden">
               {formatRelativeDate(notification.createdAt)}

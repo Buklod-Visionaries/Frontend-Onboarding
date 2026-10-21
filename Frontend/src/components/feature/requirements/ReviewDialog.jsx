@@ -56,6 +56,9 @@ function ReviewDialogBody({
     await getReqFromEmpProfile?.();
     await getReqFromDashboard?.();
     await getReqFromVerify?.();
+    await queryClient.invalidateQueries({
+      queryKey: ["reports"],
+    });
   };
 
   const resubmit = async () => {
@@ -79,6 +82,9 @@ function ReviewDialogBody({
     await getReqFromEmpProfile?.();
     await getReqFromDashboard?.();
     await getReqFromVerify?.();
+    await queryClient.invalidateQueries({
+      queryKey: ["reports"],
+    });
   };
   // if (specificEmpReqHistoriesLoading || existingDocumentLoading) {
   //   return <p>Loading...</p>;
