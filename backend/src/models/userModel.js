@@ -52,6 +52,12 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    //only hash not the actual refreshtoken
+    refreshTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
   },
   { timestamps: true },
 );
