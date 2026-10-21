@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useAllOwnNotif,
   useReadAllOwnNotif,
+  useReadNotifById,
   useDeleteAllOwnNotif,
 } from "../hooks/useNotifications";
 
@@ -24,6 +25,7 @@ export default function Notifications() {
   } = useAllOwnNotif(app.session.accessToken);
 
   const readAllNotifMutation = useReadAllOwnNotif(app.session.accessToken);
+  const readNotifByIdMutation = useReadNotifById(app.session.accessToken);
   const deleteAllNotifMutation = useDeleteAllOwnNotif(app.session.accessToken);
 
   // const items = app.notifications.filter((notification) => notification.to === role);
@@ -56,7 +58,9 @@ export default function Notifications() {
               notifications.filter((notif) => !notif.isRead).length === 0 //disabled when no notifs are unread
             }
           >
-            {readAllNotifMutation.isPending ? "Marking as read..." : "Mark all as read"}
+            {readAllNotifMutation.isPending
+              ? "Marking as read..."
+              : "Mark all as read"}
           </Button>
           <Button
             onClick={async () => {
@@ -66,7 +70,9 @@ export default function Notifications() {
               });
             }}
             disabled={
-              isLoading || deleteAllNotifMutation.isPending || notifications.length === 0
+              isLoading ||
+              deleteAllNotifMutation.isPending ||
+              notifications.length === 0
             }
           >
             {deleteAllNotifMutation.isPending ? "Clearing..." : "Clear all"}
@@ -79,7 +85,10 @@ export default function Notifications() {
       ) : isError ? (
         <ErrorState>Failed loading notifications.</ErrorState>
       ) : notifications.length ? (
-        <NotificationList items={notifications} />
+        <NotificationList
+          items={notifications}
+          readNotifByIdMutation={readNotifByIdMutation}
+        />
       ) : (
         <EmptyState>
           No notifications yet. New updates will appear here.

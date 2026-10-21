@@ -55,6 +55,29 @@ export async function readAllOwnNotifications(req, res) {
   res.send(readNotifs);
 }
 
+export async function readNotificationById(req, res) {
+  const { id: userId } = req.user;
+  const { id: notifId } = req.params;
+
+  const readNotif = await Notification.findOneAndUpdate(
+    { _id: notifId, user: userId },
+    {
+      $set: {
+        isRead: true,
+      },
+    },
+    { new: true }, //return new document
+  );
+
+  if (!readNotif) {
+    return res
+      .status(404)
+      .send({ message: "No notification exist with return id" });
+  }
+
+  res.send(readNotif);
+}
+
 export async function deleteAllOwnNotifications(req, res) {
   const { id } = req.user;
 
