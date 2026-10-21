@@ -453,6 +453,7 @@ export async function editEmpReq(req, res) {
     if (allCompleted && employee.onboardingStatus !== "completed") {
       //mark specific employee as completed
       employee.onboardingStatus = "completed";
+      employee.completedDate = new Date();
       await employee.save();
 
       //find all HR
