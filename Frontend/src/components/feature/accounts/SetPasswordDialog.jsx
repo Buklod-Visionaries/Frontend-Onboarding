@@ -48,6 +48,7 @@ function SetPasswordDialogBody({ currentUser, onSubmit, onDone, preview }) {
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
   const app = useApp();
+  const queryClient = useQueryClient();
   // Errors appear after the first submit, then update as the user types.
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -85,12 +86,13 @@ function SetPasswordDialogBody({ currentUser, onSubmit, onDone, preview }) {
     }
     setLoading(true);
     try {
-      // await onSubmit(newPass);
+      //set up new password
       await firstLoginMutation.mutateAsync({
         email: currentUser.email,
         tempPass: currentUser.password,
         newPass: newPass,
       });
+
       setDone(true);
     } catch (error) {
       setSubmitError(

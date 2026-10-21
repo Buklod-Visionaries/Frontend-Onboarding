@@ -66,6 +66,7 @@ export default function AppShell() {
   const [crumb, title] = titleFor(location.pathname);
   const isDesktop = useIsDesktop();
   const [navState, setNavOpen] = useState(false);
+  const [passwordSetupComplete, setPasswordSetupComplete] = useState(false);
   const {
     data: currentUser = [],
     isLoading: currentUserLoading,
@@ -125,7 +126,22 @@ export default function AppShell() {
     return <p>Error loading current user.</p>;
   }
 
-  console.log("currentUser", currentUser);
+  const needsPasswordSetup =
+    currentUser?.isFirstLogin || currentUser?.passwordResetRequested;
+  //disable dashboard view unless successful password change
+  if (
+    needsPasswordSetup ||
+    (passwordSetupComplete && !location.pathname.endsWith("/dashboard"))
+  ) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-accent-900">
+        <SetPasswordDemo
+          currentUser={currentUser}
+          onSetupComplete={() => setPasswordSetupComplete(true)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
