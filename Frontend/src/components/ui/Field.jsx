@@ -1,5 +1,6 @@
 import { cx } from "../../lib/cx";
 import { forwardRef } from "react";
+import { ChevronDown } from "lucide-react";
 
 const CONTROL =
   "w-full min-h-9 rounded-control border border-divider bg-surface px-2.5 py-[6px] " +
@@ -97,12 +98,17 @@ export function Radio({ name, checked, onChange, children }) {
   );
 }
 
-/** Segmented control — tabs, filters and the demo role switcher. */
-export function Segmented({ value, onChange, options, className }) {
-  return (
+/**
+ * Segmented control — tabs, filters and the demo role switcher.
+ * `collapse` (with a `label`) swaps it for a native dropdown below md, bound to
+ * the same value and onChange, so long filter lists don't wrap on phones.
+ */
+export function Segmented({ value, onChange, options, className, collapse, label }) {
+  const buttons = (
     <div
       className={cx(
         "inline-flex flex-wrap rounded-control border border-divider p-[2px]",
+        collapse && "max-md:hidden",
         className,
       )}
     >
@@ -114,9 +120,10 @@ export function Segmented({ value, onChange, options, className }) {
           <button
             key={optionValue}
             type="button"
+            aria-pressed={active}
             onClick={() => onChange(optionValue)}
             className={cx(
-              "rounded-[2px] px-3 py-[5px] font-heading text-field transition-colors",
+              "cursor-pointer rounded-[2px] px-3 py-[5px] font-heading text-field transition-colors",
               active ? "bg-accent text-bg" : "text-ink/70 hover:bg-ink/[0.06]",
             )}
           >
@@ -125,5 +132,26 @@ export function Segmented({ value, onChange, options, className }) {
         );
       })}
     </div>
+  );
+  if (!collapse) return buttons;
+  return (
+    <>
+      <div className="relative w-full md:hidden">
+        <Select
+          aria-label={label}
+          className="min-h-11 appearance-none pr-9"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          options={options}
+        />
+        <ChevronDown
+          size={16}
+          strokeWidth={1.75}
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink/60"
+        />
+      </div>
+      {buttons}
+    </>
   );
 }

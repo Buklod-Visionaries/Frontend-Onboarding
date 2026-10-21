@@ -16,16 +16,24 @@ export default function NotificationList({ items }) {
           )}
         >
           <span
+            aria-hidden="true"
             className={cx(
               "mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full",
               !notification.isRead ? "bg-accent" : "bg-neutral-400",
             )}
           />
           <div className="min-w-0 flex-1">
-            <div className="text-field font-medium">{notification.title}</div>
-            <div className="text-cell text-ink/60">{notification.message}</div>
+            <div className="break-words text-field font-medium">
+              {!notification.isRead && <span className="sr-only">Unread: </span>}
+              {notification.title}
+            </div>
+            <div className="break-words text-cell text-ink/65">{notification.message}</div>
+            {/* Phones: the timestamp sits under the message. */}
+            <div className="mt-1 text-[11px] text-ink/55 sm:hidden">
+              {formatRelativeDate(notification.createdAt)}
+            </div>
           </div>
-          <div className="whitespace-nowrap text-[11px] text-ink/45">
+          <div className="whitespace-nowrap text-[11px] text-ink/55 max-sm:hidden">
             {formatRelativeDate(notification.createdAt)}
           </div>
         </DividerRow>

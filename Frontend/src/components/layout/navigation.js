@@ -9,25 +9,28 @@ import {
   Users,
 } from "lucide-react";
 
+// `section` (optional) groups rows under a small label in the mobile drawer.
 export const NAV = {
   hr: [
-    { to: "/hr/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/hr/users", label: "User management", icon: UserCog },
-    { to: "/hr/employees", label: "Employees", icon: Users },
+    { to: "/hr/dashboard", section: "Workspace", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/hr/users", section: "Workspace", label: "User management", icon: UserCog },
+    { to: "/hr/employees", section: "Workspace", label: "Employees", icon: Users },
     {
       to: "/hr/requirements",
+      section: "Workspace",
       label: "Requirements",
       icon: ClipboardCheck,
       badge: "verify",
     },
     {
       to: "/hr/notifications",
+      section: "Workspace",
       label: "Notifications",
       icon: Bell,
       badge: "unread",
     },
-    { to: "/hr/reports", label: "Reports", icon: ChartColumn },
-    { to: "/hr/settings", label: "Settings", icon: Settings },
+    { to: "/hr/reports", section: "Management", label: "Reports", icon: ChartColumn },
+    { to: "/hr/settings", section: "Management", label: "Settings", icon: Settings },
   ],
   employee: [
     { to: "/employee/dashboard", label: "Dashboard", icon: LayoutDashboard },
