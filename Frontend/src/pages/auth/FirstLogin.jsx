@@ -37,8 +37,8 @@ export default function FirstLogin() {
     if (loading) return;
     setError(null);
 
-    if (!email.includes("@gmail.com")) {
-      return fail("Email must end with @gmail.com", "email");
+    if (!email.includes("@gmail.com") && !email.includes("@pmcl.ph")) {
+      return fail("Email must end with @gmail.com or @pmcl.ph", "email");
     }
     if (newPass.length < 6) {
       return fail("Use at least 6 characters for the new password.", "newPass");

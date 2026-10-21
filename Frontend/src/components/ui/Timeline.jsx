@@ -22,7 +22,8 @@ export function EventList({ items, round, history, notifications }) {
                 : "bg-accent",
             )}
           />
-          <div>
+          {/* min-w-0 + break-words let long names and descriptions wrap instead of overflowing. */}
+          <div className="min-w-0 break-words">
             <div className="text-field">
               {notifications ? event.title : history && event.note}{" "}
               {/* change content dynamically based on type*/}

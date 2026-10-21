@@ -86,8 +86,9 @@ export default function Reports() {
 
   return (
     <Card className="gap-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label="Department" className="min-w-[180px]">
+      {/* Phones: the filter and export share one row, export keeps its size. */}
+      <div className="flex flex-wrap items-end gap-3 max-sm:flex-nowrap">
+        <Field label="Department" className="min-w-0 flex-1 sm:min-w-[180px] sm:flex-none">
           <Select
             value={department}
             options={[
@@ -131,7 +132,7 @@ export default function Reports() {
         )}
 
         {isError && (
-          <div className="py-8 text-center text-red-500">
+          <div className="py-8 text-center text-red-800">
             Failed to load report.
           </div>
         )}
@@ -139,6 +140,7 @@ export default function Reports() {
         {!isLoading && !isError && (
           <>
             <StatStrip
+              min={130}
               items={[
                 {
                   label: "Employees",
@@ -173,7 +175,13 @@ export default function Reports() {
                 No employees found for this department.
               </div>
             ) : (
-              <Table>
+              <>
+              {/* A comparison table, so it stays a table: it scrolls sideways
+                  inside the card with the Employee column pinned. */}
+              <p className="m-0 text-meta text-ink/55 lg:hidden">
+                Scroll sideways to compare all columns.
+              </p>
+              <Table className="[&_tr>*:first-child]:sticky [&_tr>*:first-child]:left-0 [&_tr>*:first-child]:z-[1] [&_tr>*:first-child]:bg-neutral-100 [&_tr>*:first-child]:pl-1">
                 <THead
                   columns={[
                     "Employee",
@@ -231,6 +239,7 @@ export default function Reports() {
                   ))}
                 </tbody>
               </Table>
+              </>
             )}
           </>
         )}

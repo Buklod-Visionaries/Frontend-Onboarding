@@ -42,8 +42,8 @@ export default function Login() {
         [!email && "email", !password && "password"].filter(Boolean),
       );
     }
-    if (!email.includes("@gmail.com")) {
-      return fail("Email must end with @gmail.com", ["email"]);
+    if (!email.includes("@gmail.com") && !email.includes("@pmcl.ph")) {
+      return fail("Email must end with @gmail.com or @pmcl.ph", ["email"]);
     }
     try {
       setLoading(true);

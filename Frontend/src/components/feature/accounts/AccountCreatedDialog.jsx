@@ -18,10 +18,8 @@ export default function AccountCreatedDialog({ receipt, onClose }) {
         </Button>
       }
     >
-      <dl
-        className="grid gap-2 text-field"
-        style={{ gridTemplateColumns: "150px 1fr" }}
-      >
+      {/* Label column narrows on phones; long emails/passwords wrap. */}
+      <dl className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3 gap-y-2 text-field sm:grid-cols-[150px_minmax(0,1fr)] [&_dd]:break-all">
         <dt className="text-ink/50">Role</dt>
         <dd className="m-0">{receipt.role}</dd>
         {receipt.department && (

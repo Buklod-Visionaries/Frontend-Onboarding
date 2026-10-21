@@ -4,6 +4,7 @@ import { cx } from "../../lib/cx";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import ToastHost from "./ToastHost";
+import SetPasswordDemo from "../feature/accounts/SetPasswordDemo"; // DEMO ONLY: remove with <SetPasswordDemo /> below
 import { useApp } from "../../hooks/useApp";
 import { useVerificationQueue } from "../../hooks/useVerificationQueue";
 
@@ -14,15 +15,15 @@ const TITLES = {
   "/hr/employees": ["HR / Employees", "Employee list"],
   "/hr/employees/new": ["HR / Employees", "Add employee"],
   "/hr/requirements": ["HR / Requirements", "Requirement verification"],
-  "/hr/notifications": ["HR Staff", "Notifications"],
+  "/hr/notifications": ["HR", "Notifications"],
   "/hr/reports": ["HR", "Reports"],
   "/hr/settings": ["HR", "Settings"],
   "/employee/dashboard": ["Employee", "My onboarding"],
-  "/employee/requirements": ["Employee", "My requirements"],
+  "/employee/requirements": ["Employee / Requirements", "My requirements"],
   "/employee/notifications": ["Employee", "Notifications"],
-  "/dept/dashboard": ["Laboratory Department", "Dashboard"],
-  "/dept/requirements": ["Laboratory Department", "Department requirements"],
-  "/dept/notifications": ["Department Representative", "Notifications"],
+  "/dept/dashboard": ["Department", "Dashboard"],
+  "/dept/requirements": ["Department", "Department requirements"],
+  "/dept/notifications": ["Department", "Notifications"],
 };
 
 function titleFor(pathname) {
@@ -133,6 +134,8 @@ export default function AppShell() {
         </div>
       </main>
       <ToastHost />
+      {/* DEMO ONLY: first-time password modal preview; remove when the backend is wired in. */}
+      <SetPasswordDemo />
     </div>
   );
 }

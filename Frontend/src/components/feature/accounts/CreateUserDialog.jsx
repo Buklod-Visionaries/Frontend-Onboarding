@@ -8,6 +8,7 @@ import { ROLES, TEMP_PASSWORD } from "../../../domain/constants";
 import { useApp } from "../../../hooks/useApp";
 //
 import { RefreshCcw } from "lucide-react";
+import { CopyButton } from "../../ui/CopyField";
 import { generatePassword } from "../../../lib/generateTempPassword";
 
 const departments = [
@@ -70,12 +71,12 @@ function CreateUserDialogBody({ onClose, onCreated }) {
       title="Create user account"
       actions={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={submit}>
+          <Button onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button variant="primary" onClick={submit} disabled={loading}>
             {role === "Employee"
               ? "Continue to Add employee"
               : loading
-                ? "Creating Acount..."
+                ? "Creating account..."
                 : "Create account"}
           </Button>
         </>
@@ -127,13 +128,32 @@ function CreateUserDialogBody({ onClose, onCreated }) {
                 />
               </Field>
             )}
-            <div className="flex flex-row items-center">
-              <Field label="Temporary password">
+            <div className="flex flex-row items-end gap-2">
+              <Field label="Temporary password" className="min-w-0 flex-1">
                 <Input value={tempPass} readOnly />
               </Field>
-              <RefreshCcw
-                className="ml-3 mt-[20px] hover:-rotate-90 transition delay-75"
+              {/* A real button (same handler) so it is keyboard-reachable and labelled. */}
+              <button
+                type="button"
+                aria-label="Generate a new temporary password"
+                title="Generate a new temporary password"
                 onClick={() => setTempPass(generatePassword())}
+                className="group flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-control border border-divider text-ink/70 transition-colors hover:bg-ink/[0.07] hover:text-ink max-sm:size-10"
+              >
+                <RefreshCcw
+                  size={16}
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:-rotate-90 motion-reduce:transition-none"
+                />
+              </button>
+              <CopyButton
+                value={tempPass}
+                label="temporary password"
+                onError={() =>
+                  app.showToast(
+                    "Could not copy — select the password and copy it manually.",
+                  )
+                }
               />
             </div>
           </div>

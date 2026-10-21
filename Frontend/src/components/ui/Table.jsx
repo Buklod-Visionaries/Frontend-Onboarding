@@ -1,8 +1,15 @@
 import { cx } from '../../lib/cx';
 
-/** Horizontal scroll shell, so narrow screens scroll instead of squashing. */
+/**
+ * Horizontal scroll shell, so a wide table scrolls inside its card instead of
+ * widening the page. Pages with record-style tables show cards on phones instead.
+ */
 export function TableScroll({ children }) {
-  return <div className="-mx-1 overflow-x-auto px-1 scroll-thin">{children}</div>;
+  return (
+    <div className="-mx-1 max-w-full overflow-x-auto overscroll-x-contain px-1 scroll-thin">
+      {children}
+    </div>
+  );
 }
 
 export function Table({ className, children }) {
@@ -42,8 +49,8 @@ export function TRow({ onClick, children }) {
   return (
     <tr
       className={cx(
-        'border-b border-ink/[0.08] last:border-0',
-        onClick && 'cursor-pointer hover:bg-ink/[0.03]'
+        'border-b border-ink/[0.08] transition-colors last:border-0 hover:bg-ink/[0.025]',
+        onClick && 'cursor-pointer hover:bg-ink/[0.04]'
       )}
       onClick={onClick}
     >

@@ -19,7 +19,7 @@ export default function Header({ crumb, title, menuButtonRef, navOpen, onOpenNav
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-4 border-b border-divider bg-bg px-5 py-4.5 sm:px-7">
+    <header className="sticky top-0 z-20 flex items-center gap-3.5 border-b border-divider bg-bg px-5 py-3.5 sm:flex-wrap sm:gap-4 sm:px-7 sm:py-4.5">
       <Button
         ref={menuButtonRef}
         variant="icon"
@@ -34,7 +34,7 @@ export default function Header({ crumb, title, menuButtonRef, navOpen, onOpenNav
 
       <div className="mr-auto min-w-0">
         <div className="text-micro uppercase text-ink/50">{crumb}</div>
-        <h3 className="mt-0.5 text-[25px]">{title}</h3>
+        <h3 className="mt-0.5 truncate text-[22px] sm:text-[25px]">{title}</h3>
       </div>
 
       {/* <div className="flex flex-wrap items-center gap-2.5">

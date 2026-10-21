@@ -10,6 +10,7 @@ import AccountCreatedDialog from "../../components/feature/accounts/AccountCreat
 import { useApp } from "../../hooks/useApp";
 //
 import { RefreshCcw } from "lucide-react";
+import { CopyButton } from "../../components/ui/CopyField";
 import { generatePassword } from "../../lib/generateTempPassword";
 import { handlePhoneChange } from "../../lib/validator";
 import api from "../../lib/axios";
@@ -169,6 +170,9 @@ export default function AddEmployee() {
       <AutoGrid min={320} className="items-start">
         <Card padding="lg" className="gap-4">
           <SectionHeading step="01">Employee information</SectionHeading>
+          <p className="-mt-1.5 m-0 text-meta text-ink/55">
+            Fields marked * are required.
+          </p>
           <div className="grid gap-3.5 sm:grid-cols-2">
             <Field label="Full name *">
               <Input
@@ -215,7 +219,7 @@ export default function AddEmployee() {
             </Field>
           </div>
           <Notice>
-            The department determine which onboarding requirements are assigned
+            The department determines which onboarding requirements are assigned
             &mdash; see the list on the right before creating the record.
           </Notice>
 
@@ -232,13 +236,32 @@ export default function AddEmployee() {
             <Field label="Role">
               <Input value="Employee" readOnly />
             </Field>
-            <div className="flex flex-row items-center">
-              <Field label="Temporary password">
+            <div className="flex flex-row items-end gap-2">
+              <Field label="Temporary password" className="min-w-0 flex-1">
                 <Input value={tempPass} readOnly />
               </Field>
-              <RefreshCcw
-                className="ml-3 mt-[20px] hover:-rotate-90 transition delay-75"
+              {/* A real button (same handler) so it is keyboard-reachable and labelled. */}
+              <button
+                type="button"
+                aria-label="Generate a new temporary password"
+                title="Generate a new temporary password"
                 onClick={() => setTempPass(generatePassword())}
+                className="group flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-control border border-divider text-ink/70 transition-colors hover:bg-ink/[0.07] hover:text-ink max-sm:size-10"
+              >
+                <RefreshCcw
+                  size={16}
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:-rotate-90 motion-reduce:transition-none"
+                />
+              </button>
+              <CopyButton
+                value={tempPass}
+                label="temporary password"
+                onError={() =>
+                  app.showToast(
+                    "Could not copy — select the password and copy it manually.",
+                  )
+                }
               />
             </div>
             <Field label="Account status on creation">
@@ -249,7 +272,8 @@ export default function AddEmployee() {
             The employee is required to set a new password on first login.
           </span>
 
-          <div className="flex flex-wrap justify-end gap-2.5">
+          {/* Phones: actions stack full width (primary on top) and may wrap. */}
+          <div className="flex flex-wrap justify-end gap-2.5 max-sm:flex-col-reverse max-sm:[&>*]:w-full max-sm:[&>*]:whitespace-normal">
             <Button onClick={() => navigate("/hr/employees")}>Cancel</Button>
             <Button variant="primary" onClick={submit} disabled={loadingSubmit}>
               {loadingSubmit
@@ -264,8 +288,13 @@ export default function AddEmployee() {
             <div className="text-micro uppercase text-accent-700">
               Automatic assignment
             </div>
-            <h4 className="mt-1 text-[20px]">Requirements for this position</h4>
+            <h4 className="mt-1 text-[20px]">Requirements for this department</h4>
           </div>
+          {dep === "Select department" && (
+            <p className="m-0 text-cell text-ink/60">
+              Select a department to see the requirements that will be assigned.
+            </p>
+          )}
           {dep !== "Select department" && (
             <p className="m-0 text-cell text-ink/60">
               {

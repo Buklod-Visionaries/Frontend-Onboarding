@@ -7,7 +7,6 @@
 | --- | --- |
 | `ReviewDialog.jsx` | HR's document review. Shows a document preview panel and submission metadata, then offers Approve or a **two-step** resubmission: the first click swaps the footer and reveals a reason textarea, the second sends it. Refuses to send an empty reason. Opened from the HR dashboard, the verification queue and the employee profile. |
 | `ConfirmActivityDialog.jsx` | The department representative confirming orientation, training or team introduction, with an optional note. |
-| `RequirementCard.jsx` | The employee-facing requirement tile. Its call to action adapts to state — *Upload document* when pending, *View / resubmit* when in progress, *View details* when completed or department-owned. |
 
 ## `accounts/`
 
