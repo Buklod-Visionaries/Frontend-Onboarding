@@ -10,7 +10,8 @@ import { useApp } from "../../hooks/useApp";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRequestPasswordReset } from "../../hooks/useAuth";
 
-const NETWORK_ERROR = "Unable to reach the server. Check your connection and try again.";
+const NETWORK_ERROR =
+  "Unable to reach the server. Check your connection and try again.";
 const UNKNOWN_ERROR = "Request failed. Please try again.";
 
 /** Password resets are handled by HR — no email or SMS in scope. */
@@ -41,8 +42,8 @@ export default function ForgotPassword() {
       if (!email.trim()) {
         return fail("Enter your work email first.", true);
       }
-      if (!email.includes("@gmail.com")) {
-        return fail("Email must end with @gmail.com", true);
+      if (!email.includes("@gmail.com") && !email.includes("@pmcl.ph")) {
+        return fail("Email must end with @gmail.com or @pmcl.ph.", true);
       }
       app.notify(
         "HR",
@@ -81,8 +82,8 @@ export default function ForgotPassword() {
         {sent ? (
           <div role="status">
             <Notice>
-              Your request was sent to the HR Department. HR will issue a temporary password for
-              your next sign-in.
+              Your request was sent to the HR Department. HR will issue a
+              temporary password for your next sign-in.
             </Notice>
           </div>
         ) : (
@@ -120,13 +121,24 @@ export default function ForgotPassword() {
                 id="reset-error"
                 className="flex items-start gap-2 border border-accent bg-accent-100 px-3 py-2.5 text-cell leading-snug text-accent-800"
               >
-                <CircleAlert size={15} className="mt-[2px] shrink-0" aria-hidden="true" />
+                <CircleAlert
+                  size={15}
+                  className="mt-[2px] shrink-0"
+                  aria-hidden="true"
+                />
                 <span>{error.message}</span>
               </div>
             )}
 
-            <Button type="submit" size="lg" className="mt-1 w-full" aria-disabled={loading}>
-              {loading && <LoaderCircle className="animate-spin" aria-hidden="true" />}
+            <Button
+              type="submit"
+              size="lg"
+              className="mt-1 w-full"
+              aria-disabled={loading}
+            >
+              {loading && (
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
+              )}
               {loading ? "Sending request..." : "Send request to HR"}
             </Button>
           </form>

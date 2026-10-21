@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { cx } from "../../lib/cx";
 import Sidebar from "./Sidebar";
@@ -7,6 +13,7 @@ import ToastHost from "./ToastHost";
 import SetPasswordDemo from "../feature/accounts/SetPasswordDemo"; // DEMO ONLY: remove with <SetPasswordDemo /> below
 import { useApp } from "../../hooks/useApp";
 import { useVerificationQueue } from "../../hooks/useVerificationQueue";
+import { useCurrentUser } from "@/hooks/useUsers";
 
 /** Page titles per route, so Header stays declarative. */
 const TITLES = {
@@ -59,6 +66,12 @@ export default function AppShell() {
   const [crumb, title] = titleFor(location.pathname);
   const isDesktop = useIsDesktop();
   const [navState, setNavOpen] = useState(false);
+  const {
+    data: currentUser = [],
+    isLoading: currentUserLoading,
+    isError: currentUserError,
+  } = useCurrentUser(app.session.accessToken);
+
   // The drawer only exists below lg; widening the window closes it.
   const navOpen = navState && !isDesktop;
   const menuButtonRef = useRef(null);
@@ -73,18 +86,26 @@ export default function AppShell() {
   const closeNav = useCallback((returnFocus = true) => {
     setNavOpen(false);
     // Wait a frame: <main> is still inert until the close re-renders.
-    if (returnFocus) requestAnimationFrame(() => menuButtonRef.current?.focus());
+    if (returnFocus)
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
   }, []);
 
   // Crossing into lg resets the drawer, so narrowing again doesn't reopen it.
-  useEffect(() => subscribeDesktop((event) => event.matches && setNavOpen(false)), []);
+  useEffect(
+    () => subscribeDesktop((event) => event.matches && setNavOpen(false)),
+    [],
+  );
 
   // While the drawer is open: Escape closes it, and the page behind can't scroll.
   useEffect(() => {
     if (!navOpen) return;
     const onKey = (event) => {
       // The sign-out dialog handles its own Escape; leave the drawer open under it.
-      if (event.key !== "Escape" || document.querySelector('[aria-modal="true"]')) return;
+      if (
+        event.key !== "Escape" ||
+        document.querySelector('[aria-modal="true"]')
+      )
+        return;
       closeNav();
     };
     const { overflow } = document.body.style;
@@ -95,6 +116,16 @@ export default function AppShell() {
       window.removeEventListener("keydown", onKey);
     };
   }, [navOpen, closeNav]);
+
+  ////
+  if (currentUserLoading) {
+    return <p>Loading...</p>;
+  }
+  if (currentUserError) {
+    return <p>Error loading current user.</p>;
+  }
+
+  console.log("currentUser", currentUser);
 
   return (
     <div
@@ -135,7 +166,7 @@ export default function AppShell() {
       </main>
       <ToastHost />
       {/* DEMO ONLY: first-time password modal preview; remove when the backend is wired in. */}
-      <SetPasswordDemo />
+      <SetPasswordDemo currentUser={currentUser} />
     </div>
   );
 }

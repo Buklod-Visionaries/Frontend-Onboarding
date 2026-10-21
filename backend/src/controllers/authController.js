@@ -73,17 +73,64 @@ export async function login(req, res) {
       .send({ message: `User with email ${email} not found` });
   }
   //doesnt allow users with temporaryPassword
-  if (user.isFirstLogin || user.tempPass || user.passwordResetRequested) {
-    return res
-      .status(404)
-      .send({ message: "First-time login user needs to setup new password" });
-  }
+  // if (
+  //   // user.isFirstLogin ||
+  //   user.tempPass ||
+  //   user.passwordResetRequested
+  // ) {
+  //   return res
+  //     .status(404)
+  //     .send({ message: "First-time login user needs to setup new password" });
+  // }
   //deactivated account forbidden access
   if (user.status === "deactivated") {
     return res
       .status(403)
       .send({ message: "Account deactivated. Contact HR for help." });
   }
+
+  //ADD HASH ON TEMPORARY PASSWORD LATER
+  //ALLOWS LOGIN FROM ISFIRSTLOGIN user to login
+  if (user.isFirstLogin || user.passwordResetRequested) {
+    if (password !== user.password) {
+      return res.status(403).send({ message: "Incorrect temporary password." });
+    }
+
+    // creates an access token for the user
+    const accessToken = jwt.sign(
+      {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      },
+    );
+
+    const refreshToken = createRefreshToken(user._id);
+    user.refreshTokenHash = hashRefreshToken(refreshToken);
+
+    setRefreshCookie(res, refreshToken);
+
+    // set up sign in time
+    // user.lastSignIn = new Date();
+    // await user.save();
+
+    return res.status(200).send({
+      accessToken: accessToken,
+      user: {
+        //explicitly return specific fields
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  }
+
   //compares the hashed password to the requested user password
   const userMatch = await bcrypt.compare(password, user.password);
 
@@ -170,6 +217,13 @@ export async function firstLogin(req, res) {
   if (tempPass !== user.password) {
     console.log(`Invalid credentials`);
     return res.status(400).send({ message: `Invalid temporary password` });
+  }
+
+  if (newPass === user.password) {
+    console.log("New password must be different from temporary password.");
+    return res.status(400).send({
+      message: "New password must be different from temporary password.",
+    });
   }
 
   //hashed the new password typed in form

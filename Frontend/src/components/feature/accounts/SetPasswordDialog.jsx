@@ -1,9 +1,19 @@
 import { useState } from "react";
-import { Check, Circle, CircleAlert, CircleCheck, LoaderCircle, LockKeyhole } from "lucide-react";
+import {
+  Check,
+  Circle,
+  CircleAlert,
+  CircleCheck,
+  LoaderCircle,
+  LockKeyhole,
+} from "lucide-react";
 import Modal from "../../ui/Modal";
 import Button from "../../ui/Button";
 import PasswordInput from "../../ui/PasswordInput";
 import { cx } from "../../../lib/cx";
+import { useFirstLogin } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { useApp } from "@/hooks/useApp";
 
 /** Same minimum length the first-login screen enforces. */
 const MIN_LENGTH = 6;
@@ -16,19 +26,35 @@ const MIN_LENGTH = 6;
  * an error. When it resolves, the success view appears and `onDone` closes it.
  * `preview` labels the success view as a design preview (nothing was saved).
  */
-export default function SetPasswordDialog({ open, onSubmit, onDone, preview }) {
+export default function SetPasswordDialog({
+  currentUser,
+  open,
+  onSubmit,
+  onDone,
+  preview,
+}) {
   if (!open) return null;
-  return <SetPasswordDialogBody onSubmit={onSubmit} onDone={onDone} preview={preview} />;
+  return (
+    <SetPasswordDialogBody
+      currentUser={currentUser}
+      onSubmit={onSubmit}
+      onDone={onDone}
+      preview={preview}
+    />
+  );
 }
 
-function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
+function SetPasswordDialogBody({ currentUser, onSubmit, onDone, preview }) {
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
+  const app = useApp();
   // Errors appear after the first submit, then update as the user types.
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  const firstLoginMutation = useFirstLogin(app.session.accessToken);
 
   const errors = {
     newPass: !newPass
@@ -50,15 +76,28 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
     setSubmitted(true);
     setSubmitError("");
     if (errors.newPass || errors.confirmPass) {
-      document.getElementById(errors.newPass ? "set-password-new" : "set-password-confirm")?.focus();
+      document
+        .getElementById(
+          errors.newPass ? "set-password-new" : "set-password-confirm",
+        )
+        ?.focus();
       return;
     }
     setLoading(true);
     try {
-      await onSubmit(newPass);
+      // await onSubmit(newPass);
+      await firstLoginMutation.mutateAsync({
+        email: currentUser.email,
+        tempPass: currentUser.password,
+        newPass: newPass,
+      });
       setDone(true);
     } catch (error) {
-      setSubmitError(error?.message || "Password update failed. Please try again.");
+      setSubmitError(
+        error?.response.data.message ||
+          "Password update failed. Please try again.",
+      );
+      console.log(error.response.data.message);
     } finally {
       setLoading(false);
     }
@@ -87,18 +126,15 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
         title="Password updated"
         subtitle="Your new password is set. Use it the next time you sign in."
         actions={
-          <Button variant="primary" className="w-full min-h-11 text-[15px]" onClick={onDone}>
+          <Button
+            variant="primary"
+            className="w-full min-h-11 text-[15px]"
+            onClick={onDone}
+          >
             Continue to dashboard
           </Button>
         }
-      >
-        {preview && (
-          <p className="m-0 border border-dashed border-accent-400 bg-accent-100 px-3.5 py-3 text-cell leading-relaxed text-accent-800">
-            <span className="mb-0.5 block text-micro uppercase">Design preview</span>
-            No password was changed and nothing was sent to the server.
-          </p>
-        )}
-      </Modal>
+      ></Modal>
     );
   }
 
@@ -121,7 +157,11 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
           aria-busy={loading}
         >
           {loading && (
-            <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            <LoaderCircle
+              size={16}
+              className="animate-spin motion-reduce:animate-none"
+              aria-hidden="true"
+            />
           )}
           {loading ? "Updating password..." : "Update Password"}
         </Button>
@@ -159,8 +199,16 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
         >
           {[
             [`At least ${MIN_LENGTH} characters`, newPass.length >= MIN_LENGTH],
-            ["Both passwords match", confirmPass !== "" && newPass === confirmPass],
-            ["Different from your temporary password", null],
+            [
+              "Both passwords match",
+              confirmPass !== "" && newPass === confirmPass,
+            ],
+            [
+              "Different from your temporary password",
+              confirmPass !== "" &&
+                newPass === confirmPass &&
+                newPass !== currentUser.password,
+            ],
           ].map(([label, met]) => (
             <li
               key={label}
@@ -172,12 +220,18 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
               {met ? (
                 <Check size={14} className="shrink-0" aria-hidden="true" />
               ) : (
-                <Circle size={14} className="shrink-0 opacity-60" aria-hidden="true" />
+                <Circle
+                  size={14}
+                  className="shrink-0 opacity-60"
+                  aria-hidden="true"
+                />
               )}
               <span>
                 {label}
                 {met !== null && (
-                  <span className="sr-only">{met ? " (met)" : " (not met yet)"}</span>
+                  <span className="sr-only">
+                    {met ? " (met)" : " (not met yet)"}
+                  </span>
                 )}
               </span>
             </li>
@@ -189,7 +243,11 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
             role="alert"
             className="flex items-start gap-2 border border-accent bg-accent-100 px-3 py-2.5 text-cell leading-snug text-accent-800"
           >
-            <CircleAlert size={15} className="mt-[2px] shrink-0" aria-hidden="true" />
+            <CircleAlert
+              size={15}
+              className="mt-[2px] shrink-0"
+              aria-hidden="true"
+            />
             <span>{submitError}</span>
           </div>
         )}
@@ -199,7 +257,15 @@ function SetPasswordDialogBody({ onSubmit, onDone, preview }) {
 }
 
 /** Label + PasswordInput (with its show/hide toggle) + inline error. */
-function PasswordField({ id, label, value, onChange, error, readOnly, describedBy }) {
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  error,
+  readOnly,
+  describedBy,
+}) {
   const errorId = `${id}-error`;
   return (
     <div className="flex flex-col gap-[5px]">
@@ -213,11 +279,16 @@ function PasswordField({ id, label, value, onChange, error, readOnly, describedB
         readOnly={readOnly}
         autoComplete="new-password"
         aria-invalid={error ? true : undefined}
-        aria-describedby={[error && errorId, describedBy].filter(Boolean).join(" ") || undefined}
+        aria-describedby={
+          [error && errorId, describedBy].filter(Boolean).join(" ") || undefined
+        }
         className="min-h-10 aria-invalid:border-accent-700 aria-invalid:bg-accent-100/60 max-sm:min-h-11"
       />
       {error && (
-        <span id={errorId} className="flex items-center gap-1.5 text-meta text-accent-800">
+        <span
+          id={errorId}
+          className="flex items-center gap-1.5 text-meta text-accent-800"
+        >
           <CircleAlert size={13} className="shrink-0" aria-hidden="true" />
           {error}
         </span>

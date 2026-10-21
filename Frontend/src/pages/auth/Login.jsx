@@ -26,7 +26,7 @@ export default function Login() {
 
   function fail(message, fields = []) {
     setError({ message, fields });
-    showToast(message);
+    // showToast(message);
     if (fields[0] === "email") emailRef.current?.focus();
     else if (fields[0] === "password") passwordRef.current?.focus();
   }

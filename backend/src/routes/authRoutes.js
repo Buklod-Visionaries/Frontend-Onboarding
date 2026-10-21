@@ -5,7 +5,7 @@ import {
   firstLogin,
   refresh,
   logout,
-  requestPasswordReset
+  requestPasswordReset,
 } from "../controllers/authController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
@@ -22,7 +22,7 @@ router.post(
 );
 router.post("/login", asyncHandler(login));
 //for toggling first time login
-router.post("/first-login", asyncHandler(firstLogin));
+router.post("/first-login", verifyToken, asyncHandler(firstLogin));
 //update accesstoken using refreshtoken
 router.post("/refresh", asyncHandler(refresh));
 //logout
