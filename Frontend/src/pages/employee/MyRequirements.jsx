@@ -20,7 +20,12 @@ import { useMyRequirements } from "../../hooks/useRequirements";
 
 const FILTERS = ["All", ...STATUSES];
 // Status values the filter below offers; a ?status= link must be one of them.
-const STATUS_VALUES = ["in-progress", "pending", "completed", "resubmission-required"];
+const STATUS_VALUES = [
+  "in-progress",
+  "pending",
+  "completed",
+  "resubmission-required",
+];
 
 export default function MyRequirements() {
   const app = useApp();
@@ -31,7 +36,9 @@ export default function MyRequirements() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const statusParam = searchParams.get("status");
-  const statusFromUrl = STATUS_VALUES.includes(statusParam) ? statusParam : "All";
+  const statusFromUrl = STATUS_VALUES.includes(statusParam)
+    ? statusParam
+    : "All";
   const [filter, setFilter] = useState(statusFromUrl);
   const [syncedParam, setSyncedParam] = useState(statusParam);
   if (statusParam !== syncedParam) {
@@ -103,21 +110,27 @@ export default function MyRequirements() {
                   return (
                     <TRow key={requirement._id}>
                       <TCell>
-                        <div className="font-medium">{requirement.requirement.name}</div>
+                        <div className="font-medium">
+                          {requirement.requirement.name}
+                        </div>
                         {view.sub && (
-                          <div className="text-[11px] text-ink/55">{view.sub}</div>
+                          <div className="text-[11px] text-ink/55">
+                            {view.sub}
+                          </div>
                         )}
                       </TCell>
                       <TCell>{capitalize(requirement.requirement.type)}</TCell>
                       <TCell>
-                        <Deadline requirement={requirement} view={view} />
+                        <Deadline requirement={requirement} />
                       </TCell>
                       <TCell>
                         <StatusBadge status={requirement.status} />
                       </TCell>
                       <TCell align="right">
                         {view.canOpen && (
-                          <Button onClick={() => open(requirement)}>{view.cta}</Button>
+                          <Button onClick={() => open(requirement)}>
+                            {view.cta}
+                          </Button>
                         )}
                       </TCell>
                     </TRow>
@@ -142,7 +155,9 @@ export default function MyRequirements() {
                         {requirement.requirement.name}
                       </div>
                       {view.sub && (
-                        <div className="break-words text-[11px] text-ink/55">{view.sub}</div>
+                        <div className="break-words text-[11px] text-ink/55">
+                          {view.sub}
+                        </div>
                       )}
                     </div>
                     <span className="shrink-0">
@@ -152,10 +167,14 @@ export default function MyRequirements() {
                   <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-2.5">
                     <div className="min-w-0">
                       <dt className="text-micro uppercase text-ink/55">Type</dt>
-                      <dd className="m-0 text-cell">{capitalize(requirement.requirement.type)}</dd>
+                      <dd className="m-0 text-cell">
+                        {capitalize(requirement.requirement.type)}
+                      </dd>
                     </div>
                     <div className="min-w-0">
-                      <dt className="text-micro uppercase text-ink/55">Deadline</dt>
+                      <dt className="text-micro uppercase text-ink/55">
+                        Deadline
+                      </dt>
                       <dd className="m-0 text-cell">
                         <Deadline requirement={requirement} view={view} />
                       </dd>
@@ -177,8 +196,8 @@ export default function MyRequirements() {
         </>
       ) : (
         <EmptyState>
-          No requirements with this status. Choose &ldquo;All&rdquo; to see every
-          requirement.
+          No requirements with this status. Choose &ldquo;All&rdquo; to see
+          every requirement.
         </EmptyState>
       )}
     </Card>
@@ -208,19 +227,26 @@ function viewOf(requirement) {
   return {
     cta,
     sub,
-    showDue: requirement.status !== "pending" && requirement.status !== "completed",
+    showDue:
+      requirement.status !== "pending" && requirement.status !== "completed",
     canOpen: requirement.requirement.type === "document",
   };
 }
 
 /** Due date with the overdue label, or a dash once pending/completed (as before). */
-function Deadline({ requirement, view }) {
-  if (!view.showDue) return <span className="text-ink/45">&mdash;</span>;
-  const overdue = isOverdue(formatDate(requirement.dueDate));
+function Deadline({ requirement }) {
+  if (!requirement.dueDate) {
+    return <span className="text-ink/45">—</span>;
+  }
+
+  const formattedDate = formatDate(requirement.dueDate);
+  const overdue =
+    requirement.status !== "completed" && isOverdue(formattedDate);
+
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       <span className={overdue ? "font-medium text-red-800" : undefined}>
-        {formatDate(requirement.dueDate)}
+        {formattedDate}
       </span>
       <OverdueBadge when={overdue} />
     </span>

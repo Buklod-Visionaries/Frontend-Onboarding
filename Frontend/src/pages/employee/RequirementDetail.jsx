@@ -110,7 +110,10 @@ export default function RequirementDetail() {
       setPendingFile("");
       setPreview(null);
       queryClient.invalidateQueries({
-        queryKey: ["myRequirements", params.id],
+        queryKey: ["myRequirements"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["myRequirement", params.id],
       });
       queryClient.invalidateQueries({
         queryKey: ["existingDocument", params.id],
@@ -149,10 +152,7 @@ export default function RequirementDetail() {
     return (
       <Card>
         <p className="m-0 text-field">That requirement does not exist.</p>
-        <Button
-          className="mt-3 self-start"
-          onClick={backToList}
-        >
+        <Button className="mt-3 self-start" onClick={backToList}>
           Back to requirements
         </Button>
       </Card>
@@ -265,7 +265,9 @@ export default function RequirementDetail() {
             >
               <Upload size={26} strokeWidth={1.5} className="text-accent" />
 
-              <div className="max-w-full break-all text-field">{uploadLabel}</div>
+              <div className="max-w-full break-all text-field">
+                {uploadLabel}
+              </div>
 
               <div className="text-meta text-ink/50">
                 PDF, JPG or PNG &middot; max 10 MB
@@ -333,8 +335,8 @@ export default function RequirementDetail() {
               )}
             </div>
           ) : !existingDocument ? (
-        <LoadingState />
-      ) : (
+            <LoadingState />
+          ) : (
             <div className="mx-auto aspect-[1/1.2941] w-full max-w-lg">
               <a
                 href={existingDocument.fileUrl}
