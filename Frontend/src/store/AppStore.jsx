@@ -23,6 +23,9 @@ export default function AppProvider({ children }) {
   const [session, setSession] = useState(null);
   //
   const [sessionLoading, setSessionLoading] = useState(true);
+  //
+  const refreshPromiseRef = useRef(null);
+  //
   const [employees] = useState(loadEmployees);
   const [staffUsers, setStaffUsers] = useState(loadStaffUsers);
   const [employeeAccounts, setEmployeeAccounts] = useState(
@@ -31,6 +34,7 @@ export default function AppProvider({ children }) {
   const [notifications, setNotifications] = useState(loadNotifications);
   const [activity] = useState(loadActivityLog);
   const [settings, setSettings] = useState({ deadline: "7", reminder: "3" });
+
   // const [toast, setToast] = useState("");
   // const toastTimer = useRef(0);
 
@@ -451,29 +455,72 @@ export default function AppProvider({ children }) {
   );
 
   //save the users refreshtoken on site refresh
+  // useEffect(() => {
+  //   async function refreshAuth() {
+  //     try {
+  //       //activate
+  //       const res = await api.post("/auth/refresh");
+  //       //create another access token based on refresh
+  //       const { accessToken, user } = res.data;
+  //       const updatedSession = {
+  //         accessToken,
+  //         ...user,
+  //       };
+  //       //activate
+  //       setSession(updatedSession);
+  //       console.log("from refresh", updatedSession);
+  //     } catch (error) {
+  //       setSession(null);
+  //       console.log("On Refresh:", error.response.data.message);
+  //     } finally {
+  //       setSessionLoading(false);
+  //     }
+  //   }
+  //   //call refresh
+  //   refreshAuth();
+  // }, []);
+
   useEffect(() => {
+    let cancelled = false;
+
     async function refreshAuth() {
       try {
-        //activate
-        const res = await api.post("/auth/refresh");
-        //create another access token based on refresh
+        // Reuse an in-flight request if Strict Mode runs this effect again.
+        if (!refreshPromiseRef.current) {
+          refreshPromiseRef.current = api.post("/auth/refresh").finally(() => {
+            refreshPromiseRef.current = null;
+          });
+        }
+
+        const res = await refreshPromiseRef.current;
         const { accessToken, user } = res.data;
-        const updatedSession = {
-          accessToken,
-          ...user,
-        };
-        //activate
-        setSession(updatedSession);
-        console.log("from refresh", updatedSession);
+
+        if (!cancelled) {
+          setSession({ accessToken, ...user });
+          console.log("Session restored successfully");
+        }
       } catch (error) {
-        setSession(null);
-        console.log("On Refresh:", error.response.data.message);
+        if (!cancelled) {
+          setSession(null);
+
+          console.error(
+            "Session restoration failed:",
+            error.response?.status,
+            error.response?.data ?? error.message,
+          );
+        }
       } finally {
-        setSessionLoading(false);
+        if (!cancelled) {
+          setSessionLoading(false);
+        }
       }
     }
-    //call refresh
+
     refreshAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
