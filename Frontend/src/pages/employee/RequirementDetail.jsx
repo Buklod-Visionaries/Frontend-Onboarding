@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { LoadingState, ErrorState } from "../../components/ui/StatusMessage";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Upload } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge, { OverdueBadge } from "../../components/ui/Badge";
@@ -24,6 +25,10 @@ export default function RequirementDetail() {
   const queryClient = useQueryClient();
   const params = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Back to the list with the status filter it was opened from, if any.
+  const backToList = () =>
+    navigate(`/employee/requirements${location.state?.listSearch ?? ""}`);
   const fileInput = useRef(null);
   const [pendingFile, setPendingFile] = useState(null);
   //from myRequirement hook
@@ -46,6 +51,21 @@ export default function RequirementDetail() {
   } = useSpecificEmpReqHistories(app.session.accessToken, myRequirement._id);
   const [fileUploading, setFileUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  // Local preview of the chosen (not yet submitted) file, via an object URL.
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const previewRef = useRef(null);
+  function setPreview(file) {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = file ? URL.createObjectURL(file) : null;
+    setPreviewUrl(previewRef.current);
+  }
+  // Free the last preview URL when leaving the page.
+  useEffect(
+    () => () => {
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    },
+    [],
+  );
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -58,6 +78,7 @@ export default function RequirementDetail() {
     if (!allowedTypes.includes(file.type)) {
       app.showToast("Only PDF, JPG, JPEG, and PNG files are allowed.");
       setPendingFile(null);
+      setPreview(null);
       return;
     }
 
@@ -65,10 +86,12 @@ export default function RequirementDetail() {
     if (file.size > MAX_FILE_SIZE) {
       app.showToast("File size must not exceed 10 MB.");
       setPendingFile(null);
+      setPreview(null);
       return;
     }
 
     setPendingFile(file);
+    setPreview(file);
     //show toast saying to users that file is chosen
     app.showToast(
       `${file.name} is ready to upload. Please click Submit document to upload it.`,
@@ -85,8 +108,12 @@ export default function RequirementDetail() {
       //sends the file and target requirement
       await app.submitDocument(pendingFile, id);
       setPendingFile("");
+      setPreview(null);
       queryClient.invalidateQueries({
-        queryKey: ["myRequirements", params.id],
+        queryKey: ["myRequirements"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["myRequirement", params.id],
       });
       queryClient.invalidateQueries({
         queryKey: ["existingDocument", params.id],
@@ -108,27 +135,24 @@ export default function RequirementDetail() {
     existingDocumentLoading ||
     specificEmpReqHistoriesLoading
   ) {
-    return <p>Loading...</p>;
+    return <LoadingState />;
   }
 
   if (myRequirementError) {
-    return <p>Failed loading requirements.</p>;
+    return <ErrorState>Failed loading requirements.</ErrorState>;
   }
   if (existingDocumentError) {
-    return <p>Failed loading document.</p>;
+    return <ErrorState>Failed loading document.</ErrorState>;
   }
   if (specificEmpReqHistoriesError) {
-    return <p>Failed loading requirements history.</p>;
+    return <ErrorState>Failed loading requirements history.</ErrorState>;
   }
 
   if (!myRequirement) {
     return (
       <Card>
         <p className="m-0 text-field">That requirement does not exist.</p>
-        <Button
-          className="mt-3 self-start"
-          onClick={() => navigate("/employee/requirements")}
-        >
+        <Button className="mt-3 self-start" onClick={backToList}>
           Back to requirements
         </Button>
       </Card>
@@ -146,11 +170,19 @@ export default function RequirementDetail() {
   return (
     <AutoGrid min={320} className="items-start">
       <Card padding="lg" className="gap-4">
+        <Button
+          variant="ghost"
+          className="-ml-2 self-start px-2"
+          onClick={backToList}
+        >
+          <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
+          Back to requirements
+        </Button>
         <div>
           <div className="text-micro uppercase text-accent-700">
             {myRequirement.type}
           </div>
-          <h2 className="mb-2 mt-1 text-[30px]">
+          <h2 className="mb-2 mt-1 break-words text-[24px] sm:text-[30px]">
             {myRequirement.requirement.name}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
@@ -201,7 +233,7 @@ export default function RequirementDetail() {
           myRequirement.status === "resubmission-required" ? (
             <div
               className={cx(
-                "flex flex-col items-center gap-1.5 border border-dashed p-6 text-center transition",
+                "flex flex-col items-center gap-1.5 border border-dashed p-4 text-center transition sm:p-6",
                 isDragging
                   ? "border-accent bg-accent/5"
                   : uploadable
@@ -233,7 +265,9 @@ export default function RequirementDetail() {
             >
               <Upload size={26} strokeWidth={1.5} className="text-accent" />
 
-              <div className="text-field">{uploadLabel}</div>
+              <div className="max-w-full break-all text-field">
+                {uploadLabel}
+              </div>
 
               <div className="text-meta text-ink/50">
                 PDF, JPG or PNG &middot; max 10 MB
@@ -256,8 +290,27 @@ export default function RequirementDetail() {
                 }}
               />
 
+              {/* Preview of the chosen file before it is submitted. */}
+              {pendingFile && previewUrl && (
+                <div className="mt-2 w-full">
+                  {pendingFile.type === "application/pdf" ? (
+                    <iframe
+                      src={`${previewUrl}#toolbar=0&navpanes=0`}
+                      title={`Preview of ${pendingFile.name}`}
+                      className="mx-auto block aspect-[1/1.2941] max-h-[70vh] w-full max-w-lg border border-divider bg-white"
+                    />
+                  ) : (
+                    <img
+                      src={previewUrl}
+                      alt={`Preview of ${pendingFile.name}`}
+                      className="mx-auto block max-h-[60vh] w-auto max-w-full border border-divider bg-white object-contain"
+                    />
+                  )}
+                </div>
+              )}
+
               {existingDocument && (
-                <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
+                <div className="mt-1.5 flex flex-wrap justify-center gap-2.5 max-sm:w-full max-sm:flex-col-reverse max-sm:[&>*]:w-full">
                   <Button
                     disabled={!uploadable || fileUploading}
                     onClick={() => fileInput.current?.click()}
@@ -271,10 +324,10 @@ export default function RequirementDetail() {
                       disabled={!uploadable || !pendingFile || fileUploading}
                       onClick={(e) => uploadFile({ e, id: myRequirement._id })}
                     >
-                      {myRequirement.file
-                        ? "Resubmit document"
-                        : fileUploading
-                          ? "Submitting..."
+                      {fileUploading
+                        ? "Submitting..."
+                        : myRequirement.file
+                          ? "Resubmit document"
                           : "Submit document"}
                     </Button>
                   )}
@@ -282,9 +335,9 @@ export default function RequirementDetail() {
               )}
             </div>
           ) : !existingDocument ? (
-            "Loading..."
+            <LoadingState />
           ) : (
-            <div class="w-full max-w-lg aspect-[1/1.2941] mx-auto">
+            <div className="mx-auto aspect-[1/1.2941] w-full max-w-lg">
               <a
                 href={existingDocument.fileUrl}
                 target="_blank"
@@ -300,13 +353,6 @@ export default function RequirementDetail() {
             </div>
           )}
         </div>
-
-        <Button
-          className="self-start"
-          onClick={() => navigate("/employee/requirements")}
-        >
-          Back to requirements
-        </Button>
       </Card>
 
       <Card padding="lg" className="gap-3.5">

@@ -7,6 +7,7 @@
 | `Card.jsx` | `Card` | Hairline-bordered section. `padding` accepts `sm` (18px), `md` (20px, default), `lg` (22px) or `none`. |
 | `Badge.jsx` | `Badge`, `OverdueBadge` | Status pill covering the six statuses — Pending, In Progress, Completed, Active, Pending first login, Deactivated. `OverdueBadge` renders only when its `when` prop is true, so callers can pass a predicate inline. |
 | `Field.jsx` | `Field`, `Input`, `Textarea`, `Select`, `Radio`, `Segmented` | Every form control. `Field` is the label + hint wrapper. `Select` and `Segmented` accept plain strings or `{ value, label }` objects. `Segmented` doubles as the tab and filter control. |
+| `PasswordInput.jsx` | `PasswordInput` | `Input` with a show/hide toggle (Lucide `Eye`/`EyeOff`) inside its right edge. The toggle is a `type="button"` with a changing "Show password"/"Hide password" label and `aria-pressed`; toggling keeps the typed value. Forwards its ref. |
 | `Modal.jsx` | `Modal` | Dialog over a dimmed backdrop. Closes on Escape and backdrop click. Takes `kicker`, `title`, `subtitle`, `actions` and a `width` override. Sets `text-ink` explicitly so it renders correctly even when mounted inside the dark sidebar. |
 | `Table.jsx` | `Table`, `TableScroll`, `THead`, `TRow`, `TCell` | Themed data table. `TableScroll` gives every table its own horizontal scroll container, which is why no page overflows on mobile. `THead` columns accept `{ label, align }` for right-aligned action columns. |
 | `ProgressBar.jsx` | `ProgressBar` | Accent fill on a neutral track. Heights `sm`, `md`, `lg`. |

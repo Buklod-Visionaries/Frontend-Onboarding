@@ -1,6 +1,7 @@
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { EmptyState } from "../components/ui/Notice";
+import { LoadingState, ErrorState } from "../components/ui/StatusMessage";
 import NotificationList from "../components/feature/notifications/NotificationList";
 import { useApp } from "../hooks/useApp";
 //
@@ -40,9 +41,9 @@ export default function Notifications() {
           </span>
         </h4>
 
-        <div className="flex">
+        {/* Phones: the two actions share a full-width row. */}
+        <div className="flex gap-2 max-sm:w-full max-sm:[&>*]:flex-1">
           <Button
-            className="mx-2"
             onClick={async () => {
               await readAllNotifMutation.mutateAsync(); //mark all as read by calling API
               queryClient.invalidateQueries({
@@ -51,29 +52,38 @@ export default function Notifications() {
             }}
             disabled={
               isLoading ||
+              readAllNotifMutation.isPending ||
               notifications.filter((notif) => !notif.isRead).length === 0 //disabled when no notifs are unread
             }
           >
-            Mark all as read
+            {readAllNotifMutation.isPending ? "Marking as read..." : "Mark all as read"}
           </Button>
           <Button
-            className="mx-2"
             onClick={async () => {
               await deleteAllNotifMutation.mutateAsync(); //delete all read by calling API
               queryClient.invalidateQueries({
                 queryKey: ["notifications"], //reload notif state
               });
             }}
-            disabled={isLoading || notifications.length === 0}
+            disabled={
+              isLoading || deleteAllNotifMutation.isPending || notifications.length === 0
+            }
           >
-            Clear All
+            {deleteAllNotifMutation.isPending ? "Clearing..." : "Clear all"}
           </Button>
         </div>
       </div>
-      {notifications.length ? (
+      {/* Loading and failure no longer read as "No notifications yet". */}
+      {isLoading ? (
+        <LoadingState />
+      ) : isError ? (
+        <ErrorState>Failed loading notifications.</ErrorState>
+      ) : notifications.length ? (
         <NotificationList items={notifications} />
       ) : (
-        <EmptyState>No notifications yet.</EmptyState>
+        <EmptyState>
+          No notifications yet. New updates will appear here.
+        </EmptyState>
       )}
     </Card>
   );

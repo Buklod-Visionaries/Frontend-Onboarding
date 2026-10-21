@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { LoadingState, ErrorState } from "../../components/ui/StatusMessage";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import AutoGrid from "../../components/ui/AutoGrid";
 import { Field, Input, Select } from "../../components/ui/Field";
 import { useApp } from "../../hooks/useApp";
 //
@@ -78,16 +78,17 @@ export default function Settings() {
   }, [systemSettings]);
 
   if (systemSettingsLoading) {
-    return <p>Loading...</p>;
+    return <LoadingState />;
   }
 
   if (systemSettingsError) {
-    return <p>Failed loading system settings.</p>;
+    return <ErrorState>Failed loading system settings.</ErrorState>;
   }
 
   console.log(systemSettings);
+  // One card per row: Account & profile above System Settings.
   return (
-    <AutoGrid min={320} className="items-start">
+    <div className="flex flex-col gap-5">
       <Card padding="lg" className="gap-4">
         <h4 className="text-[20px]">Account &amp; profile</h4>
         <div className="grid gap-3.5 sm:grid-cols-2">
@@ -114,7 +115,7 @@ export default function Settings() {
         </Field>
         <Button
           variant="primary"
-          className="self-start"
+          className="self-start max-sm:self-stretch"
           onClick={save}
           disabled={!next || !confirm}
         >
@@ -144,7 +145,7 @@ export default function Settings() {
         </p>
         <Button
           variant="primary"
-          className="self-start"
+          className="self-start max-sm:self-stretch"
           onClick={async () => {
             try {
               await updateSystemSettingsMutation({
@@ -165,6 +166,6 @@ export default function Settings() {
           Save Settings
         </Button>
       </Card>
-    </AutoGrid>
+    </div>
   );
 }

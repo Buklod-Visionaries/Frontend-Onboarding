@@ -1,8 +1,9 @@
 # `pages/auth/` — signed-out screens
 
 Three screens reached before a session exists. They render inside `AuthLayout`
-(accent panel on the left, centred card on the right) rather than `AppShell`,
-since there is no sidebar or header without a session.
+(brand panel on the left, an `AuthCard` on the right) rather than `AppShell`,
+since there is no sidebar or header without a session. `AuthPlaceholder.jsx`
+uses the same frame but is not currently routed.
 
 | File | Route | Purpose |
 | --- | --- | --- |
