@@ -16,7 +16,7 @@ import { useApp } from "../../hooks/useApp";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDepEmployees } from "../../hooks/useEmployees";
 import { useDepEmpReq } from "../../hooks/useRequirements";
-import { formatStatus } from "../../lib/formatter";
+import { formatDepartment, formatStatus } from "../../lib/formatter";
 
 export default function DeptDashboard() {
   const app = useApp();
@@ -54,8 +54,16 @@ export default function DeptDashboard() {
 
   /** done/total for one activity; green once every one is done, amber until then. */
   const activityStat = (activity) => {
-    const rows = depRequirements.filter((e) => e.requirement.activity === activity);
-    const done = rows.filter((e) => e.status === "completed").length;
+    const rows = depRequirements.filter(
+      (e) =>
+        e.requirement.activity === activity &&
+        e.employee.onboardingStatus !== "deactivated", //exclude deactivated employees
+    );
+    const done = rows.filter(
+      (e) =>
+        e.status === "completed" &&
+        e.employee.onboardingStatus !== "deactivated", //exclude deactivated employees
+    ).length;
     return {
       value: `${done}/${rows.length}`,
       tone: rows.length && done === rows.length ? "success" : "warning",
@@ -78,7 +86,7 @@ export default function DeptDashboard() {
           to="/dept/requirements"
           label="Employees in department"
           value={depEmployees.length}
-          note={scope.department}
+          note={`${formatDepartment(depEmployees[0].department)} department`}
           icon={Users}
         />
         <StatCard
@@ -110,7 +118,9 @@ export default function DeptDashboard() {
         {/* Heading and button share the top row; on phones the heading wraps
             beside a compact "View all" label. */}
         <div className="flex items-start justify-between gap-3 sm:items-center">
-          <h4 className="min-w-0 text-[20px]">Activities awaiting your confirmation</h4>
+          <h4 className="min-w-0 text-[20px]">
+            Activities awaiting your confirmation
+          </h4>
           <Button
             className="shrink-0"
             aria-label="View all department requirements"
@@ -137,35 +147,35 @@ export default function DeptDashboard() {
                   ]}
                 />
                 <tbody>
-                  {confirmLoading
-                    ? (
-                        <tr>
-                          <td colSpan={6}>
-                            <LoadingState />
-                          </td>
-                        </tr>
-                      )
-                    : awaitingConfirm.map((req) => (
-                        <TRow key={req._id}>
-                          <TCell strong>{req.employee.user.username}</TCell>
-                          <TCell>{req.employee.position}</TCell>
-                          <TCell>{req.requirement.name}</TCell>
-                          <TCell>{formatDate(req.dueDate)}</TCell>
-                          <TCell>
-                            <ActivityStatusBadge status={req.status} />
-                          </TCell>
-                          <TCell align="right">
-                            {req.status !== "completed" && (
-                              <Button
-                                variant="primary"
-                                onClick={() => setConfirm(req)}
-                              >
-                                Confirm
-                              </Button>
-                            )}
-                          </TCell>
-                        </TRow>
-                      ))}
+                  {confirmLoading ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <LoadingState />
+                      </td>
+                    </tr>
+                  ) : (
+                    awaitingConfirm.map((req) => (
+                      <TRow key={req._id}>
+                        <TCell strong>{req.employee.user.username}</TCell>
+                        <TCell>{req.employee.position}</TCell>
+                        <TCell>{req.requirement.name}</TCell>
+                        <TCell>{formatDate(req.dueDate)}</TCell>
+                        <TCell>
+                          <ActivityStatusBadge status={req.status} />
+                        </TCell>
+                        <TCell align="right">
+                          {req.status !== "completed" && (
+                            <Button
+                              variant="primary"
+                              onClick={() => setConfirm(req)}
+                            >
+                              Confirm
+                            </Button>
+                          )}
+                        </TCell>
+                      </TRow>
+                    ))
+                  )}
                 </tbody>
               </Table>
             </div>
@@ -189,16 +199,27 @@ export default function DeptDashboard() {
                           {req.employee.position}
                         </div>
                       </div>
-                      <ActivityStatusBadge status={req.status} className="shrink-0" />
+                      <ActivityStatusBadge
+                        status={req.status}
+                        className="shrink-0"
+                      />
                     </div>
                     <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-2.5">
                       <div className="min-w-0">
-                        <dt className="text-micro uppercase text-ink/55">Activity</dt>
-                        <dd className="m-0 break-words text-cell">{req.requirement.name}</dd>
+                        <dt className="text-micro uppercase text-ink/55">
+                          Activity
+                        </dt>
+                        <dd className="m-0 break-words text-cell">
+                          {req.requirement.name}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-micro uppercase text-ink/55">Target date</dt>
-                        <dd className="m-0 text-cell">{formatDate(req.dueDate)}</dd>
+                        <dt className="text-micro uppercase text-ink/55">
+                          Target date
+                        </dt>
+                        <dd className="m-0 text-cell">
+                          {formatDate(req.dueDate)}
+                        </dd>
                       </div>
                     </dl>
                     {req.status !== "completed" && (
