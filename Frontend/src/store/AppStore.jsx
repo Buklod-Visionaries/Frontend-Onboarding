@@ -23,6 +23,9 @@ export default function AppProvider({ children }) {
   const [session, setSession] = useState(null);
   //
   const [sessionLoading, setSessionLoading] = useState(true);
+  //
+  const refreshPromiseRef = useRef(null);
+  //
   const [employees] = useState(loadEmployees);
   const [staffUsers, setStaffUsers] = useState(loadStaffUsers);
   const [employeeAccounts, setEmployeeAccounts] = useState(
@@ -31,17 +34,25 @@ export default function AppProvider({ children }) {
   const [notifications, setNotifications] = useState(loadNotifications);
   const [activity] = useState(loadActivityLog);
   const [settings, setSettings] = useState({ deadline: "7", reminder: "3" });
-  // const [toast, setToast] = useState("");
-  // const toastTimer = useRef(0);
 
-  // const showToast = useCallback((text) => {
-  //   setToast(text);
-  //   window.clearTimeout(toastTimer.current);
-  //   toastTimer.current = window.setTimeout(() => setToast(""), 3200);
-  // }, []);
-  const showToast = useCallback((message) => {
+  const showToast = useCallback((message, options = {}) => {
     toast.dismiss();
-    toast(message);
+
+    // Destructure custom options with safe fallbacks
+    const { type, duration = 3000, emoji } = options;
+
+    // Execute the matching react-hot-toast function style dynamically
+    if (type === "warning" || type === "error") {
+      return toast.error(message, { duration });
+    }
+    if (type === "success") {
+      return toast.success(message, { duration });
+    }
+    if (emoji) {
+      return toast(message, { icon: emoji });
+    }
+
+    return toast(message);
   }, []);
 
   const notify = useCallback((to, title, body) => {
@@ -139,7 +150,9 @@ export default function AppProvider({ children }) {
           Authorization: `Bearer ${session.accessToken}`,
         },
       });
-      showToast(`${pendingFile.name} submitted - awaiting HR Verification`);
+      showToast(`${pendingFile.name} submitted - awaiting HR Verification`, {
+        type: "success",
+      });
     },
     // (requirement) =>
     //   showToast(`${requirement.name} submitted — awaiting HR verification`),
@@ -159,7 +172,9 @@ export default function AppProvider({ children }) {
             },
           },
         );
-        showToast(`${empReq.requirement.name} marked completed`);
+        showToast(`${empReq.requirement.name} marked completed`, {
+          type: "success",
+        });
       } catch (error) {
         console.log(error);
       } finally {
@@ -188,6 +203,9 @@ export default function AppProvider({ children }) {
         );
         showToast(
           `Resubmission requested from ${empReq.employee.user.username}`,
+          {
+            type: "success",
+          },
         );
       } catch (error) {
         console.log(error);
@@ -223,6 +241,9 @@ export default function AppProvider({ children }) {
         );
         showToast(
           `${empReq.requirement.name} confirmed for ${empReq.employee.user.username}`,
+          {
+            type: "success",
+          },
         );
       } catch (error) {
         console.log(error);
@@ -236,7 +257,10 @@ export default function AppProvider({ children }) {
   );
 
   const sendReminder = useCallback(
-    (employee) => showToast(`Reminder sent to ${employee.user.username}`),
+    (employee) =>
+      showToast(`Reminder sent to ${employee.user.username}`, {
+        type: "success",
+      }),
     [showToast],
   );
 
@@ -341,7 +365,9 @@ export default function AppProvider({ children }) {
           },
         );
         //show toast after success
-        showToast(`${role} account created for ${name}`);
+        showToast(`${role} account created for ${name}`, {
+          type: "success",
+        });
         //
         return {
           name,
@@ -451,29 +477,72 @@ export default function AppProvider({ children }) {
   );
 
   //save the users refreshtoken on site refresh
+  // useEffect(() => {
+  //   async function refreshAuth() {
+  //     try {
+  //       //activate
+  //       const res = await api.post("/auth/refresh");
+  //       //create another access token based on refresh
+  //       const { accessToken, user } = res.data;
+  //       const updatedSession = {
+  //         accessToken,
+  //         ...user,
+  //       };
+  //       //activate
+  //       setSession(updatedSession);
+  //       console.log("from refresh", updatedSession);
+  //     } catch (error) {
+  //       setSession(null);
+  //       console.log("On Refresh:", error.response.data.message);
+  //     } finally {
+  //       setSessionLoading(false);
+  //     }
+  //   }
+  //   //call refresh
+  //   refreshAuth();
+  // }, []);
+
   useEffect(() => {
+    let cancelled = false;
+
     async function refreshAuth() {
       try {
-        //activate
-        const res = await api.post("/auth/refresh");
-        //create another access token based on refresh
+        // Reuse an in-flight request if Strict Mode runs this effect again.
+        if (!refreshPromiseRef.current) {
+          refreshPromiseRef.current = api.post("/auth/refresh").finally(() => {
+            refreshPromiseRef.current = null;
+          });
+        }
+
+        const res = await refreshPromiseRef.current;
         const { accessToken, user } = res.data;
-        const updatedSession = {
-          accessToken,
-          ...user,
-        };
-        //activate
-        setSession(updatedSession);
-        console.log("from refresh", updatedSession);
+
+        if (!cancelled) {
+          setSession({ accessToken, ...user });
+          console.log("Session restored successfully");
+        }
       } catch (error) {
-        setSession(null);
-        console.log("On Refresh:", error.response.data.message);
+        if (!cancelled) {
+          setSession(null);
+
+          console.error(
+            "Session restoration failed:",
+            error.response?.status,
+            error.response?.data ?? error.message,
+          );
+        }
       } finally {
-        setSessionLoading(false);
+        if (!cancelled) {
+          setSessionLoading(false);
+        }
       }
     }
-    //call refresh
+
     refreshAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

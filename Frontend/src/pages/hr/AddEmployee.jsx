@@ -9,7 +9,8 @@ import { Field, Input, Select } from "../../components/ui/Field";
 import AccountCreatedDialog from "../../components/feature/accounts/AccountCreatedDialog";
 import { useApp } from "../../hooks/useApp";
 //
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, Info } from "lucide-react";
+import { CopyButton } from "../../components/ui/CopyField";
 import { generatePassword } from "../../lib/generateTempPassword";
 import { handlePhoneChange } from "../../lib/validator";
 import api from "../../lib/axios";
@@ -108,13 +109,17 @@ export default function AddEmployee() {
     const invalidField = validations.find((field) => !field.valid);
 
     if (invalidField) {
-      app.showToast(invalidField.message);
+      app.showToast(invalidField.message, {
+        type: "warning",
+      });
       invalidField.ref.current?.focus();
       return;
     }
 
     if (!tempPass) {
-      app.showToast("Temporary password is missing. Generate a new password.");
+      app.showToast("Temporary password is missing. Generate a new password.", {
+        type: "error",
+      });
       return;
     }
 
@@ -150,15 +155,23 @@ export default function AddEmployee() {
       const message = error.response?.data?.message;
 
       if (status === 409) {
-        app.showToast(message || "An account with this email already exists.");
+        app.showToast(message || "An account with this email already exists.", {
+          type: "error",
+        });
         emailRef.current?.focus();
       } else if (!error.response) {
         app.showToast(
           "Unable to connect to the server. Check your connection and try again.",
+          {
+            type: "error",
+          },
         );
       } else {
         app.showToast(
           message || "Failed to create the employee account. Please try again.",
+          {
+            type: "error",
+          },
         );
       }
     }
@@ -169,6 +182,9 @@ export default function AddEmployee() {
       <AutoGrid min={320} className="items-start">
         <Card padding="lg" className="gap-4">
           <SectionHeading step="01">Employee information</SectionHeading>
+          <p className="-mt-1.5 m-0 text-meta text-ink/55">
+            Fields marked * are required.
+          </p>
           <div className="grid gap-3.5 sm:grid-cols-2">
             <Field label="Full name *">
               <Input
@@ -215,7 +231,7 @@ export default function AddEmployee() {
             </Field>
           </div>
           <Notice>
-            The department determine which onboarding requirements are assigned
+            The department determines which onboarding requirements are assigned
             &mdash; see the list on the right before creating the record.
           </Notice>
 
@@ -232,13 +248,35 @@ export default function AddEmployee() {
             <Field label="Role">
               <Input value="Employee" readOnly />
             </Field>
-            <div className="flex flex-row items-center">
-              <Field label="Temporary password">
+            <div className="flex flex-row items-end gap-2">
+              <Field label="Temporary password" className="min-w-0 flex-1">
                 <Input value={tempPass} readOnly />
               </Field>
-              <RefreshCcw
-                className="ml-3 mt-[20px] hover:-rotate-90 transition delay-75"
+              {/* A real button (same handler) so it is keyboard-reachable and labelled. */}
+              <button
+                type="button"
+                aria-label="Generate a new temporary password"
+                title="Generate a new temporary password"
                 onClick={() => setTempPass(generatePassword())}
+                className="group flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-control border border-divider text-ink/70 transition-colors hover:bg-ink/[0.07] hover:text-ink max-sm:size-10"
+              >
+                <RefreshCcw
+                  size={16}
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:-rotate-90 motion-reduce:transition-none"
+                />
+              </button>
+              <CopyButton
+                value={tempPass}
+                label="temporary password"
+                onError={() =>
+                  app.showToast(
+                    "Could not copy — select the password and copy it manually.",
+                    {
+                      type: "error",
+                    },
+                  )
+                }
               />
             </div>
             <Field label="Account status on creation">
@@ -249,7 +287,8 @@ export default function AddEmployee() {
             The employee is required to set a new password on first login.
           </span>
 
-          <div className="flex flex-wrap justify-end gap-2.5">
+          {/* Phones: actions stack full width (primary on top) and may wrap. */}
+          <div className="flex flex-wrap justify-end gap-2.5 max-sm:flex-col-reverse max-sm:[&>*]:w-full max-sm:[&>*]:whitespace-normal">
             <Button onClick={() => navigate("/hr/employees")}>Cancel</Button>
             <Button variant="primary" onClick={submit} disabled={loadingSubmit}>
               {loadingSubmit
@@ -259,40 +298,80 @@ export default function AddEmployee() {
           </div>
         </Card>
 
-        <Card padding="lg" className="gap-3.5">
+        <Card padding="lg" className=" gap-3.5">
           <div>
             <div className="text-micro uppercase text-accent-700">
               Automatic assignment
             </div>
-            <h4 className="mt-1 text-[20px]">Requirements for this position</h4>
+            <h4 className="mt-1 text-[20px]">
+              Requirements for this department
+            </h4>
           </div>
-          {dep !== "Select department" && (
-            <p className="m-0 text-cell text-ink/60">
-              {
-                requirements.filter(
-                  (req) => req.department === dep.toLowerCase(),
-                ).length
-              }{" "}
-              requirements are assigned automatically for employees in {dep}{" "}
-              department. HR can adjust them afterwards on the employee record.
-            </p>
+
+          {dep === "Select department" ? (
+            // Ghost Skeleton List Empty State
+            <div className="flex flex-col gap-4 flex-1">
+              <p className="m-0 text-cell text-ink/60">
+                Select a department to see the requirements that will be
+                assigned.
+              </p>
+
+              {/* Animated Skeleton List */}
+              <DividerList className="animate-pulse opacity-40 pointer-events-none">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((index) => (
+                  <DividerRow
+                    key={index}
+                    className="flex items-center gap-2.5 px-3 py-3"
+                  >
+                    {/* Fake Checkmark */}
+                    <div className="w-3.5 h-3.5 rounded-full bg-ink/20" />
+
+                    {/* Fake Name (Randomized widths for a natural look) */}
+                    <div
+                      className="h-3.5 bg-ink/20 rounded"
+                      style={{ width: index % 2 === 0 ? "45%" : "60%" }}
+                    />
+
+                    {/* Fake Type */}
+                    <div className="w-12 h-2.5 bg-ink/15 rounded" />
+                  </DividerRow>
+                ))}
+              </DividerList>
+            </div>
+          ) : (
+            // Active State with content
+            <>
+              <p className="m-0 text-cell text-ink/60">
+                {
+                  requirements.filter(
+                    (req) => req.department === dep.toLowerCase(),
+                  ).length
+                }{" "}
+                requirements are assigned automatically for employees in {dep}{" "}
+                department. HR can adjust them afterwards on the employee
+                record.
+              </p>
+
+              <DividerList>
+                {requirements
+                  .filter((req) => req.department === dep.toLowerCase())
+                  .map((requirement) => (
+                    <DividerRow
+                      key={requirement._id}
+                      className="flex items-center gap-2.5 px-3 py-2.5"
+                    >
+                      <span className="text-cell text-accent">✓</span>
+                      <span className="flex-1 text-field">
+                        {requirement.name}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.1em] text-ink/45">
+                        {requirement.type}
+                      </span>
+                    </DividerRow>
+                  ))}
+              </DividerList>
+            </>
           )}
-          <DividerList>
-            {requirements
-              .filter((req) => req.department === dep.toLowerCase())
-              .map((requirement) => (
-                <DividerRow
-                  key={requirement._id}
-                  className="flex items-center gap-2.5 px-3 py-2.5"
-                >
-                  <span className="text-cell text-accent">&#10003;</span>
-                  <span className="flex-1 text-field">{requirement.name}</span>
-                  <span className="text-[10px] uppercase tracking-[0.1em] text-ink/45">
-                    {requirement.type}
-                  </span>
-                </DividerRow>
-              ))}
-          </DividerList>
         </Card>
       </AutoGrid>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { LoadingState, ErrorState } from "../../components/ui/StatusMessage";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import AutoGrid from "../../components/ui/AutoGrid";
 import { Field, Input, Select } from "../../components/ui/Field";
 import { useApp } from "../../hooks/useApp";
 //
@@ -31,13 +31,15 @@ export default function Settings() {
   const [confirm, setConfirm] = useState("");
   //fetch system settings hook
   const {
-    data: systemSettings = [],
+    data: systemSettings = {},
     isLoading: systemSettingsLoading,
     isError: systemSettingsError,
   } = useFetchSystemSettings(app.session.accessToken);
-  const [deadlineDays, setDeadlineDays] = useState(systemSettings.deadlineDays);
+  const [deadlineDays, setDeadlineDays] = useState(
+    systemSettings.deadlineDays ?? "",
+  );
   const [reminderDaysBefore, setReminderDaysBefore] = useState(
-    systemSettings.reminderDaysBefore,
+    systemSettings.reminderDaysBefore ?? "",
   );
   //update own user pass hook
   const updateOwnUserPasswordMutation = useUpdateOwnUserPass(
@@ -55,7 +57,9 @@ export default function Settings() {
       return;
     }
     if (next !== confirm) {
-      app.showToast("The two passwords do not match.");
+      app.showToast("The two passwords do not match.", {
+        type: "error",
+      });
       return;
     }
     //update the password by passing password in the mutation
@@ -78,16 +82,17 @@ export default function Settings() {
   }, [systemSettings]);
 
   if (systemSettingsLoading) {
-    return <p>Loading...</p>;
+    return <LoadingState />;
   }
 
   if (systemSettingsError) {
-    return <p>Failed loading system settings.</p>;
+    return <ErrorState>Failed loading system settings.</ErrorState>;
   }
 
   console.log(systemSettings);
+  // One card per row: Account & profile above System Settings.
   return (
-    <AutoGrid min={320} className="items-start">
+    <div className="flex flex-col gap-5">
       <Card padding="lg" className="gap-4">
         <h4 className="text-[20px]">Account &amp; profile</h4>
         <div className="grid gap-3.5 sm:grid-cols-2">
@@ -114,7 +119,7 @@ export default function Settings() {
         </Field>
         <Button
           variant="primary"
-          className="self-start"
+          className="self-start max-sm:self-stretch"
           onClick={save}
           disabled={!next || !confirm}
         >
@@ -124,35 +129,62 @@ export default function Settings() {
 
       <Card padding="lg" className="gap-4">
         <h4 className="text-[20px]">System Settings</h4>
+
+        {/* Row 1 */}
         <Field label="Default deadline for document requirements">
-          <Select
-            value={deadlineDays}
-            onChange={(e) => setDeadlineDays(Number(e.target.value))}
-            options={DEADLINE_OPTIONS}
-          />
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-fit">
+            <Input
+              type="number"
+              min={1}
+              className="w-[100px] shrink-0"
+              value={deadlineDays}
+              onChange={(e) => setDeadlineDays(Number(e.target.value))}
+            />
+            <span className="text-xs md:text-md text-body text-ink/75 whitespace-nowrap">
+              days from start date
+            </span>
+          </div>
         </Field>
+        <hr className="text-gray-300 md:text-white" />
+        {/* Row 2 */}
         <Field label="Reminder notice before a deadline">
-          <Select
-            value={reminderDaysBefore}
-            onChange={(e) => setReminderDaysBefore(Number(e.target.value))}
-            options={REMINDER_OPTIONS}
-          />
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-fit">
+            <Input
+              type="number"
+              min={0}
+              className="w-[100px] shrink-0"
+              value={reminderDaysBefore}
+              onChange={(e) => setReminderDaysBefore(Number(e.target.value))}
+            />
+            <span className="text-xs md:text-md text-body text-ink/75 whitespace-nowrap">
+              days before
+            </span>
+          </div>
         </Field>
+
         <p className="m-0 text-meta leading-relaxed text-ink/55">
           Applies to newly assigned requirements. Existing deadlines are
           unchanged.
         </p>
+
         <Button
           variant="primary"
-          className="self-start"
+          className="self-start max-sm:self-stretch"
           onClick={async () => {
             try {
               await updateSystemSettingsMutation({
                 deadlineDays,
                 reminderDaysBefore,
               });
+              // Invalidate cache so TanStack query refetches the latest values
+              queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
+              app.showToast("System settings updated successfully", {
+                type: "success",
+              });
             } catch (error) {
-              app.showToast("Failed updating system settings");
+              app.showToast("Failed updating system settings", {
+                type: "error",
+              });
               console.log("Error updating system settings, ", error);
             }
           }}
@@ -165,6 +197,6 @@ export default function Settings() {
           Save Settings
         </Button>
       </Card>
-    </AutoGrid>
+    </div>
   );
 }

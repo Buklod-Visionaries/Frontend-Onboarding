@@ -10,7 +10,7 @@ the store — they need the session and the notification counts.
 | `Sidebar.jsx` | The deep accent rail. Brand block, numbered-free icon nav from `navigation.js`, and the account footer with the sign-out button. Holds the open/closed state for `SignOutDialog`. |
 | `SidebarItem.jsx` | One nav row: lucide icon, label, optional count badge. Uses `NavLink` so the active state comes from the router rather than manual path comparison. |
 | `Header.jsx` | Sticky page header — breadcrumb, page title, and the demo role switcher that calls `app.login(role)` and navigates to that role's home. |
-| `AuthLayout.jsx` | The signed-out frame. Accent-900 panel on the left with the organisation name and system title, centred card slot on the right. Shared by all three auth screens. |
+| `AuthLayout.jsx` | The signed-out frame shared by Login, Forgot Password, First Login and the auth placeholder. Split screen from 768px: the accent-900 brand panel (organisation name, system title, ruled-record texture and a decorative record-stack illustration) beside a vertically centred form column. Below 768px the panel is hidden and a one-line organisation label sits above the card. Also exports `AuthCard`, the folder-tab card every auth page renders its kicker, title, description and form into; `back` adds the "Back to sign in" link. |
 | `ToastHost.jsx` | Bridges the store to the presentational `ui/Toast`. Exists so `ui/` can stay free of app state. Mounted in both `AppShell` and `AuthLayout`. |
 | `navigation.js` | The single source of truth for the sidebar: `NAV` maps each role to its rows (path, label, lucide icon, optional badge key) and `ROLE_LABEL` maps a role to its display name. |
 
@@ -18,5 +18,5 @@ the store — they need the session and the notification counts.
 
 Everything is driven by Tailwind's `lg:` breakpoint (1024px):
 
-- **≥1024px** — sidebar is a sticky full-height 236px rail; the account footer stacks name, title, then a full-width button.
-- **<1024px** — the shell becomes a single column, the sidebar sits at the top with its nav wrapping horizontally, and the account footer becomes one row with the name on the left and the sign-out button on the right.
+- **≥1024px** — sidebar is a sticky full-height 236px rail beside the content; the account footer stacks name, title, then a full-width button.
+- **<1024px** — the sidebar is the same vertical rail, but as a fixed drawer off-screen to the left. The header shows a hamburger that slides it in over a dimmed backdrop. The backdrop, the drawer's close button, Escape and choosing a nav link all close it; while open the page behind doesn't scroll and is inert, so focus stays in the drawer. Widening past 1024px resets it. `AppShell` owns the open state; it is never a horizontal top bar.

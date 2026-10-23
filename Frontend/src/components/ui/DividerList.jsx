@@ -3,7 +3,7 @@ import { cx } from '../../lib/cx';
 /**
  * Hairline-separated stack: the container paints the divider colour and the
  * 1px grid gaps let it show through between opaque rows.
- * Rows must sit on `bg-bg` — use DividerRow, which supplies it.
+ * Rows must be opaque — use DividerRow, which supplies the surface colour.
  */
 export default function DividerList({ className, children }) {
   return (
@@ -15,5 +15,6 @@ export default function DividerList({ className, children }) {
 
 /** One row. `as` swaps the element (div by default; button for clickable rows). */
 export function DividerRow({ as: Tag = 'div', className, ...rest }) {
-  return <Tag {...rest} className={cx('bg-bg', className)} />;
+  // Matches the Card surface the list usually sits on.
+  return <Tag {...rest} className={cx('bg-neutral-100', className)} />;
 }

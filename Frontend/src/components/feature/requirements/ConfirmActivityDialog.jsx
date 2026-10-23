@@ -14,6 +14,8 @@ function ConfirmActivityDialogBody({
 }) {
   const app = useApp();
   const [note, setNote] = useState("");
+  // UI-only guard: disables the buttons while the confirmation is in flight.
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <Modal
@@ -22,19 +24,27 @@ function ConfirmActivityDialogBody({
       title={`Confirm ${empReq.requirement.name}`}
       actions={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
           <Button
             variant="primary"
+            disabled={submitting}
             onClick={async () => {
-              await app.confirmActivity(
-                empReq,
-                setDepRequirements,
-                setConfirmLoading,
-              );
+              setSubmitting(true);
+              try {
+                await app.confirmActivity(
+                  empReq,
+                  setDepRequirements,
+                  setConfirmLoading,
+                );
+              } finally {
+                setSubmitting(false);
+              }
               onClose();
             }}
           >
-            Confirm completion
+            {submitting ? "Confirming..." : "Confirm completion"}
           </Button>
         </>
       }

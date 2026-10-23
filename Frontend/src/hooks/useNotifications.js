@@ -3,6 +3,7 @@ import {
   createNotification,
   fetchAllOwnNotifications,
   readAllOwnNotifications,
+  readNotificationById,
   deleteAllOwnNotifications,
 } from "../api/notifications";
 
@@ -24,6 +25,12 @@ export function useAllOwnNotif(token, limit) {
 export function useReadAllOwnNotif(token) {
   return useMutation({
     mutationFn: () => readAllOwnNotifications(token),
+  });
+}
+
+export function useReadNotifById(token) {
+  return useMutation({
+    mutationFn: (notifId) => readNotificationById(token, notifId),
   });
 }
 

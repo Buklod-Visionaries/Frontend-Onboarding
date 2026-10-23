@@ -67,14 +67,18 @@ function ManageAccessDialogBody({ target, onClose }) {
                 onClose();
               } catch (error) {
                 console.error(error);
-                app.showToast("Failed to reset temporary password");
+                app.showToast("Failed to reset temporary password", {
+                  type: "error",
+                });
               }
             }}
             disabled={
               resetPasswordMutation.isPending || !target.passwordResetRequested
             }
           >
-            Reset to temporary password
+            {resetPasswordMutation.isPending
+              ? "Issuing password..."
+              : "Reset to temporary password"}
           </Button>
           <Button
             variant="primary"
@@ -127,6 +131,12 @@ function ManageAccessDialogBody({ target, onClose }) {
       <p className="m-0 text-meta leading-relaxed text-ink/55">
         {NOTES[target.role]}
       </p>
+      {!target.passwordResetRequested && (
+        <p className="m-0 mt-2 text-meta leading-relaxed text-ink/55">
+          Reset to temporary password becomes available once this user requests
+          a password reset.
+        </p>
+      )}
     </Modal>
   );
 }

@@ -4,6 +4,11 @@ import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 import Notification from "../models/notificationModel.js";
 import crypto from "crypto";
+import {
+  hashRefreshToken,
+  createRefreshToken,
+  setRefreshCookie,
+} from "../helpers/refreshTokenHelper.js";
 
 export async function register(req, res) {
   //takes the destructured value from json
@@ -68,17 +73,64 @@ export async function login(req, res) {
       .send({ message: `User with email ${email} not found` });
   }
   //doesnt allow users with temporaryPassword
-  if (user.isFirstLogin || user.tempPass || user.passwordResetRequested) {
-    return res
-      .status(404)
-      .send({ message: "First-time login user needs to setup new password" });
-  }
+  // if (
+  //   // user.isFirstLogin ||
+  //   user.tempPass ||
+  //   user.passwordResetRequested
+  // ) {
+  //   return res
+  //     .status(404)
+  //     .send({ message: "First-time login user needs to setup new password" });
+  // }
   //deactivated account forbidden access
   if (user.status === "deactivated") {
     return res
       .status(403)
       .send({ message: "Account deactivated. Contact HR for help." });
   }
+
+  //ADD HASH ON TEMPORARY PASSWORD LATER
+  //ALLOWS LOGIN FROM ISFIRSTLOGIN user to login
+  if (user.isFirstLogin || user.passwordResetRequested) {
+    if (password !== user.password) {
+      return res.status(403).send({ message: "Incorrect temporary password." });
+    }
+
+    // creates an access token for the user
+    const accessToken = jwt.sign(
+      {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      },
+    );
+
+    const refreshToken = createRefreshToken(user._id);
+    user.refreshTokenHash = hashRefreshToken(refreshToken);
+
+    setRefreshCookie(res, refreshToken);
+
+    // set up sign in time
+    // user.lastSignIn = new Date();
+    // await user.save();
+
+    return res.status(200).send({
+      accessToken: accessToken,
+      user: {
+        //explicitly return specific fields
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  }
+
   //compares the hashed password to the requested user password
   const userMatch = await bcrypt.compare(password, user.password);
 
@@ -102,24 +154,29 @@ export async function login(req, res) {
   );
 
   //creates another token but longer
-  const refreshToken = jwt.sign(
-    {
-      id: user._id,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    },
-  );
+  // const refreshToken = jwt.sign(
+  //   {
+  //     id: user._id,
+  //   },
+  //   process.env.JWT_SECRET,
+  //   {
+  //     expiresIn: "7d",
+  //   },
+  // );
+
+  const refreshToken = createRefreshToken(user._id);
+  user.refreshTokenHash = hashRefreshToken(refreshToken);
 
   // put the refreshToken on cookies
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true, //cant be access by javascript
-    //secure: process.env.NODE_ENV === "production",
-    secure: false,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, //
-  });
+  // res.cookie("refreshToken", refreshToken, {
+  //   httpOnly: true, //cant be access by javascript
+  //   //secure: process.env.NODE_ENV === "production",
+  //   secure: false,
+  //   sameSite: "strict",
+  //   maxAge: 7 * 24 * 60 * 60 * 1000, //
+  // });
+
+  setRefreshCookie(res, refreshToken);
 
   // set up sign in time
   user.lastSignIn = new Date();
@@ -162,6 +219,13 @@ export async function firstLogin(req, res) {
     return res.status(400).send({ message: `Invalid temporary password` });
   }
 
+  if (newPass === user.password) {
+    console.log("New password must be different from temporary password.");
+    return res.status(400).send({
+      message: "New password must be different from temporary password.",
+    });
+  }
+
   //hashed the new password typed in form
   const newHashedPass = await bcrypt.hash(newPass, 10);
   //create notif message for pending firstLogin
@@ -198,29 +262,33 @@ export async function firstLogin(req, res) {
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: "1h",
+      expiresIn: "15m",
+      algorithm: "HS256",
     },
   );
 
   //creates another token but longer
-  const refreshToken = jwt.sign(
-    {
-      id: user._id,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    },
-  );
+  // const refreshToken = jwt.sign(
+  //   {
+  //     id: user._id,
+  //   },
+  //   process.env.JWT_SECRET,
+  //   {
+  //     expiresIn: "7d",
+  //   },
+  // );
+  const refreshToken = createRefreshToken(user._id);
+  user.refreshTokenHash = hashRefreshToken(refreshToken);
 
   // put the refreshToken on cookies
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true, //cant be access by javascript
-    //secure: process.env.NODE_ENV === "production",
-    secure: false,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, //
-  });
+  // res.cookie("refreshToken", refreshToken, {
+  //   httpOnly: true, //cant be access by javascript
+  //   //secure: process.env.NODE_ENV === "production",
+  //   secure: false,
+  //   sameSite: "strict",
+  //   maxAge: 7 * 24 * 60 * 60 * 1000, //
+  // });
+  setRefreshCookie(res, refreshToken);
 
   console.log(`Successfully activated account of: ${user.username}`);
 
@@ -265,10 +333,28 @@ export async function refresh(req, res) {
   }
 
   try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, {
+      algorithms: ["HS256"],
+    });
+    if (decoded.tokenUse !== "refresh") {
+      return res.status(401).json({
+        message: "Invalid refresh token",
+      });
+    }
+
+    const incomingHash = hashRefreshToken(refreshToken);
+
     const user = await User.findById(decoded.id).select(
-      "_id email username role status",
+      //"_id email username role status",
+      "+refreshTokenHash",
     );
+
+    if (!user) {
+      res.clearCookie("refreshToken");
+      return res.status(401).json({
+        message: "Invalid refresh token",
+      });
+    }
 
     //deactivated account forbidden access
     if (user.status === "deactivated") {
@@ -277,42 +363,119 @@ export async function refresh(req, res) {
         .send({ message: "Account deactivated. Contact HR for help." });
     }
 
+    if (!user.refreshTokenHash || user.refreshTokenHash !== incomingHash) {
+      res.clearCookie("refreshToken");
+      return res.status(401).json({
+        message: "Refresh token expired, invalid, or already used.",
+      });
+    }
+
+    const newRefreshToken = createRefreshToken(user._id);
+    const newHash = hashRefreshToken(newRefreshToken);
+
+    const updatedUser = await User.findOneAndUpdate(
+      {
+        _id: user._id,
+        refreshTokenHash: incomingHash,
+        status: { $ne: "deactivated" },
+      },
+      {
+        $set: { refreshTokenHash: newHash },
+      },
+      { new: true },
+    ).select("_id username email role status");
+
+    if (!updatedUser) {
+      res.clearCookie("refreshToken");
+      return res.status(401).json({
+        message: "Refresh token already used or invalid",
+      });
+    }
+
     const accessToken = jwt.sign(
       {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        role: updatedUser.role,
       },
       process.env.JWT_SECRET,
       {
         expiresIn: "15m",
+        algorithm: "HS256",
       },
     );
+
+    //replace old cookie with new refresh token
+    setRefreshCookie(res, newRefreshToken);
 
     res.status(200).send({
       accessToken: accessToken,
       user: {
         //explicitly return specific fields
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        role: updatedUser.role,
       },
     });
   } catch (error) {
-    return res.status(403).json({
-      message: "Invalid refresh token",
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "JsonWebTokenError" ||
+      error.name === "NotBeforeError"
+    ) {
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+      });
+
+      return res.status(401).json({
+        message: "Invalid or expired refresh token",
+      });
+    }
+
+    console.error("Refresh token error:", error);
+
+    return res.status(500).json({
+      message: "Unable to refresh session",
     });
   }
 }
 
 //logout is not going to be made because JWT are stateless
-export function logout(req, res) {
-  res.clearCookie("refreshToken");
-  //temp
-  console.log("REFRESH COOKIE:", req.cookies.refreshToken);
-  res.send({ message: "Logout" });
+export async function logout(req, res) {
+  // res.clearCookie("refreshToken");
+  // //temp
+  // console.log("REFRESH COOKIE:", req.cookies.refreshToken);
+  // res.send({ message: "Logout" });
+
+  const refreshToken = req.cookies.refreshToken;
+
+  if (refreshToken) {
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, {
+        algorithms: ["HS256"],
+      });
+
+      await User.updateOne(
+        {
+          _id: decoded.id,
+          refreshTokenHash: hashRefreshToken(refreshToken),
+        },
+        { $set: { refreshTokenHash: null } },
+      );
+    } catch {}
+  }
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  return res.json({ message: "Logged out successfully" });
 }
 
 //request password reset controller

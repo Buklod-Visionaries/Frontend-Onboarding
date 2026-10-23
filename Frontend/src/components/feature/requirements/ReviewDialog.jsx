@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LoadingState, ErrorState } from "../../ui/StatusMessage";
 import { FileText, LoaderCircle } from "lucide-react";
 import Modal from "../../ui/Modal";
 import Button from "../../ui/Button";
@@ -14,7 +15,7 @@ import api from "../../../lib/axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useExistingDocument } from "../../../hooks/useDocuments";
 import { useSpecificEmpReqHistories } from "../../../hooks/useRequirementHistories";
-import { formatRole } from "../../../lib/formatter";
+import { formatRole, formatStatus } from "../../../lib/formatter";
 
 function ReviewDialogBody({
   employee,
@@ -55,6 +56,9 @@ function ReviewDialogBody({
     await getReqFromEmpProfile?.();
     await getReqFromDashboard?.();
     await getReqFromVerify?.();
+    await queryClient.invalidateQueries({
+      queryKey: ["reports"],
+    });
   };
 
   const resubmit = async () => {
@@ -78,16 +82,19 @@ function ReviewDialogBody({
     await getReqFromEmpProfile?.();
     await getReqFromDashboard?.();
     await getReqFromVerify?.();
+    await queryClient.invalidateQueries({
+      queryKey: ["reports"],
+    });
   };
   // if (specificEmpReqHistoriesLoading || existingDocumentLoading) {
   //   return <p>Loading...</p>;
   // }
 
   if (existingDocumentError) {
-    return <p>Failed loading document.</p>;
+    return <ErrorState>Failed loading document.</ErrorState>;
   }
   if (specificEmpReqHistoriesError) {
-    return <p>Failed loading history.</p>;
+    return <ErrorState>Failed loading history.</ErrorState>;
   }
 
   // console.log("documentFIle", documentPreview);
@@ -151,7 +158,7 @@ function ReviewDialogBody({
       }
     >
       {specificEmpReqHistoriesLoading || existingDocumentLoading ? (
-        <LoaderCircle className="animate-spin" />
+        <LoadingState>Loading submission…</LoadingState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-[1.1fr_1fr]">
           {requirement.type === "document" && (
@@ -176,10 +183,7 @@ function ReviewDialogBody({
           )}
 
           <div className="flex flex-col gap-3">
-            <dl
-              className="grid gap-2 text-cell"
-              style={{ gridTemplateColumns: "110px 1fr" }}
-            >
+            <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-2 text-cell [&_dd]:break-words">
               <dt className="text-ink/50">Type</dt>
               <dd className="m-0">{capitalize(requirement.type)}</dd>
               <dt className="text-ink/50">Submitted</dt>
@@ -198,7 +202,7 @@ function ReviewDialogBody({
                         : empReq.status === "pending" && "in-progress"
                   }
                 >
-                  {capitalize(empReq.status)}
+                  {formatStatus(empReq.status)}
                 </Badge>
               </dd>
               {empReq.verifiedBy && empReq.status === "completed" && (

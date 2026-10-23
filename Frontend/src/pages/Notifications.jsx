@@ -1,6 +1,7 @@
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { EmptyState } from "../components/ui/Notice";
+import { LoadingState, ErrorState } from "../components/ui/StatusMessage";
 import NotificationList from "../components/feature/notifications/NotificationList";
 import { useApp } from "../hooks/useApp";
 //
@@ -8,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useAllOwnNotif,
   useReadAllOwnNotif,
+  useReadNotifById,
   useDeleteAllOwnNotif,
 } from "../hooks/useNotifications";
 
@@ -23,6 +25,7 @@ export default function Notifications() {
   } = useAllOwnNotif(app.session.accessToken);
 
   const readAllNotifMutation = useReadAllOwnNotif(app.session.accessToken);
+  const readNotifByIdMutation = useReadNotifById(app.session.accessToken);
   const deleteAllNotifMutation = useDeleteAllOwnNotif(app.session.accessToken);
 
   // const items = app.notifications.filter((notification) => notification.to === role);
@@ -40,40 +43,73 @@ export default function Notifications() {
           </span>
         </h4>
 
-        <div className="flex">
+        {/* Phones: the two actions share a full-width row. */}
+        <div className="flex gap-2 max-sm:w-full max-sm:[&>*]:flex-1">
           <Button
-            className="mx-2"
-            onClick={async () => {
-              await readAllNotifMutation.mutateAsync(); //mark all as read by calling API
-              queryClient.invalidateQueries({
-                queryKey: ["notifications"], //reload notif state
+            onClick={() => {
+              // Mark all notifications as read immediately
+              queryClient.setQueriesData(
+                { queryKey: ["notifications"] },
+                (oldData) => {
+                  if (!Array.isArray(oldData)) return oldData;
+
+                  return oldData.map((notif) => ({
+                    ...notif,
+                    isRead: true,
+                  }));
+                },
+              );
+
+              // Update the database
+              readAllNotifMutation.mutate(undefined, {
+                onError: () => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["notifications"],
+                  });
+                },
               });
             }}
             disabled={
               isLoading ||
-              notifications.filter((notif) => !notif.isRead).length === 0 //disabled when no notifs are unread
+              readAllNotifMutation.isPending ||
+              notifications.filter((notif) => !notif.isRead).length === 0
             }
           >
-            Mark all as read
+            {readAllNotifMutation.isPending
+              ? "Marking as read..."
+              : "Mark all as read"}
           </Button>
           <Button
-            className="mx-2"
             onClick={async () => {
               await deleteAllNotifMutation.mutateAsync(); //delete all read by calling API
               queryClient.invalidateQueries({
                 queryKey: ["notifications"], //reload notif state
               });
             }}
-            disabled={isLoading || notifications.length === 0}
+            disabled={
+              isLoading ||
+              deleteAllNotifMutation.isPending ||
+              notifications.length === 0
+            }
           >
-            Clear All
+            {deleteAllNotifMutation.isPending ? "Clearing..." : "Clear all"}
           </Button>
         </div>
       </div>
-      {notifications.length ? (
-        <NotificationList items={notifications} />
+      {/* Loading and failure no longer read as "No notifications yet". */}
+      {isLoading ? (
+        <LoadingState />
+      ) : isError ? (
+        <ErrorState>Failed loading notifications.</ErrorState>
+      ) : notifications.length ? (
+        <NotificationList
+          items={notifications}
+          readNotifByIdMutation={readNotifByIdMutation}
+        />
       ) : (
-        <EmptyState>No notifications yet.</EmptyState>
+        <EmptyState>
+          No notifications yet. New updates will appear here.
+        </EmptyState>
       )}
     </Card>
   );
