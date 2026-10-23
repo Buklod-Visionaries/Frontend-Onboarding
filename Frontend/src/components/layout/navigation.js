@@ -45,6 +45,7 @@ export const NAV = {
       icon: Bell,
       badge: "unread",
     },
+    { to: "/employee/settings", label: "Settings", icon: Settings },
   ],
   "dept-rep": [
     { to: "/dept/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -59,6 +60,7 @@ export const NAV = {
       icon: Bell,
       badge: "unread",
     },
+    { to: "/dept/settings", label: "Settings", icon: Settings },
   ],
 };
 

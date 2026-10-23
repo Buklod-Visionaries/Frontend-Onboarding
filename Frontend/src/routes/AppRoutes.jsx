@@ -23,6 +23,7 @@ import DeptDashboard from "../pages/dept/DeptDashboard";
 import DeptRequirements from "../pages/dept/DeptRequirements";
 
 import Notifications from "../pages/Notifications";
+import AccountSettings from "../pages/AccountSettings";
 
 import PublicOnlyRoute from "./PublicOnlyRoute";
 
@@ -62,6 +63,7 @@ export default function AppRoutes() {
           <Route path="requirements" element={<MyRequirements />} />
           <Route path="requirements/:id" element={<RequirementDetail />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="settings" element={<AccountSettings />} />
           <Route
             path="*"
             element={<Navigate to="/employee/dashboard" replace />}
@@ -75,6 +77,7 @@ export default function AppRoutes() {
           <Route path="dashboard" element={<DeptDashboard />} />
           <Route path="requirements" element={<DeptRequirements />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="settings" element={<AccountSettings />} />
           <Route path="*" element={<Navigate to="/dept/dashboard" replace />} />
         </Route>
       </Route>

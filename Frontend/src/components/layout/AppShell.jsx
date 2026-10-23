@@ -28,9 +28,11 @@ const TITLES = {
   "/employee/dashboard": ["Employee", "My onboarding"],
   "/employee/requirements": ["Employee / Requirements", "My requirements"],
   "/employee/notifications": ["Employee", "Notifications"],
+  "/employee/settings": ["Employee", "Settings"],
   "/dept/dashboard": ["Department", "Dashboard"],
   "/dept/requirements": ["Department", "Department requirements"],
   "/dept/notifications": ["Department", "Notifications"],
+  "/dept/settings": ["Department", "Settings"],
 };
 
 function titleFor(pathname) {
