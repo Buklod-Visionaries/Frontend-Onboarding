@@ -31,13 +31,15 @@ export default function Settings() {
   const [confirm, setConfirm] = useState("");
   //fetch system settings hook
   const {
-    data: systemSettings = [],
+    data: systemSettings = {},
     isLoading: systemSettingsLoading,
     isError: systemSettingsError,
   } = useFetchSystemSettings(app.session.accessToken);
-  const [deadlineDays, setDeadlineDays] = useState(systemSettings.deadlineDays);
+  const [deadlineDays, setDeadlineDays] = useState(
+    systemSettings.deadlineDays ?? "",
+  );
   const [reminderDaysBefore, setReminderDaysBefore] = useState(
-    systemSettings.reminderDaysBefore,
+    systemSettings.reminderDaysBefore ?? "",
   );
   //update own user pass hook
   const updateOwnUserPasswordMutation = useUpdateOwnUserPass(
@@ -127,24 +129,44 @@ export default function Settings() {
 
       <Card padding="lg" className="gap-4">
         <h4 className="text-[20px]">System Settings</h4>
+
+        {/* Row 1 */}
         <Field label="Default deadline for document requirements">
-          <Select
-            value={deadlineDays}
-            onChange={(e) => setDeadlineDays(Number(e.target.value))}
-            options={DEADLINE_OPTIONS}
-          />
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-fit">
+            <Input
+              type="number"
+              min={1}
+              className="w-[100px] shrink-0"
+              value={deadlineDays}
+              onChange={(e) => setDeadlineDays(Number(e.target.value))}
+            />
+            <span className="text-xs md:text-md text-body text-ink/75 whitespace-nowrap">
+              days from start date
+            </span>
+          </div>
         </Field>
+        <hr className="text-gray-300 md:text-white" />
+        {/* Row 2 */}
         <Field label="Reminder notice before a deadline">
-          <Select
-            value={reminderDaysBefore}
-            onChange={(e) => setReminderDaysBefore(Number(e.target.value))}
-            options={REMINDER_OPTIONS}
-          />
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-fit">
+            <Input
+              type="number"
+              min={0}
+              className="w-[100px] shrink-0"
+              value={reminderDaysBefore}
+              onChange={(e) => setReminderDaysBefore(Number(e.target.value))}
+            />
+            <span className="text-xs md:text-md text-body text-ink/75 whitespace-nowrap">
+              days before
+            </span>
+          </div>
         </Field>
+
         <p className="m-0 text-meta leading-relaxed text-ink/55">
           Applies to newly assigned requirements. Existing deadlines are
           unchanged.
         </p>
+
         <Button
           variant="primary"
           className="self-start max-sm:self-stretch"
@@ -154,8 +176,15 @@ export default function Settings() {
                 deadlineDays,
                 reminderDaysBefore,
               });
+              // Invalidate cache so TanStack query refetches the latest values
+              queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
+              app.showToast("System settings updated successfully", {
+                type: "success",
+              });
             } catch (error) {
-              app.showToast("Failed updating system settings");
+              app.showToast("Failed updating system settings", {
+                type: "error",
+              });
               console.log("Error updating system settings, ", error);
             }
           }}
