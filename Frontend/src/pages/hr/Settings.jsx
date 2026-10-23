@@ -55,7 +55,9 @@ export default function Settings() {
       return;
     }
     if (next !== confirm) {
-      app.showToast("The two passwords do not match.");
+      app.showToast("The two passwords do not match.", {
+        type: "error",
+      });
       return;
     }
     //update the password by passing password in the mutation

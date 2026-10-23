@@ -56,11 +56,11 @@ export default function Login() {
 
       if (session.role === "dept-rep") {
         navigate(`/dept/dashboard`);
-        showToast(`Welcome back, ${session.username}!`);
+        showToast(`Welcome back, ${session.username}!`, { emoji: "👋" });
         return;
       }
       navigate(`/${session.role}/dashboard`);
-      showToast(`Welcome back, ${session.username}!`);
+      showToast(`Welcome back, ${session.username}!`, { emoji: "👋" });
     } catch (error) {
       // No response means the request never reached the server.
       if (!error.response) {

@@ -57,14 +57,17 @@ export default function HrDashboard() {
     return <ErrorState>Failed loading requirements.</ErrorState>;
   }
   if (notificationsError) {
-    return <ErrorState>Failed loading employee requirements history.</ErrorState>;
+    return (
+      <ErrorState>Failed loading employee requirements history.</ErrorState>
+    );
   }
 
   const overdueCount = requirements.filter(
     (req) =>
       (req.status === "in-progress" ||
         req.status === "resubmission-required") &&
-      isOverdue(formatDate(req.dueDate)),
+      isOverdue(formatDate(req.dueDate)) &&
+      req.employee.onboardingStatus !== "deactivated",
   ).length;
 
   // Active employees with a submission to review or an overdue requirement;
@@ -202,7 +205,9 @@ export default function HrDashboard() {
                     <span
                       className={cx(
                         "text-meta",
-                        overdue > 0 ? "font-medium text-red-800" : "text-ink/55",
+                        overdue > 0
+                          ? "font-medium text-red-800"
+                          : "text-ink/55",
                       )}
                     >
                       {summary}
@@ -261,19 +266,22 @@ export default function HrDashboard() {
                   ]}
                 />
                 <tbody>
-                  {awaiting
-                    .map((row) => (
-                      <TRow key={row._id}>
-                        <TCell strong>{row.employee.user.username}</TCell>
-                        <TCell>{row.requirement.name}</TCell>
-                        <TCell>{formatDate(row.updatedAt)}</TCell>
-                        <TCell>{formatDate(row.dueDate)}</TCell>
-                        <TCell align="right">
-                          <Button onClick={() => setReview(row)}>Review</Button>
-                        </TCell>
-                      </TRow>
-                    ))
-                    .slice(0, 5) //only show 5
+                  {
+                    awaiting
+                      .map((row) => (
+                        <TRow key={row._id}>
+                          <TCell strong>{row.employee.user.username}</TCell>
+                          <TCell>{row.requirement.name}</TCell>
+                          <TCell>{formatDate(row.updatedAt)}</TCell>
+                          <TCell>{formatDate(row.dueDate)}</TCell>
+                          <TCell align="right">
+                            <Button onClick={() => setReview(row)}>
+                              Review
+                            </Button>
+                          </TCell>
+                        </TRow>
+                      ))
+                      .slice(0, 5) //only show 5
                   }
                 </tbody>
               </Table>
@@ -298,13 +306,23 @@ export default function HrDashboard() {
                     </div>
                     <dl className="m-0 grid grid-cols-2 gap-3">
                       <div>
-                        <dt className="text-micro uppercase text-ink/55">Submitted</dt>
-                        <dd className="m-0 text-cell">{formatDate(row.updatedAt)}</dd>
+                        <dt className="text-micro uppercase text-ink/55">
+                          Submitted
+                        </dt>
+                        <dd className="m-0 text-cell">
+                          {formatDate(row.updatedAt)}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-micro uppercase text-ink/55">Deadline</dt>
+                        <dt className="text-micro uppercase text-ink/55">
+                          Deadline
+                        </dt>
                         <dd className="m-0 flex flex-wrap items-center gap-1.5 text-cell">
-                          <span className={overdue ? "font-medium text-red-800" : undefined}>
+                          <span
+                            className={
+                              overdue ? "font-medium text-red-800" : undefined
+                            }
+                          >
                             {formatDate(row.dueDate)}
                           </span>
                           <OverdueBadge when={overdue} />

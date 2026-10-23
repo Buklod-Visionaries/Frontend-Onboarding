@@ -35,17 +35,24 @@ export default function AppProvider({ children }) {
   const [activity] = useState(loadActivityLog);
   const [settings, setSettings] = useState({ deadline: "7", reminder: "3" });
 
-  // const [toast, setToast] = useState("");
-  // const toastTimer = useRef(0);
-
-  // const showToast = useCallback((text) => {
-  //   setToast(text);
-  //   window.clearTimeout(toastTimer.current);
-  //   toastTimer.current = window.setTimeout(() => setToast(""), 3200);
-  // }, []);
-  const showToast = useCallback((message) => {
+  const showToast = useCallback((message, options = {}) => {
     toast.dismiss();
-    toast(message);
+
+    // Destructure custom options with safe fallbacks
+    const { type, duration = 3000, emoji } = options;
+
+    // Execute the matching react-hot-toast function style dynamically
+    if (type === "warning" || type === "error") {
+      return toast.error(message, { duration });
+    }
+    if (type === "success") {
+      return toast.success(message, { duration });
+    }
+    if (emoji) {
+      return toast(message, { icon: emoji });
+    }
+
+    return toast(message);
   }, []);
 
   const notify = useCallback((to, title, body) => {
@@ -143,7 +150,9 @@ export default function AppProvider({ children }) {
           Authorization: `Bearer ${session.accessToken}`,
         },
       });
-      showToast(`${pendingFile.name} submitted - awaiting HR Verification`);
+      showToast(`${pendingFile.name} submitted - awaiting HR Verification`, {
+        type: "success",
+      });
     },
     // (requirement) =>
     //   showToast(`${requirement.name} submitted — awaiting HR verification`),
@@ -163,7 +172,9 @@ export default function AppProvider({ children }) {
             },
           },
         );
-        showToast(`${empReq.requirement.name} marked completed`);
+        showToast(`${empReq.requirement.name} marked completed`, {
+          type: "success",
+        });
       } catch (error) {
         console.log(error);
       } finally {
@@ -192,6 +203,9 @@ export default function AppProvider({ children }) {
         );
         showToast(
           `Resubmission requested from ${empReq.employee.user.username}`,
+          {
+            type: "success",
+          },
         );
       } catch (error) {
         console.log(error);
@@ -227,6 +241,9 @@ export default function AppProvider({ children }) {
         );
         showToast(
           `${empReq.requirement.name} confirmed for ${empReq.employee.user.username}`,
+          {
+            type: "success",
+          },
         );
       } catch (error) {
         console.log(error);
@@ -240,7 +257,10 @@ export default function AppProvider({ children }) {
   );
 
   const sendReminder = useCallback(
-    (employee) => showToast(`Reminder sent to ${employee.user.username}`),
+    (employee) =>
+      showToast(`Reminder sent to ${employee.user.username}`, {
+        type: "success",
+      }),
     [showToast],
   );
 
@@ -345,7 +365,9 @@ export default function AppProvider({ children }) {
           },
         );
         //show toast after success
-        showToast(`${role} account created for ${name}`);
+        showToast(`${role} account created for ${name}`, {
+          type: "success",
+        });
         //
         return {
           name,

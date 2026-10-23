@@ -241,7 +241,9 @@ function Deadline({ requirement }) {
 
   const formattedDate = formatDate(requirement.dueDate);
   const overdue =
-    requirement.status !== "completed" && isOverdue(formattedDate);
+    requirement.status !== "completed" &&
+    requirement.status !== "pending" &&
+    isOverdue(formattedDate);
 
   return (
     <span className="flex flex-wrap items-center gap-1.5">

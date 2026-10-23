@@ -16,11 +16,28 @@ export default function NotificationList({ items, readNotifByIdMutation }) {
             "flex items-start gap-3 px-4 py-3.5 hover:cursor-pointer",
             notification.isRead && "opacity-70",
           )}
-          onClick={async () => {
-            await readNotifByIdMutation.mutateAsync(notification._id);
-            await queryClient.invalidateQueries({
-              queryKey: ["notifications"],
+          onClick={() => {
+            readNotifByIdMutation.mutate(notification._id, {
+              onError: () => {
+                queryClient.invalidateQueries({
+                  queryKey: ["notifications"],
+                });
+              },
             });
+
+            // Update the notification immediately
+            queryClient.setQueriesData(
+              { queryKey: ["notifications"] },
+              (oldData) => {
+                if (!Array.isArray(oldData)) return oldData;
+
+                return oldData.map((item) =>
+                  item._id === notification._id
+                    ? { ...item, isRead: true }
+                    : item,
+                );
+              },
+            );
           }}
         >
           <span

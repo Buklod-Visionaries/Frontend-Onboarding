@@ -28,21 +28,25 @@ export default function AccountSettings() {
     e.preventDefault();
     if (saving) return;
     if (next.length < MIN_LENGTH) {
-      app.showToast(`Use at least ${MIN_LENGTH} characters for the new password.`);
+      app.showToast(
+        `Use at least ${MIN_LENGTH} characters for the new password.`,
+      );
       return;
     }
     if (next !== confirm) {
-      app.showToast("The two passwords do not match.");
+      app.showToast("The two passwords do not match.", { type: "error" });
       return;
     }
     try {
       await updateOwnUserPasswordMutation.mutateAsync(next);
       setNext("");
       setConfirm("");
-      app.showToast("Password updated");
+      app.showToast("Password updated", { type: "success" });
     } catch (error) {
       console.log("Failed updating password", error);
-      app.showToast("Failed to update password. Please try again.");
+      app.showToast("Failed to update password. Please try again.", {
+        type: "error",
+      });
     }
   };
 
@@ -93,11 +97,17 @@ export default function AccountSettings() {
               {met ? (
                 <Check size={14} className="shrink-0" aria-hidden="true" />
               ) : (
-                <Circle size={14} className="shrink-0 opacity-60" aria-hidden="true" />
+                <Circle
+                  size={14}
+                  className="shrink-0 opacity-60"
+                  aria-hidden="true"
+                />
               )}
               <span>
                 {label}
-                <span className="sr-only">{met ? " (met)" : " (not met yet)"}</span>
+                <span className="sr-only">
+                  {met ? " (met)" : " (not met yet)"}
+                </span>
               </span>
             </li>
           ))}

@@ -46,7 +46,7 @@ export default function EmployeeDashboard() {
 
   const actionable = myRequirements
     .filter((requirement) => requirement.status !== "completed")
-    .slice(0, 5);
+    .slice(0, 7);
 
   // const notifications = app.notifications
   //   .filter((notification) => notification.to === "Employee")
@@ -281,7 +281,10 @@ export default function EmployeeDashboard() {
                           {formatStatus(requirement.status)}
                         </Badge>{" "}
                         <OverdueBadge
-                          when={isOverdue(formatDate(requirement.dueDate))}
+                          when={
+                            isOverdue(formatDate(requirement.dueDate)) &&
+                            requirement.status !== "completed"
+                          }
                         />
                       </DividerRow>
                     ))}

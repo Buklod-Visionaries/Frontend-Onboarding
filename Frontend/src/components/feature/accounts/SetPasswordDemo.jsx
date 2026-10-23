@@ -56,7 +56,7 @@ export default function SetPasswordDemo({ currentUser, onSetupComplete }) {
         });
 
         navigate(destination, { replace: true });
-        app.showToast(`Welcome, ${app.session.username}!`);
+        app.showToast(`Welcome, ${app.session.username}!`, { emoji: "👋" });
       }}
     />
   );

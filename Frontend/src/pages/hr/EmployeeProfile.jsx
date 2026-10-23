@@ -61,10 +61,7 @@ export default function EmployeeProfile() {
     return (
       <Card>
         <p className="m-0 text-field">That employee record does not exist.</p>
-        <Button
-          className="mt-3 self-start"
-          onClick={backToList}
-        >
+        <Button className="mt-3 self-start" onClick={backToList}>
           Back to list
         </Button>
       </Card>
@@ -107,16 +104,20 @@ export default function EmployeeProfile() {
     (empRequirements.filter(
       (req) => req.employee._id === employee._id && req.status === "completed",
     ).length /
-      empRequirements.filter((req) => req.employee._id === employee._id).length) *
+      empRequirements.filter((req) => req.employee._id === employee._id)
+        .length) *
     100;
-  const progressPercent = Number.isFinite(progressValue) ? Math.round(progressValue) : 0;
+  const progressPercent = Number.isFinite(progressValue)
+    ? Math.round(progressValue)
+    : 0;
   // Same condition the Send reminder button has always used, named so the
   // hint below can say why it is unavailable.
   const hasOverdueOpen =
     empRequirements.filter(
       (req) =>
         isOverdue(formatDate(req.dueDate)) &&
-        (req.status === "in-progress" || req.status === "resubmission-required"),
+        (req.status === "in-progress" ||
+          req.status === "resubmission-required"),
     ).length > 0;
   const deactivated = employee.onboardingStatus === "deactivated";
 
@@ -170,9 +171,7 @@ export default function EmployeeProfile() {
           </div>
           {/* Phones: the two actions share a full-width row. */}
           <div className="flex flex-wrap gap-2.5 max-sm:w-full max-sm:[&>button]:flex-1 sm:max-w-[300px] sm:justify-end">
-            <Button onClick={backToList}>
-              Back to list
-            </Button>
+            <Button onClick={backToList}>Back to list</Button>
             <Button
               onClick={async () => {
                 try {
@@ -182,7 +181,9 @@ export default function EmployeeProfile() {
                     message:
                       "You have onboarding requirements that need your attention. Please review your requirements and submit any in progress documents or resubmit documents that require changes",
                   }); //user, title, message
-                  app.showToast(`Reminder sent to ${employee.user.username}`);
+                  app.showToast(`Reminder sent to ${employee.user.username}`, {
+                    type: "success",
+                  });
                 } catch (error) {
                   console.log("Failed sending notif", error);
                 }
@@ -194,7 +195,9 @@ export default function EmployeeProfile() {
                 createNotifMutation.isPending
               }
             >
-              {createNotifMutation.isPending ? "Sending reminder..." : "Send reminder"}
+              {createNotifMutation.isPending
+                ? "Sending reminder..."
+                : "Send reminder"}
             </Button>
             {(deactivated || !hasOverdueOpen) && (
               <p className="m-0 basis-full text-meta text-ink/55 sm:text-right">
@@ -218,7 +221,9 @@ export default function EmployeeProfile() {
         </div>
 
         {empRequirements.length === 0 && (
-          <EmptyState>No requirements are assigned to this employee yet.</EmptyState>
+          <EmptyState>
+            No requirements are assigned to this employee yet.
+          </EmptyState>
         )}
 
         {/* lg and up: the existing table. */}
@@ -293,15 +298,22 @@ export default function EmployeeProfile() {
                       {req.requirement.name}
                     </div>
                     {req.subLabel && (
-                      <div className="break-words text-[11px] text-ink/55">{req.subLabel}</div>
+                      <div className="break-words text-[11px] text-ink/55">
+                        {req.subLabel}
+                      </div>
                     )}
                   </div>
-                  <RequirementStatusBadge status={req.status} className="shrink-0" />
+                  <RequirementStatusBadge
+                    status={req.status}
+                    className="shrink-0"
+                  />
                 </div>
                 <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-2.5">
                   <div className="min-w-0">
                     <dt className="text-micro uppercase text-ink/55">Type</dt>
-                    <dd className="m-0 text-cell">{capitalize(req.requirement.type)}</dd>
+                    <dd className="m-0 text-cell">
+                      {capitalize(req.requirement.type)}
+                    </dd>
                   </div>
                   <div className="min-w-0">
                     <dt className="text-micro uppercase text-ink/55">Owner</dt>
@@ -312,9 +324,15 @@ export default function EmployeeProfile() {
                     </dd>
                   </div>
                   <div className="col-span-2">
-                    <dt className="text-micro uppercase text-ink/55">Deadline</dt>
+                    <dt className="text-micro uppercase text-ink/55">
+                      Deadline
+                    </dt>
                     <dd className="m-0 flex flex-wrap items-center gap-1.5 text-cell">
-                      <span className={overdue ? "font-medium text-red-800" : undefined}>
+                      <span
+                        className={
+                          overdue ? "font-medium text-red-800" : undefined
+                        }
+                      >
                         {formatDate(req.dueDate)}
                       </span>
                       <OverdueBadge when={overdue} />

@@ -67,7 +67,9 @@ function ManageAccessDialogBody({ target, onClose }) {
                 onClose();
               } catch (error) {
                 console.error(error);
-                app.showToast("Failed to reset temporary password");
+                app.showToast("Failed to reset temporary password", {
+                  type: "error",
+                });
               }
             }}
             disabled={

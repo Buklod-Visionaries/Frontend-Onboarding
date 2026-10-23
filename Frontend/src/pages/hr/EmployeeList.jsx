@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { LoadingState, ErrorState } from "../../components/ui/StatusMessage";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -27,6 +28,10 @@ export default function EmployeeList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("q") ?? "";
   const departmentParam = searchParams.get("department");
+  //pagination
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  //
   const department = DEPARTMENTS.some((d) => d.value === departmentParam)
     ? departmentParam
     : "All";
@@ -68,6 +73,23 @@ export default function EmployeeList() {
     return byDepartment && byQuery;
   });
 
+  // Reset to page 1 when search or department filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, department]);
+
+  // Pagination calculations (after filtering)
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const startIndex = (page - 1) * pageSize;
+
+  const paginatedRows = rows.slice(startIndex, startIndex + pageSize);
+
+  const showing = `Showing ${
+    rows.length === 0 ? 0 : startIndex + 1
+  }–${Math.min(startIndex + pageSize, rows.length)} of ${
+    rows.length
+  } matching employees`;
+
   if (employeesLoading || requirementsLoading) {
     return <LoadingState />;
   }
@@ -81,7 +103,9 @@ export default function EmployeeList() {
 
   /** Same completed/total calculation as before, computed once per employee. */
   const progressOf = (employee) => {
-    const mine = requirements.filter((req) => req.employee._id === employee._id);
+    const mine = requirements.filter(
+      (req) => req.employee._id === employee._id,
+    );
     const done = mine.filter((req) => req.status === "completed").length;
     return { done, total: mine.length, value: (done / mine.length) * 100 };
   };
@@ -139,7 +163,7 @@ export default function EmployeeList() {
                 ]}
               />
               <tbody>
-                {rows.map((employee) => {
+                {paginatedRows.map((employee) => {
                   const progress = progressOf(employee);
                   return (
                     <TRow key={employee._id}>
@@ -167,7 +191,7 @@ export default function EmployeeList() {
 
           {/* Below lg: one card per employee (two-up on tablets), same rows and Open action. */}
           <ul className="m-0 flex list-none flex-col gap-2.5 p-0 md:grid md:grid-cols-2 lg:hidden">
-            {rows.map((employee) => (
+            {paginatedRows.map((employee) => (
               <li
                 key={employee._id}
                 className="flex flex-col gap-3 border border-divider bg-bg/60 p-3.5"
@@ -181,19 +205,32 @@ export default function EmployeeList() {
                       {capitalize(employee.position)}
                     </div>
                   </div>
-                  <OnboardingBadge status={employee.onboardingStatus} className="shrink-0" />
+                  <OnboardingBadge
+                    status={employee.onboardingStatus}
+                    className="shrink-0"
+                  />
                 </div>
                 <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-2.5">
                   <div className="min-w-0">
-                    <dt className="text-micro uppercase text-ink/55">Department</dt>
-                    <dd className="m-0 break-words text-cell">{capitalize(employee.department)}</dd>
+                    <dt className="text-micro uppercase text-ink/55">
+                      Department
+                    </dt>
+                    <dd className="m-0 break-words text-cell">
+                      {capitalize(employee.department)}
+                    </dd>
                   </div>
                   <div className="min-w-0">
-                    <dt className="text-micro uppercase text-ink/55">Start date</dt>
-                    <dd className="m-0 text-cell">{formatDate(employee.startDate)}</dd>
+                    <dt className="text-micro uppercase text-ink/55">
+                      Start date
+                    </dt>
+                    <dd className="m-0 text-cell">
+                      {formatDate(employee.startDate)}
+                    </dd>
                   </div>
                   <div className="col-span-2">
-                    <dt className="text-micro uppercase text-ink/55">Progress</dt>
+                    <dt className="text-micro uppercase text-ink/55">
+                      Progress
+                    </dt>
                     <dd className="m-0 mt-1">
                       <ProgressCell progress={progressOf(employee)} />
                     </dd>
@@ -212,14 +249,43 @@ export default function EmployeeList() {
         </>
       ) : (
         <EmptyState>
-          No employees match this search and department. Try a different name
-          or position, or choose &ldquo;All&rdquo;.
+          No employees match this search and department. Try a different name or
+          position, or choose &ldquo;All&rdquo;.
         </EmptyState>
       )}
 
-      <span className="text-meta text-ink/50">
-        Showing {rows.length} of {employees.length} employee records
-      </span>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1 text-meta text-ink/50">
+          <span>{showing}</span>
+          <span>{employees.length} total employee records</span>
+        </div>
+
+        <div className="flex items-center gap-2 max-md:w-full max-md:justify-between">
+          <Button
+            aria-label="Previous page"
+            className="max-md:min-h-11 max-md:min-w-11"
+            disabled={page === 1}
+            onClick={() => setPage((current) => current - 1)}
+          >
+            <ChevronLeft size={16} aria-hidden="true" className="md:hidden" />
+            <span className="max-md:hidden">Previous</span>
+          </Button>
+
+          <span className="whitespace-nowrap text-meta text-ink/70">
+            Page {page} of {totalPages}
+          </span>
+
+          <Button
+            aria-label="Next page"
+            className="max-md:min-h-11 max-md:min-w-11"
+            disabled={page >= totalPages}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            <span className="max-md:hidden">Next</span>
+            <ChevronRight size={16} aria-hidden="true" className="md:hidden" />
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }
@@ -228,7 +294,11 @@ export default function EmployeeList() {
 function ProgressCell({ progress }) {
   return (
     <div className="flex items-center gap-2.5">
-      <ProgressBar height="sm" value={progress.value} className="min-w-[80px] flex-1" />
+      <ProgressBar
+        height="sm"
+        value={progress.value}
+        className="min-w-[80px] flex-1"
+      />
       <span className="text-meta tabular-nums text-ink/60">
         {progress.done}/{progress.total}
       </span>

@@ -76,7 +76,9 @@ export default function RequirementDetail() {
     const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
 
     if (!allowedTypes.includes(file.type)) {
-      app.showToast("Only PDF, JPG, JPEG, and PNG files are allowed.");
+      app.showToast("Only PDF, JPG, JPEG, and PNG files are allowed.", {
+        type: "error",
+      });
       setPendingFile(null);
       setPreview(null);
       return;
@@ -84,7 +86,9 @@ export default function RequirementDetail() {
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
-      app.showToast("File size must not exceed 10 MB.");
+      app.showToast("File size must not exceed 10 MB.", {
+        type: "error",
+      });
       setPendingFile(null);
       setPreview(null);
       return;
@@ -94,7 +98,9 @@ export default function RequirementDetail() {
     setPreview(file);
     //show toast saying to users that file is chosen
     app.showToast(
-      `${file.name} is ready to upload. Please click Submit document to upload it.`,
+      `${file.name} is ready to upload. Please click Submit document to upload it.`, {
+        type: "success",
+      }
     );
   }
 
@@ -122,7 +128,9 @@ export default function RequirementDetail() {
         queryKey: ["specificEmpReqHistories", myRequirement._id],
       });
     } catch (error) {
-      app.showToast(`Failed uploading File: ${error.response.data.message}`);
+      app.showToast(`Failed uploading File: ${error.response.data.message}`, {
+        type: "error",
+      });
       console.log("failed uploading file:", error);
     } finally {
       setFileUploading(false);
@@ -210,7 +218,13 @@ export default function RequirementDetail() {
                 </span>
               </>
             )}
-            <OverdueBadge when={isOverdue(formatDate(myRequirement.dueDate))} />
+            <OverdueBadge
+              when={
+                isOverdue(formatDate(myRequirement.dueDate)) &&
+                myRequirement.status !== "completed" &&
+                myRequirement.status !== "pending"
+              }
+            />
           </div>
         </div>
 

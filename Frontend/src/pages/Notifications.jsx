@@ -46,16 +46,33 @@ export default function Notifications() {
         {/* Phones: the two actions share a full-width row. */}
         <div className="flex gap-2 max-sm:w-full max-sm:[&>*]:flex-1">
           <Button
-            onClick={async () => {
-              await readAllNotifMutation.mutateAsync(); //mark all as read by calling API
-              queryClient.invalidateQueries({
-                queryKey: ["notifications"], //reload notif state
+            onClick={() => {
+              // Mark all notifications as read immediately
+              queryClient.setQueriesData(
+                { queryKey: ["notifications"] },
+                (oldData) => {
+                  if (!Array.isArray(oldData)) return oldData;
+
+                  return oldData.map((notif) => ({
+                    ...notif,
+                    isRead: true,
+                  }));
+                },
+              );
+
+              // Update the database
+              readAllNotifMutation.mutate(undefined, {
+                onError: () => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["notifications"],
+                  });
+                },
               });
             }}
             disabled={
               isLoading ||
               readAllNotifMutation.isPending ||
-              notifications.filter((notif) => !notif.isRead).length === 0 //disabled when no notifs are unread
+              notifications.filter((notif) => !notif.isRead).length === 0
             }
           >
             {readAllNotifMutation.isPending
