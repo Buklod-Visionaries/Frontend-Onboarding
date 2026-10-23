@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { LoadingState, ErrorState } from "../../components/ui/StatusMessage";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheckBig } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -74,6 +74,58 @@ export default function EmployeeDashboard() {
     return <ErrorState>Failed loading notifications.</ErrorState>;
   }
 
+  let statusLabel;
+
+  if (
+    Math.round(
+      (myRequirements.filter((req) => req.status === "completed").length /
+        myRequirements.length) *
+        100,
+    ) === 100
+  ) {
+    statusLabel = (
+      <div
+        className={`flex flex-row justify-center items-center text-sm uppercase text-green-700`}
+      >
+        <CircleCheckBig size={15} className="mr-1" /> Fully Completed
+      </div>
+    );
+  }
+  if (
+    Math.round(
+      (myRequirements.filter((req) => req.status === "completed").length /
+        myRequirements.length) *
+        100,
+    ) < 100 &&
+    myRequirements.filter((req) => isOverdue(formatDate(req.dueDate)))
+      .length === 0
+  ) {
+    statusLabel = (
+      <div
+        className={`flex flex-row justify-center items-center text-sm uppercase text-accent-700`}
+      >
+        Making Progress
+      </div>
+    );
+  }
+  if (
+    Math.round(
+      (myRequirements.filter((req) => req.status === "completed").length /
+        myRequirements.length) *
+        100,
+    ) < 100 &&
+    myRequirements.filter((req) => isOverdue(formatDate(req.dueDate))).length >
+      0
+  ) {
+    statusLabel = (
+      <div
+        className={`flex flex-row justify-center items-center text-sm uppercase text-red-700`}
+      >
+        <CircleAlert size={15} className="mr-1" /> Action Required
+      </div>
+    );
+  }
+
   return (
     <>
       <>
@@ -92,16 +144,20 @@ export default function EmployeeDashboard() {
                 {formatDate(currentUser.user.createdAt)}
               </div>
             </div>
-            <div className="font-heading text-[44px] leading-none sm:text-[56px]">
-              {myRequirements.length
-                ? Math.round(
-                    (myRequirements.filter((req) => req.status === "completed")
-                      .length /
-                      myRequirements.length) *
-                      100,
-                  )
-                : 0}
-              %
+            <div className="flex flex-col items-end justify-end font-heading text-[44px] leading-none sm:text-[56px]">
+              <div>
+                {myRequirements.length
+                  ? Math.round(
+                      (myRequirements.filter(
+                        (req) => req.status === "completed",
+                      ).length /
+                        myRequirements.length) *
+                        100,
+                    )
+                  : 0}
+                %
+              </div>
+              {statusLabel}
             </div>
           </div>
           <ProgressBar
@@ -118,8 +174,8 @@ export default function EmployeeDashboard() {
             height="lg"
           />
           {myRequirementsLoading ? (
-        <LoadingState />
-      ) : (
+            <LoadingState />
+          ) : (
             <StatStrip
               min={140}
               items={[
@@ -162,8 +218,8 @@ export default function EmployeeDashboard() {
 
         <AutoGrid min={320}>
           {myRequirementsLoading ? (
-        <LoadingState />
-      ) : (
+            <LoadingState />
+          ) : (
             <Card className="gap-3">
               <div className="flex items-baseline">
                 <h4 className="text-[20px]">Needs your action</h4>
@@ -177,7 +233,9 @@ export default function EmployeeDashboard() {
               </div>
               {/* Rows and the empty check use the same list, so pending-only
                   requirements show the empty message instead of a blank list. */}
-              {actionable.some((requirement) => requirement.status !== "pending") ? (
+              {actionable.some(
+                (requirement) => requirement.status !== "pending",
+              ) ? (
                 <DividerList>
                   {actionable
                     .filter(
@@ -229,7 +287,9 @@ export default function EmployeeDashboard() {
                     ))}
                 </DividerList>
               ) : (
-                <EmptyState>Nothing needs your action right now.</EmptyState>
+                <EmptyState className="h-full flex justify-center items-center">
+                  Nothing needs your action right now.
+                </EmptyState>
               )}
             </Card>
           )}
