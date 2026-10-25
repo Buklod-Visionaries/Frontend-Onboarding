@@ -3,6 +3,7 @@ import { LoadingState, ErrorState } from "../../components/ui/StatusMessage";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import { Field, Input, Select } from "../../components/ui/Field";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { useApp } from "../../hooks/useApp";
 //
 import { useQueryClient } from "@tanstack/react-query";
@@ -114,21 +115,21 @@ export default function Settings() {
           </Field>
         </div>
         <Field label="Current password">
-          <Input
+          <PasswordInput
             type="password"
             value={currentPass}
             onChange={(e) => setCurrentPass(e.target.value)}
           />
         </Field>
         <Field label="New password">
-          <Input
+          <PasswordInput
             type="password"
             value={next}
             onChange={(e) => setNext(e.target.value)}
           />
         </Field>
         <Field label="Confirm new password">
-          <Input
+          <PasswordInput
             type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
