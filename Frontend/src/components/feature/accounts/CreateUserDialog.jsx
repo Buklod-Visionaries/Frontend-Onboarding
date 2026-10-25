@@ -46,8 +46,8 @@ function CreateUserDialogBody({ onClose, onCreated }) {
       app.showToast("Select a department.");
       return;
     }
-    if (!email.endsWith("@gmail.com")) {
-      app.showToast("Enter a valid work email.");
+    if (!email.endsWith("@gmail.com") && !email.endsWith("@pmcl.ph")) {
+      app.showToast("Email must end with either @pmcl.ph or @gmail.com");
       return;
     }
     const receipt = await app.createStaffUser(
@@ -71,7 +71,9 @@ function CreateUserDialogBody({ onClose, onCreated }) {
       title="Create user account"
       actions={
         <>
-          <Button onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
           <Button variant="primary" onClick={submit} disabled={loading}>
             {role === "Employee"
               ? "Continue to Add employee"

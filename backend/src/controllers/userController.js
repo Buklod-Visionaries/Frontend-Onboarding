@@ -6,6 +6,7 @@ import Task from "../models/requirementModel.js";
 import Employee from "../models/employeeModel.js";
 import EmployeeRequirement from "../models/employeeRequirement.js";
 import Notification from "../models/notificationModel.js";
+import supabase from "../lib/supabase.js";
 
 export async function getAllUser(req, res) {
   //get all user from db
@@ -16,20 +17,24 @@ export async function getAllUser(req, res) {
           $switch: {
             branches: [
               {
+                case: { $eq: ["$passwordResetRequested", true] },
+                then: 0,
+              },
+              {
                 case: {
                   $and: [
                     { $eq: ["$status", "active"] },
                     { $eq: ["$isFirstLogin", true] },
                   ],
                 },
-                then: 0,
+                then: 1,
               },
               {
                 case: { $eq: ["$status", "active"] },
-                then: 1,
+                then: 2,
               },
             ],
-            default: 2,
+            default: 3,
           },
         },
       },
@@ -83,30 +88,113 @@ export async function resetUserPassword(req, res) {
     .send({ message: `Successfully reset password of ${user.email}` });
 }
 
+import Document from "../models/documentModel.js";
+import EmployeeRequirementHistory from "../models/employeeRequirementHistoryModel.js";
+// Import supabase from your existing Supabase client file.
+// Example: import { supabase } from "../config/supabase.js";
+
 export async function deleteUser(req, res) {
-  //get the /:id from url params
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const selectedUser = await User.findOne({ _id: id });
-  if (!selectedUser) {
-    return res.send({ message: "User doesn't exist" });
-  }
+    // 1. Find the user
+    const selectedUser = await User.findById(id);
 
-  //also delete related data if Employee role
-  if (selectedUser.role === "employee") {
-    // //finds the employee
-    const employee = await Employee.findOne({ user: id });
-    //   //also delete all employeeRequirements
-    const empReq = await EmployeeRequirement.deleteMany({
-      employee: employee._id,
+    if (!selectedUser) {
+      return res.status(404).json({
+        message: "User doesn't exist",
+      });
+    }
+
+    let deletedEmployeeId = null;
+    let deletedRequirementsCount = 0;
+    let deletedDocumentsCount = 0;
+
+    // 2. Cascade cleanup for employee accounts only
+    if (selectedUser.role === "employee") {
+      const employee = await Employee.findOne({ user: id });
+
+      if (employee) {
+        deletedEmployeeId = employee._id;
+
+        // Find all requirements belonging to this employee
+        const employeeRequirements = await EmployeeRequirement.find({
+          employee: employee._id,
+        }).select("_id");
+
+        const requirementIds = employeeRequirements.map((item) => item._id);
+
+        deletedRequirementsCount = requirementIds.length;
+
+        if (requirementIds.length > 0) {
+          // Find documents associated with these requirements
+          const documents = await Document.find({
+            employeeRequirement: { $in: requirementIds },
+          });
+
+          // 3. Delete files from Supabase storage
+          // fileUrl must contain a bucket-relative path.
+          const filePaths = documents.map((doc) => doc.fileUrl).filter(Boolean);
+
+          if (filePaths.length > 0) {
+            const { error } = await supabase.storage
+              .from("employee-files")
+              .remove(filePaths);
+
+            if (error) {
+              console.error("Supabase deletion failed:", error);
+
+              return res.status(500).json({
+                message:
+                  "Failed to delete employee files. No MongoDB records were deleted.",
+              });
+            }
+          }
+
+          // 4. Delete document records
+          const deletedDocuments = await Document.deleteMany({
+            employeeRequirement: { $in: requirementIds },
+          });
+
+          deletedDocumentsCount = deletedDocuments.deletedCount;
+
+          // 5. Delete histories linked to employee requirements
+          await EmployeeRequirementHistory.deleteMany({
+            employeeRequirement: { $in: requirementIds },
+          });
+
+          // 6. Delete employee requirements
+          await EmployeeRequirement.deleteMany({
+            employee: employee._id,
+          });
+        }
+
+        // 7. Delete the employee record
+        await Employee.deleteOne({ _id: employee._id });
+      }
+    }
+
+    // 8. Delete notifications belonging to this user
+    await Notification.deleteMany({ user: selectedUser._id });
+
+    // 9. Finally, delete the user account
+    await User.deleteOne({ _id: selectedUser._id });
+
+    return res.status(200).json({
+      message: "Successfully deleted user and related data",
+      deletedUserId: id,
+      deletedEmployeeId,
+      deletedRequirements: deletedRequirementsCount,
+      deletedDocuments: deletedDocumentsCount,
     });
+  } catch (error) {
+    console.error("Failed to delete user:", error);
 
-    //   // also delete the employee data if its an employee role
-    const deletedEmployee = await Employee.deleteOne({ user: id });
-    console.log("Also deleted Employee Data and EmployeeReq data");
+    return res.status(500).json({
+      message: "Failed to delete user",
+      error: error.message,
+    });
   }
-  await User.deleteOne({ _id: id });
-  res.send({ message: "Successfully deleted user with id", id: id });
 }
 
 export async function getSpecificUser(req, res) {
@@ -128,7 +216,18 @@ export async function getSpecificUser(req, res) {
 
 export async function updateOwnUserPassword(req, res) {
   const { id } = req.user;
-  const { password } = req.body;
+  const { currentPass, password } = req.body;
+
+  const user = await User.findById(id);
+
+  const currentPassMatched = await bcrypt.compare(currentPass, user.password);
+
+  //add layer of current password checker to add security
+  if (!currentPassMatched) {
+    return res
+      .status(400)
+      .send({ message: "The current password is incorrect" });
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 

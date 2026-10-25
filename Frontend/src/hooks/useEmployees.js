@@ -22,11 +22,11 @@ export function useDepEmployees(token) {
   });
 }
 
-export function useCurrentEmployee(token) {
+export function useCurrentEmployee(token, role) {
   return useQuery({
     queryKey: ["currentEmployee"],
     queryFn: () => fetchCurrentEmployee(token),
-    enabled: !!token,
+    enabled: !!token && role === "employee",
   });
 }
 

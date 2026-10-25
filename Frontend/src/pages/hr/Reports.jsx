@@ -60,6 +60,7 @@ export default function Reports() {
       Pending: employee.pending,
       Completed: employee.completed,
       Total: employee.total,
+      "Start Date": formatDate(employee.startDate),
       "Completed Date": formatDate(employee.completedDate),
       Status:
         employee.onboardingStatus === "in_progress"
@@ -200,6 +201,7 @@ export default function Reports() {
                       "Pending",
                       "Completed",
                       "Total",
+                      "Start Date",
                       "Completed Date",
                       "Status",
                     ]}
@@ -221,6 +223,8 @@ export default function Reports() {
                         <TCell>{employee.completed}</TCell>
 
                         <TCell>{employee.total}</TCell>
+
+                        <TCell>{formatDate(employee.startDate)}</TCell>
 
                         <TCell>{formatDate(employee.completedDate)}</TCell>
 

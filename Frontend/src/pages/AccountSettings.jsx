@@ -17,6 +17,7 @@ const MIN_LENGTH = 6;
  */
 export default function AccountSettings() {
   const app = useApp();
+  const [currentPass, setCurrentPass] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const updateOwnUserPasswordMutation = useUpdateOwnUserPass(
@@ -38,15 +39,21 @@ export default function AccountSettings() {
       return;
     }
     try {
-      await updateOwnUserPasswordMutation.mutateAsync(next);
-      setNext("");
-      setConfirm("");
+      await updateOwnUserPasswordMutation.mutateAsync({
+        currentPass: currentPass,
+        password: next,
+      });
+
       app.showToast("Password updated", { type: "success" });
     } catch (error) {
       console.log("Failed updating password", error);
-      app.showToast("Failed to update password. Please try again.", {
+      app.showToast(error.response.data.message, {
         type: "error",
       });
+    } finally {
+      setCurrentPass("");
+      setNext("");
+      setConfirm("");
     }
   };
 
@@ -60,6 +67,15 @@ export default function AccountSettings() {
       </div>
 
       <form noValidate onSubmit={save} className="flex flex-col gap-3.5">
+        <Field label="Current password">
+          <PasswordInput
+            value={currentPass}
+            onChange={(e) => setCurrentPass(e.target.value)}
+            readOnly={saving}
+            autoComplete="new-password"
+            aria-describedby="account-password-rules"
+          />
+        </Field>
         <Field label="New password">
           <PasswordInput
             value={next}
@@ -117,7 +133,7 @@ export default function AccountSettings() {
           type="submit"
           variant="primary"
           className="mt-1 self-start max-sm:min-h-11 max-sm:self-stretch"
-          disabled={!next || !confirm || saving}
+          disabled={!currentPass || !next || !confirm || saving}
         >
           {saving ? "Updating password..." : "Update password"}
         </Button>

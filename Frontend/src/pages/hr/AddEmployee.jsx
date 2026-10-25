@@ -347,9 +347,9 @@ export default function AddEmployee() {
                     (req) => req.department === dep.toLowerCase(),
                   ).length
                 }{" "}
-                requirements are assigned automatically for employees in {dep}{" "}
-                department. HR can adjust them afterwards on the employee
-                record.
+                requirements are automatically assigned to employees in the
+                Laboratory department based on predefined system settings.{" "}
+                {/*change the statement and deleted the sentence "HR can adjust the requirements afterwards" since our system requirement assignment are preconfigured in the DB*/}
               </p>
 
               <DividerList>

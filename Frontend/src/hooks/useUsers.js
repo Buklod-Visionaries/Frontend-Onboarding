@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   fetchAllUsers,
   fetchCurrentUser,
-  getCurrentEmployeeUser,
+  // getCurrentEmployeeUser,
   resetTempPass,
   updateOwnUserPass,
   changeUserStatus,
@@ -25,13 +25,13 @@ export function useCurrentUser(token) {
   });
 }
 
-export function useCurrentEmployeeUser(token) {
-  return useQuery({
-    queryKey: ["currentEmployeeUser"],
-    queryFn: () => getCurrentEmployeeUser(token),
-    enabled: !!token,
-  });
-}
+// export function useCurrentEmployeeUser(token) {
+//   return useQuery({
+//     queryKey: ["currentEmployeeUser"],
+//     queryFn: () => getCurrentEmployeeUser(token),
+//     enabled: !!token,
+//   });
+// }
 
 export function useResetTempPass(token) {
   return useMutation({
@@ -42,7 +42,8 @@ export function useResetTempPass(token) {
 
 export function useUpdateOwnUserPass(token) {
   return useMutation({
-    mutationFn: (password) => updateOwnUserPass(token, password),
+    mutationFn: ({ currentPass, password }) =>
+      updateOwnUserPass(token, currentPass, password),
   });
 }
 

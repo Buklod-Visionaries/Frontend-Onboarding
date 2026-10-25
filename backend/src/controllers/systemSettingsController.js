@@ -33,8 +33,7 @@ export async function updateSystemSettings(req, res) {
     reminder >= deadline // 💡 Logic check: Reminder must happen BEFORE the deadline!
   ) {
     return res.status(400).json({
-      message:
-        "Invalid settings. Deadline must be 1-90 days, and reminder must be 1-30 days (and less than the deadline).",
+      message: `Deadline must be 1–90 days. Reminder must be 1–30 days and earlier than the deadline.`,
     });
   }
 

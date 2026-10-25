@@ -18,14 +18,14 @@ export async function fetchCurrentUser(token) {
   return res.data;
 }
 
-export async function getCurrentEmployeeUser(token) {
-  const res = await api.get("/employees/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.data;
-}
+// export async function getCurrentEmployeeUser(token) {
+//   const res = await api.get("/employees/me", {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return res.data;
+// }
 
 export async function resetTempPass(token, userId, tempPass) {
   const res = await api.patch(
@@ -40,10 +40,10 @@ export async function resetTempPass(token, userId, tempPass) {
   return res.data;
 }
 
-export async function updateOwnUserPass(token, password) {
+export async function updateOwnUserPass(token, currentPass, password) {
   const res = await api.post(
     "/users/me/update-password",
-    { password },
+    { currentPass, password },
     {
       headers: {
         Authorization: `Bearer ${token}`,

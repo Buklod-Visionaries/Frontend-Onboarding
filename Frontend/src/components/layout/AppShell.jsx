@@ -84,8 +84,6 @@ export default function AppShell() {
   ).length;
   const verifyCount = useVerificationQueue().length;
 
-  console.log("appshell:", role);
-
   const closeNav = useCallback((returnFocus = true) => {
     setNavOpen(false);
     // Wait a frame: <main> is still inert until the close re-renders.
