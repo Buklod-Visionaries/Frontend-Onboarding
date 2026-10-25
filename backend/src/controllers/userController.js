@@ -128,7 +128,18 @@ export async function getSpecificUser(req, res) {
 
 export async function updateOwnUserPassword(req, res) {
   const { id } = req.user;
-  const { password } = req.body;
+  const { currentPass, password } = req.body;
+
+  const user = await User.findById(id);
+
+  const currentPassMatched = await bcrypt.compare(currentPass, user.password);
+
+  //add layer of current password checker to add security
+  if (!currentPassMatched) {
+    return res
+      .status(400)
+      .send({ message: "The current password is incorrect" });
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 

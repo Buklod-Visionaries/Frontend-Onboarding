@@ -27,6 +27,7 @@ const REMINDER_OPTIONS = [
 export default function Settings() {
   const app = useApp();
   const queryClient = useQueryClient();
+  const [currentPass, setCurrentPass] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   //fetch system settings hook
@@ -52,21 +53,32 @@ export default function Settings() {
   } = useUpdateSystemSettings(app.session.accessToken);
 
   const save = async () => {
-    if (next.length < 6) {
-      app.showToast("Use at least 6 characters for the new password.");
-      return;
-    }
-    if (next !== confirm) {
-      app.showToast("The two passwords do not match.", {
+    try {
+      if (next.length < 6) {
+        app.showToast("Use at least 6 characters for the new password.");
+        return;
+      }
+      if (next !== confirm) {
+        app.showToast("The two passwords do not match.", {
+          type: "error",
+        });
+        return;
+      }
+      //update the password by passing password in the mutation
+      await updateOwnUserPasswordMutation.mutateAsync({
+        currentPass: currentPass,
+        password: next,
+      }); //currentPass and next are the name of useState variable where password is set
+      app.showToast("Password updated", { type: "success" });
+    } catch (error) {
+      app.showToast(error.response.data.message, {
         type: "error",
       });
-      return;
+    } finally {
+      setCurrentPass("");
+      setNext("");
+      setConfirm("");
     }
-    //update the password by passing password in the mutation
-    await updateOwnUserPasswordMutation.mutateAsync(next); //next is the name of useState variable where password is set
-    setNext("");
-    setConfirm("");
-    app.showToast("Password updated");
   };
 
   const setSetting = (key) => (e) => {
@@ -88,8 +100,6 @@ export default function Settings() {
   if (systemSettingsError) {
     return <ErrorState>Failed loading system settings.</ErrorState>;
   }
-
-  console.log(systemSettings);
   // One card per row: Account & profile above System Settings.
   return (
     <div className="flex flex-col gap-5">
@@ -103,6 +113,13 @@ export default function Settings() {
             <Input value={app.session.email} readOnly />
           </Field>
         </div>
+        <Field label="Current password">
+          <Input
+            type="password"
+            value={currentPass}
+            onChange={(e) => setCurrentPass(e.target.value)}
+          />
+        </Field>
         <Field label="New password">
           <Input
             type="password"
@@ -121,7 +138,7 @@ export default function Settings() {
           variant="primary"
           className="self-start max-sm:self-stretch"
           onClick={save}
-          disabled={!next || !confirm}
+          disabled={!currentPass || !next || !confirm}
         >
           Update password
         </Button>
@@ -182,7 +199,7 @@ export default function Settings() {
                 type: "success",
               });
             } catch (error) {
-              app.showToast("Failed updating system settings", {
+              app.showToast(error.response.data.message, {
                 type: "error",
               });
               console.log("Error updating system settings, ", error);

@@ -42,7 +42,8 @@ export function useResetTempPass(token) {
 
 export function useUpdateOwnUserPass(token) {
   return useMutation({
-    mutationFn: (password) => updateOwnUserPass(token, password),
+    mutationFn: ({ currentPass, password }) =>
+      updateOwnUserPass(token, currentPass, password),
   });
 }
 

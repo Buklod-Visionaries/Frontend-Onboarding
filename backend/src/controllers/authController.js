@@ -113,6 +113,8 @@ export async function login(req, res) {
     const refreshToken = createRefreshToken(user._id);
     user.refreshTokenHash = hashRefreshToken(refreshToken);
 
+    await user.save();
+
     setRefreshCookie(res, refreshToken);
 
     // set up sign in time
