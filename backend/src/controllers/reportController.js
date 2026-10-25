@@ -16,7 +16,7 @@ export async function generateReports(req, res) {
   //administration
   const employees = await Employee.find(
     { onboardingStatus: { $ne: "deactivated" } }, //show all except deactivated employees
-    { startDate: 0, phone: 0 }, //exclude fields
+    { phone: 0 }, //exclude fields
   ).populate({
     path: "user",
     select: {
@@ -69,6 +69,7 @@ export async function generateReports(req, res) {
           employee: employee.user.username,
           position: employee.position,
           department: employee.department,
+          startDate: employee.startDate,
           completed,
           inProgress,
           pending,
