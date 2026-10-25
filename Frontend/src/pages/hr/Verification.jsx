@@ -39,16 +39,23 @@ export default function Verification() {
   // One list feeds the count, the table and the cards.
   const pending = requirements.filter((req) => req.status === "pending");
   /** File name(s) for a submission, rendered as before. */
-  const filesFor = (req) =>
-    documents
-      .filter((doc) => doc.employeeRequirement._id === req._id)
-      .map((doc) => (
-        <span key={doc._id ?? doc.fileName} className="truncate">
-          {doc.fileName.length > 30
-            ? `${doc.fileName.slice(0, 27)}...`
-            : doc.fileName}
-        </span>
-      )) || "—";
+  const filesFor = (req) => {
+    const matchingDocuments = documents.filter(
+      (doc) => doc.employeeRequirement?._id === req._id,
+    );
+
+    if (matchingDocuments.length === 0) {
+      return "—";
+    }
+
+    return matchingDocuments.map((doc) => (
+      <span key={doc._id ?? doc.fileName} className="truncate">
+        {doc.fileName.length > 30
+          ? `${doc.fileName.slice(0, 27)}...`
+          : doc.fileName}
+      </span>
+    ));
+  };
 
   // Reset to page 1 when search or department filter changes
   useEffect(() => {

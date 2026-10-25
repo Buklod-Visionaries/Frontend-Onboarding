@@ -324,10 +324,17 @@ export async function firstLogin(req, res) {
 }
 
 export async function refresh(req, res) {
-  //set the refresh token from the cookies
   const refreshToken = req.cookies.refreshToken;
 
-  //if reftoken does not exist
+  const clearRefreshCookie = () => {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+  };
+
   if (!refreshToken) {
     return res.status(401).json({
       message: "No refresh token",
@@ -338,7 +345,9 @@ export async function refresh(req, res) {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, {
       algorithms: ["HS256"],
     });
+
     if (decoded.tokenUse !== "refresh") {
+      clearRefreshCookie();
       return res.status(401).json({
         message: "Invalid refresh token",
       });
@@ -346,27 +355,44 @@ export async function refresh(req, res) {
 
     const incomingHash = hashRefreshToken(refreshToken);
 
-    const user = await User.findById(decoded.id).select(
-      //"_id email username role status",
-      "+refreshTokenHash",
-    );
+    const user = await User.findById(decoded.id).select("+refreshTokenHash");
 
     if (!user) {
-      res.clearCookie("refreshToken");
+      clearRefreshCookie();
       return res.status(401).json({
         message: "Invalid refresh token",
       });
     }
 
-    //deactivated account forbidden access
     if (user.status === "deactivated") {
-      return res
-        .status(403)
-        .send({ message: "Account deactivated. Contact HR for help." });
+      clearRefreshCookie();
+      return res.status(403).json({
+        message: "Account deactivated. Contact HR for help.",
+      });
+    }
+
+    // Reject first-login and password-reset sessions.
+    // Do this BEFORE rotating the refresh token.
+    if (user.isFirstLogin || user.passwordResetRequested) {
+      await User.updateOne(
+        {
+          _id: user._id,
+          refreshTokenHash: incomingHash,
+        },
+        {
+          $set: { refreshTokenHash: null },
+        },
+      );
+
+      clearRefreshCookie();
+
+      return res.status(401).json({
+        message: "Password setup required. Please log in again.",
+      });
     }
 
     if (!user.refreshTokenHash || user.refreshTokenHash !== incomingHash) {
-      res.clearCookie("refreshToken");
+      clearRefreshCookie();
       return res.status(401).json({
         message: "Refresh token expired, invalid, or already used.",
       });
@@ -380,15 +406,19 @@ export async function refresh(req, res) {
         _id: user._id,
         refreshTokenHash: incomingHash,
         status: { $ne: "deactivated" },
+        isFirstLogin: false,
+        passwordResetRequested: false,
       },
       {
         $set: { refreshTokenHash: newHash },
       },
       { new: true },
-    ).select("_id username email role status");
+    ).select(
+      "_id username email role status isFirstLogin passwordResetRequested",
+    );
 
     if (!updatedUser) {
-      res.clearCookie("refreshToken");
+      clearRefreshCookie();
       return res.status(401).json({
         message: "Refresh token already used or invalid",
       });
@@ -408,17 +438,17 @@ export async function refresh(req, res) {
       },
     );
 
-    //replace old cookie with new refresh token
     setRefreshCookie(res, newRefreshToken);
 
-    res.status(200).send({
-      accessToken: accessToken,
+    return res.status(200).json({
+      accessToken,
       user: {
-        //explicitly return specific fields
         id: updatedUser._id,
         username: updatedUser.username,
         email: updatedUser.email,
         role: updatedUser.role,
+        isFirstLogin: updatedUser.isFirstLogin,
+        passwordResetRequested: updatedUser.passwordResetRequested,
       },
     });
   } catch (error) {
@@ -427,12 +457,7 @@ export async function refresh(req, res) {
       error.name === "JsonWebTokenError" ||
       error.name === "NotBeforeError"
     ) {
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-      });
+      clearRefreshCookie();
 
       return res.status(401).json({
         message: "Invalid or expired refresh token",
