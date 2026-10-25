@@ -7,13 +7,13 @@ import {
   fetchSpecificEmployeeRequirements,
 } from "../api/requirements";
 
-export function useRequirements(token) {
+export function useRequirements(token, role) {
   return useQuery({
     queryKey: ["requirements"],
     queryFn: () => fetchAllRequirements(token),
-    enabled: !!token,
+    enabled: !!token && role === "hr",
     refetchOnMount: "always",
-    refetchInterval: 30000 //30 seconds
+    refetchInterval: 30000, //30 seconds
   });
 }
 

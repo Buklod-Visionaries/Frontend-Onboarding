@@ -94,7 +94,6 @@ export default function AppProvider({ children }) {
 
     //set new session
     setSession(newSession);
-    console.log("login:", newSession);
 
     return newSession;
   }, []);

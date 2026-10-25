@@ -99,7 +99,11 @@ export default function UserManagement() {
             />
             <StatCard
               label="Active"
-              value={users.filter((user) => !user.isFirstLogin).length}
+              value={
+                users.filter(
+                  (user) => user.status === "active" && !user.isFirstLogin,
+                ).length
+              }
               note="Signed in at least once"
               tone="success"
               icon={UserCheck}
@@ -108,7 +112,7 @@ export default function UserManagement() {
               label="Pending first login"
               value={
                 users.filter(
-                  (user) => user.status === "active" && user.isFirstLogin,
+                  (user) => user.status !== "deactivated" && user.isFirstLogin,
                 ).length
               }
               note="Temporary password issued"
@@ -179,122 +183,140 @@ export default function UserManagement() {
 
             {rows.length ? (
               <>
-              {/* lg and up: the existing table (8 columns need the width). */}
-              <div className="hidden lg:block">
-              <Table>
-                <THead
-                  columns={[
-                    "User",
-                    "Role",
-                    "Department",
-                    "Work email",
-                    "Account status",
-                    "Temporary password",
-                    "Last sign-in",
-                    { label: "", align: "right" },
-                  ]}
-                />
-                <tbody>
-                  {paginatedRows.map((user) => (
-                    <TRow key={`${user.username}${user._id}`}>
-                      <TCell strong>{user.username}</TCell>
-                      <TCell>{formatRole(user.role)}</TCell>
-                      <TCell>
-                        {user.role === "hr"
-                          ? "Administration"
-                          : capitalize(user.department)}
-                      </TCell>
-                      <TCell muted className="text-cell">
-                        {user.email}
-                      </TCell>
-                      <TCell>
-                        <AccountStatusBadge user={user} />
-                      </TCell>
-                      <TCell>
-                        <TempPassword user={user} onCopyError={copyError} />
-                      </TCell>
-                      <TCell>{formatRelativeDate(user.lastSignIn)}</TCell>
-                      {/* Your own row keeps an empty cell so the columns stay aligned. */}
-                      <TCell align="right">
-                        {app.session.id !== user._id && (
-                          <Button onClick={() => setManage(user)}>
-                            Manage access
-                          </Button>
-                        )}
-                      </TCell>
-                    </TRow>
-                  ))}
-                </tbody>
-              </Table>
-              </div>
-
-              {/* Below lg: one card per account (two-up on tablets), same page of rows and handlers. */}
-              <ul className="m-0 flex list-none flex-col gap-2.5 p-0 md:grid md:grid-cols-2 lg:hidden">
-                {paginatedRows.map((user) => {
-                  const showTemp =
-                    (user.passwordResetRequested && !user.tempPass) ||
-                    user.isFirstLogin ||
-                    user.tempPass;
-                  return (
-                    <li
-                      key={`${user.username}${user._id}`}
-                      className="flex flex-col gap-3 border border-divider bg-bg/60 p-3.5"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="break-words text-field font-medium">
-                            {user.username}
-                          </div>
-                          <div className="break-all text-cell text-ink/60">
-                            {user.email}
-                          </div>
-                        </div>
-                        <AccountStatusBadge user={user} className="shrink-0" />
-                      </div>
-
-                      <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-2.5">
-                        <div className="min-w-0">
-                          <dt className="text-micro uppercase text-ink/55">Role</dt>
-                          <dd className="m-0 break-words text-cell">{formatRole(user.role)}</dd>
-                        </div>
-                        <div className="min-w-0">
-                          <dt className="text-micro uppercase text-ink/55">Department</dt>
-                          <dd className="m-0 break-words text-cell">
+                {/* lg and up: the existing table (8 columns need the width). */}
+                <div className="hidden lg:block">
+                  <Table>
+                    <THead
+                      columns={[
+                        "User",
+                        "Role",
+                        "Department",
+                        "Work email",
+                        "Account status",
+                        "Temporary password",
+                        "Last sign-in",
+                        { label: "", align: "right" },
+                      ]}
+                    />
+                    <tbody>
+                      {paginatedRows.map((user) => (
+                        <TRow key={`${user.username}${user._id}`}>
+                          <TCell strong>{user.username}</TCell>
+                          <TCell>{formatRole(user.role)}</TCell>
+                          <TCell>
                             {user.role === "hr"
                               ? "Administration"
                               : capitalize(user.department)}
-                          </dd>
+                          </TCell>
+                          <TCell muted className="text-cell">
+                            {user.email}
+                          </TCell>
+                          <TCell>
+                            <AccountStatusBadge user={user} />
+                          </TCell>
+                          <TCell>
+                            <TempPassword user={user} onCopyError={copyError} />
+                          </TCell>
+                          <TCell>{formatRelativeDate(user.lastSignIn)}</TCell>
+                          {/* Your own row keeps an empty cell so the columns stay aligned. */}
+                          <TCell align="right">
+                            {app.session.id !== user._id && (
+                              <Button onClick={() => setManage(user)}>
+                                Manage access
+                              </Button>
+                            )}
+                          </TCell>
+                        </TRow>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+
+                {/* Below lg: one card per account (two-up on tablets), same page of rows and handlers. */}
+                <ul className="m-0 flex list-none flex-col gap-2.5 p-0 md:grid md:grid-cols-2 lg:hidden">
+                  {paginatedRows.map((user) => {
+                    const showTemp =
+                      (user.passwordResetRequested && !user.tempPass) ||
+                      user.isFirstLogin ||
+                      user.tempPass;
+                    return (
+                      <li
+                        key={`${user.username}${user._id}`}
+                        className="flex flex-col gap-3 border border-divider bg-bg/60 p-3.5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="break-words text-field font-medium">
+                              {user.username}
+                            </div>
+                            <div className="break-all text-cell text-ink/60">
+                              {user.email}
+                            </div>
+                          </div>
+                          <AccountStatusBadge
+                            user={user}
+                            className="shrink-0"
+                          />
                         </div>
-                        {showTemp && (
-                          <div className="col-span-2 min-w-0">
-                            <dt className="text-micro uppercase text-ink/55">Temporary password</dt>
-                            <dd className="m-0 mt-1">
-                              <TempPassword user={user} onCopyError={copyError} />
+
+                        <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-2.5">
+                          <div className="min-w-0">
+                            <dt className="text-micro uppercase text-ink/55">
+                              Role
+                            </dt>
+                            <dd className="m-0 break-words text-cell">
+                              {formatRole(user.role)}
                             </dd>
                           </div>
-                        )}
-                        {user.lastSignIn && (
-                          <div className="col-span-2 min-w-0">
-                            <dt className="text-micro uppercase text-ink/55">Last sign-in</dt>
-                            <dd className="m-0 text-cell">{formatRelativeDate(user.lastSignIn)}</dd>
+                          <div className="min-w-0">
+                            <dt className="text-micro uppercase text-ink/55">
+                              Department
+                            </dt>
+                            <dd className="m-0 break-words text-cell">
+                              {user.role === "hr"
+                                ? "Administration"
+                                : capitalize(user.department)}
+                            </dd>
                           </div>
-                        )}
-                      </dl>
+                          {showTemp && (
+                            <div className="col-span-2 min-w-0">
+                              <dt className="text-micro uppercase text-ink/55">
+                                Temporary password
+                              </dt>
+                              <dd className="m-0 mt-1">
+                                <TempPassword
+                                  user={user}
+                                  onCopyError={copyError}
+                                />
+                              </dd>
+                            </div>
+                          )}
+                          {user.lastSignIn && (
+                            <div className="col-span-2 min-w-0">
+                              <dt className="text-micro uppercase text-ink/55">
+                                Last sign-in
+                              </dt>
+                              <dd className="m-0 text-cell">
+                                {formatRelativeDate(user.lastSignIn)}
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
 
-                      {app.session.id !== user._id && (
-                        <Button
-                          // mt-auto lines buttons up across a two-up row.
-                          className="mt-auto min-h-11 w-full"
-                          aria-label={`Manage access for ${user.username}`}
-                          onClick={() => setManage(user)}
-                        >
-                          Manage access
-                        </Button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                        {app.session.id !== user._id && (
+                          <Button
+                            // mt-auto lines buttons up across a two-up row.
+                            className="mt-auto min-h-11 w-full"
+                            aria-label={`Manage access for ${user.username}`}
+                            onClick={() => setManage(user)}
+                          >
+                            Manage access
+                          </Button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               </>
             ) : (
               <EmptyState>
@@ -322,7 +344,11 @@ export default function UserManagement() {
                   disabled={page === 1}
                   onClick={() => setPage((current) => current - 1)}
                 >
-                  <ChevronLeft size={16} aria-hidden="true" className="md:hidden" />
+                  <ChevronLeft
+                    size={16}
+                    aria-hidden="true"
+                    className="md:hidden"
+                  />
                   <span className="max-md:hidden">Previous</span>
                 </Button>
 
@@ -337,7 +363,11 @@ export default function UserManagement() {
                   onClick={() => setPage((current) => current + 1)}
                 >
                   <span className="max-md:hidden">Next</span>
-                  <ChevronRight size={16} aria-hidden="true" className="md:hidden" />
+                  <ChevronRight
+                    size={16}
+                    aria-hidden="true"
+                    className="md:hidden"
+                  />
                 </Button>
               </div>
             </div>

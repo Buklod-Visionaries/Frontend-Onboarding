@@ -8,7 +8,8 @@ import SignOutDialog from "../feature/accounts/SignOutDialog";
 import { NAV } from "./navigation";
 import { useApp } from "../../hooks/useApp";
 //
-import { useCurrentUser, useCurrentEmployeeUser } from "../../hooks/useUsers";
+import { useCurrentUser } from "../../hooks/useUsers";
+import { useCurrentEmployee } from "../../hooks/useEmployees";
 import { useRequirements } from "../../hooks/useRequirements";
 import { useAllOwnNotif } from "../../hooks/useNotifications";
 import { capitalize } from "../../lib/capitalize";
@@ -21,7 +22,14 @@ import { capitalize } from "../../lib/capitalize";
 /** Screen-reader context read after each badge count. */
 const BADGE_LABEL = { verify: "awaiting verification", unread: "unread" };
 
-export default function Sidebar({ unreadCount, verifyCount, drawer, open, onClose, onNavigate }) {
+export default function Sidebar({
+  unreadCount,
+  verifyCount,
+  drawer,
+  open,
+  onClose,
+  onNavigate,
+}) {
   const app = useApp();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -51,13 +59,13 @@ export default function Sidebar({ unreadCount, verifyCount, drawer, open, onClos
     data: currentEmployeeUser,
     isLoading: currentEmployeeUserLoading,
     isError: currentEmployeeUserError,
-  } = useCurrentEmployeeUser(app.session.accessToken);
+  } = useCurrentEmployee(app.session.accessToken, app.session.role);
   //from req hook
   const {
     data: requirements = [],
     isLoading: requirementsLoading,
     isError: requirementsError,
-  } = useRequirements(app.session.accessToken);
+  } = useRequirements(app.session.accessToken, app.session.role);
   //from notif hook
   const {
     data: notifications = [],
@@ -140,7 +148,8 @@ export default function Sidebar({ unreadCount, verifyCount, drawer, open, onClos
             {group.items.map((item) => {
               const badge =
                 item.badge === "verify"
-                  ? requirements.filter((req) => req.status === "pending").length
+                  ? requirements.filter((req) => req.status === "pending")
+                      .length
                   : item.badge === "unread"
                     ? notifications.filter((notif) => !notif.isRead).length
                     : 0;
@@ -174,7 +183,12 @@ export default function Sidebar({ unreadCount, verifyCount, drawer, open, onClos
           className="w-full border-bg/30! text-bg! hover:bg-bg/10! focus-visible:outline-accent-300! max-lg:min-h-11"
           onClick={() => setConfirmOpen(true)}
         >
-          <LogOut size={15} strokeWidth={1.75} aria-hidden="true" className="lg:hidden" />
+          <LogOut
+            size={15}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            className="lg:hidden"
+          />
           Sign out
         </Button>
       </div>
