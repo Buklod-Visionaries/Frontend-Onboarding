@@ -16,20 +16,24 @@ export async function getAllUser(req, res) {
           $switch: {
             branches: [
               {
+                case: { $eq: ["$passwordResetRequested", true] },
+                then: 0,
+              },
+              {
                 case: {
                   $and: [
                     { $eq: ["$status", "active"] },
                     { $eq: ["$isFirstLogin", true] },
                   ],
                 },
-                then: 0,
+                then: 1,
               },
               {
                 case: { $eq: ["$status", "active"] },
-                then: 1,
+                then: 2,
               },
             ],
-            default: 2,
+            default: 3,
           },
         },
       },
