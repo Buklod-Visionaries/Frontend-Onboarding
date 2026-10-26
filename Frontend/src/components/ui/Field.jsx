@@ -21,8 +21,23 @@ export function Field({ label, hint, className, children }) {
 // export function Input({ className, ...rest }) {
 //   return <input {...rest} className={cx(CONTROL, className)} />;
 // }
-export const Input = forwardRef(function Input({ className, ...rest }, ref) {
-  return <input {...rest} ref={ref} className={cx(CONTROL, className)} />;
+export const Input = forwardRef(function Input(
+  { className, readOnly, ...rest },
+  ref,
+) {
+  return (
+    <input
+      {...rest}
+      ref={ref}
+      readOnly={readOnly}
+      className={cx(
+        CONTROL,
+        readOnly &&
+          "!cursor-default !select-none !border-transparent hover:!border-transparent focus:!border-transparent focus:!outline-none focus:!ring-0",
+        className,
+      )}
+    />
+  );
 });
 
 export function Textarea({ className, ...rest }) {
@@ -103,7 +118,14 @@ export function Radio({ name, checked, onChange, children }) {
  * `collapse` (with a `label`) swaps it for a native dropdown below md, bound to
  * the same value and onChange, so long filter lists don't wrap on phones.
  */
-export function Segmented({ value, onChange, options, className, collapse, label }) {
+export function Segmented({
+  value,
+  onChange,
+  options,
+  className,
+  collapse,
+  label,
+}) {
   const buttons = (
     <div
       className={cx(
