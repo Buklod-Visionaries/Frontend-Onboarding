@@ -12,6 +12,7 @@ import {
   getNotificationById,
   updateNotification,
   deleteNotification,
+  getReminderStatus,
 } from "../controllers/notificationController.js";
 
 const router = express.Router();
@@ -46,6 +47,14 @@ router.delete(
   "/me/delete-all", //mark read all own notif
   verifyToken,
   asyncHandler(deleteAllOwnNotifications),
+);
+
+//
+router.get(
+  "/reminder-status/:id",
+  verifyToken,
+  authorizeRoles("hr"),
+  asyncHandler(getReminderStatus),
 );
 
 router.get("/:id", verifyToken, asyncHandler(getNotificationById));

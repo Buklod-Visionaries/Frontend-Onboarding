@@ -3,6 +3,7 @@ import {
   createNotification,
   fetchAllOwnNotifications,
   readAllOwnNotifications,
+  fetchReminderStatus,
   readNotificationById,
   deleteAllOwnNotifications,
 } from "../api/notifications";
@@ -25,6 +26,15 @@ export function useAllOwnNotif(token, limit) {
 export function useReadAllOwnNotif(token) {
   return useMutation({
     mutationFn: () => readAllOwnNotifications(token),
+  });
+}
+
+export function useFetchReminderStatus(token, userId) {
+  return useQuery({
+    queryKey: ["reminderStatus", userId],
+    queryFn: () => fetchReminderStatus(token, userId),
+    enabled: !!token && !!userId,
+    refetchInterval: 10000,
   });
 }
 
