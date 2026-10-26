@@ -427,7 +427,7 @@ function TempPassword({ user, onCopyError }) {
   if (user.passwordResetRequested && !user.tempPass) {
     return <Badge variant={"in-progress"}>Password Reset Requested</Badge>;
   }
-  if (user.isFirstLogin || user.tempPass) {
+  if ((user.isFirstLogin || user.tempPass) && user.status !== "deactivated") {
     return (
       <CopyField
         value={user.password}
