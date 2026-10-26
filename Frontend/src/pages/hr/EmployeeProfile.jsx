@@ -9,13 +9,17 @@ import { EmptyState } from "../../components/ui/Notice";
 import { TCell, THead, TRow, Table } from "../../components/ui/Table";
 import ReviewDialog from "../../components/feature/requirements/ReviewDialog";
 import { useApp } from "../../hooks/useApp";
-import { formatDate, isOverdue } from "../../domain/date";
+import { formatDate, formatRelativeDate, isOverdue } from "../../domain/date";
+import { Clock3 } from "lucide-react";
 //
 import { formatStatus } from "../../lib/formatter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSpecificEmployee } from "../../hooks/useEmployees";
 import { useSpecificEmployeeRequirements } from "../../hooks/useRequirements";
-import { useCreateNotif } from "../../hooks/useNotifications";
+import {
+  useCreateNotif,
+  useFetchReminderStatus,
+} from "../../hooks/useNotifications";
 import { capitalize } from "../../lib/capitalize";
 
 /** Employee record, scoped to onboarding requirements. */
@@ -41,12 +45,20 @@ export default function EmployeeProfile() {
     isLoading: empRequirementsLoading,
     isError: empRequirementsError,
   } = useSpecificEmployeeRequirements(app.session.accessToken, params.id);
+  //
+  const reminderUserId = employee?.user?._id;
+
+  const {
+    data: reminderStatus,
+    isLoading: reminderStatusLoading,
+    isError: reminderStatusError,
+  } = useFetchReminderStatus(app.session.accessToken, reminderUserId);
 
   //notif mutation
   const createNotifMutation = useCreateNotif(app.session.accessToken);
 
   ////
-  if (employeeLoading || empRequirementsLoading) {
+  if (employeeLoading || empRequirementsLoading || reminderStatusLoading) {
     return <LoadingState />;
   }
 
@@ -55,6 +67,9 @@ export default function EmployeeProfile() {
   }
   if (empRequirementsError) {
     return <ErrorState>Failed loading requirements.</ErrorState>;
+  }
+  if (reminderStatusError) {
+    return <ErrorState>Failed loading reminder status.</ErrorState>;
   }
 
   if (!employee) {
@@ -181,24 +196,48 @@ export default function EmployeeProfile() {
                     message:
                       "You have onboarding requirements that need your attention. Please review your requirements and submit any in progress documents or resubmit documents that require changes",
                   }); //user, title, message
+
+                  await queryClient.invalidateQueries({
+                    queryKey: ["reminderStatus", employee.user._id],
+                  });
                   app.showToast(`Reminder sent to ${employee.user.username}`, {
                     type: "success",
                   });
                 } catch (error) {
+                  app.showToast(error.response.data.message, { type: "error" });
                   console.log("Failed sending notif", error);
                 }
               }}
               disabled={
-                //disabled if no requirements are overdue while in progress or resubmission required
                 !hasOverdueOpen ||
-                deactivated || //disabled if employee is deactivated
-                createNotifMutation.isPending
+                deactivated ||
+                createNotifMutation.isPending ||
+                reminderStatusLoading ||
+                reminderStatusError ||
+                !reminderStatus?.canSend
               }
             >
               {createNotifMutation.isPending
                 ? "Sending reminder..."
-                : "Send reminder"}
+                : reminderStatus?.canSend === false
+                  ? "Reminder already sent"
+                  : "Send reminder"}
             </Button>
+            {reminderStatus?.availableAt && (
+              <p className="m-0 flex items-center gap-2 rounded-md border border-[#E7D5D1] bg-[#FAF5F3] px-3 py-2 text-xs text-[#685D5A] sm:ml-auto">
+                <Clock3
+                  size={15}
+                  className="shrink-0 text-[#803F37]"
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="font-semibold text-[#71352F]">
+                    Reminder cooldown:
+                  </span>{" "}
+                  You can send another reminder tomorrow.
+                </span>
+              </p>
+            )}
             {(deactivated || !hasOverdueOpen) && (
               <p className="m-0 basis-full text-meta text-ink/55 sm:text-right">
                 {deactivated

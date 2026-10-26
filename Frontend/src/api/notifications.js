@@ -13,6 +13,16 @@ export async function createNotification(token, user, title, message) {
   return res.data;
 }
 
+export async function fetchReminderStatus(token, userId) {
+  const res = await api.get(`/notifications/reminder-status/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+}
+
 export async function fetchAllOwnNotifications(token, limit) {
   const res = await api.get("/notifications/me", {
     headers: {

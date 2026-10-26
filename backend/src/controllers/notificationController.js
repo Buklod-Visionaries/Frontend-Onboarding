@@ -3,6 +3,31 @@ import Notification from "../models/notificationModel.js";
 export async function createNotification(req, res) {
   const { user, title, message } = req.body;
 
+  //check if the message is from the send reminder button
+  if (title === "Onboarding Requirements Reminder") {
+    //add cutoff date
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    //check if reminder is recent <24 hours
+    const recentReminder = await Notification.findOne({
+      user,
+      title: "Onboarding Requirements Reminder",
+      createdAt: { $gte: cutoff },
+    }).sort({ createdAt: -1 });
+
+    //set availability for the notification again after 24 hours
+    if (recentReminder) {
+      const availableAt = new Date(
+        recentReminder.createdAt.getTime() + 24 * 60 * 60 * 1000,
+      );
+
+      return res.status(429).send({
+        message: "A reminder can only be sent once every 24 hours.",
+        availableAt,
+      });
+    }
+  }
+
   const newNotification = new Notification({
     user,
     title,
@@ -15,6 +40,37 @@ export async function createNotification(req, res) {
 
   await newNotification.save();
   res.status(201).send(newNotification);
+}
+
+export async function getReminderStatus(req, res) {
+  try {
+    const { id } = req.params;
+
+    const recentReminder = await Notification.findOne({
+      user: id,
+      title: "Onboarding Requirements Reminder",
+    }).sort({ createdAt: -1 });
+
+    if (!recentReminder) {
+      return res.status(200).send({
+        canSend: true,
+        availableAt: null,
+      });
+    }
+
+    const availableAt = new Date(
+      recentReminder.createdAt.getTime() + 24 * 60 * 60 * 1000,
+    );
+
+    return res.status(200).send({
+      canSend: Date.now() >= availableAt.getTime(),
+      availableAt: Date.now() >= availableAt.getTime() ? null : availableAt,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      message: "Failed to check reminder status.",
+    });
+  }
 }
 
 export async function getAllNotifications(req, res) {
