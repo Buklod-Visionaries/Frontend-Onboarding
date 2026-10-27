@@ -6,6 +6,7 @@ import {
   refresh,
   logout,
   requestPasswordReset,
+  checkAccountStatus,
 } from "../controllers/authController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
@@ -29,5 +30,7 @@ router.post("/refresh", asyncHandler(refresh));
 router.post("/logout", asyncHandler(logout));
 //forgot password reset
 router.post("/request-password-reset", asyncHandler(requestPasswordReset));
+//check status
+router.get("/status", verifyToken, asyncHandler(checkAccountStatus));
 
 export default router;

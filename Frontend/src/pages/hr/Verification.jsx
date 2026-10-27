@@ -37,7 +37,11 @@ export default function Verification() {
   } = usePendingDocuments(app.session.accessToken);
 
   // One list feeds the count, the table and the cards.
-  const pending = requirements.filter((req) => req.status === "pending");
+  const pending = requirements.filter(
+    (req) =>
+      req.status === "pending" &&
+      req.employee.onboardingStatus !== "deactivated", //exclude requirements of deactivated users
+  );
   /** File name(s) for a submission, rendered as before. */
   const filesFor = (req) => {
     const matchingDocuments = documents.filter(

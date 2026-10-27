@@ -546,3 +546,32 @@ export async function requestPasswordReset(req, res) {
     notifCreated: notif.length,
   });
 }
+
+//new addition
+export async function checkAccountStatus(req, res) {
+  try {
+    const user = await User.findById(req.user.id).select("status");
+
+    if (!user) {
+      return res.status(401).json({
+        code: "ACCOUNT_NOT_FOUND",
+        message: "Account no longer exists.",
+      });
+    }
+
+    if (user.status === "deactivated") {
+      return res.status(403).json({
+        code: "ACCOUNT_DEACTIVATED",
+        message: "Your account has been deactivated. Contact HR.",
+      });
+    }
+
+    return res.status(200).json({ active: true });
+  } catch (error) {
+    console.error("Account status check error:", error);
+
+    return res.status(500).json({
+      message: "Failed to check account status.",
+    });
+  }
+}

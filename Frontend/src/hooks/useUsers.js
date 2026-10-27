@@ -7,6 +7,7 @@ import {
   updateOwnUserPass,
   changeUserStatus,
 } from "../api/users";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useUsers(token) {
   return useQuery({
@@ -48,7 +49,13 @@ export function useUpdateOwnUserPass(token) {
 }
 
 export function useChangeUserStatus(token) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status }) => changeUserStatus(token, id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["requirements"],
+      });
+    },
   });
 }
