@@ -10,7 +10,8 @@ import { cx } from "../../lib/cx";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import ToastHost from "./ToastHost";
-import SetPasswordDemo from "../feature/accounts/SetPasswordDemo"; // DEMO ONLY: remove with <SetPasswordDemo /> below
+import SetPasswordDemo from "../feature/accounts/SetPasswordDemo"; // CURRENTLY IN USED: FOR TOGGLING SETPASSWORD MODAL
+import AccountStatusMonitor from "@/pages/auth/AccountStatusMonitor";
 import { useApp } from "../../hooks/useApp";
 import { useVerificationQueue } from "../../hooks/useVerificationQueue";
 import { useCurrentUser } from "@/hooks/useUsers";
@@ -148,6 +149,7 @@ export default function AppShell() {
       className="min-h-screen lg:grid"
       style={{ gridTemplateColumns: "236px 1fr" }}
     >
+      <AccountStatusMonitor />
       <Sidebar
         unreadCount={unreadCount}
         verifyCount={verifyCount}

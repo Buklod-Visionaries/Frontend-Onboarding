@@ -148,8 +148,11 @@ export default function Sidebar({
             {group.items.map((item) => {
               const badge =
                 item.badge === "verify"
-                  ? requirements.filter((req) => req.status === "pending")
-                      .length
+                  ? requirements.filter(
+                      (req) =>
+                        req.status === "pending" &&
+                        req.employee.user.status !== "deactivated",
+                    ).length //exclude deactivated users requirement submissions from being counted
                   : item.badge === "unread"
                     ? notifications.filter((notif) => !notif.isRead).length
                     : 0;
