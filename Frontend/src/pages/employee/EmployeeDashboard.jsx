@@ -97,8 +97,12 @@ export default function EmployeeDashboard() {
         myRequirements.length) *
         100,
     ) < 100 &&
-    myRequirements.filter((req) => isOverdue(formatDate(req.dueDate)))
-      .length === 0
+    myRequirements.filter(
+      (req) =>
+        isOverdue(formatDate(req.dueDate)) &&
+        (req.status === "in-progress" ||
+          req.status === "resubmission-required"),
+    ).length === 0
   ) {
     statusLabel = (
       <div
@@ -114,8 +118,12 @@ export default function EmployeeDashboard() {
         myRequirements.length) *
         100,
     ) < 100 &&
-    myRequirements.filter((req) => isOverdue(formatDate(req.dueDate))).length >
-      0
+    myRequirements.filter(
+      (req) =>
+        isOverdue(formatDate(req.dueDate)) &&
+        (req.status === "in-progress" ||
+          req.status === "resubmission-required"),
+    ).length > 0
   ) {
     statusLabel = (
       <div
