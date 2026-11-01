@@ -296,6 +296,41 @@ export async function changeUserStatus(req, res) {
       });
       //save to DB and send
       await notif.save();
+
+      //recheck if reactivated employees onboarding is completed
+      // MARKS onboarding status as completed if all requirements are completed //
+      //find specific employee
+      const employee = await Employee.findOne({
+        user: user._id,
+      }).populate("user");
+
+      if (!employee) {
+        return res.status(404).send({ message: "No employee found" });
+      }
+
+      //find all empReqs of that employee
+      const allEmpReqs = await EmployeeRequirement.find({
+        employee: employee._id,
+      });
+
+      if (allEmpReqs.length === 0) {
+        return res
+          .status(404)
+          .send("No employee requirements for the employee.");
+      }
+
+      //checks if all requirements are completed
+      const allCompleted = allEmpReqs.every(
+        (empReq) => empReq.status === "completed",
+      );
+
+      //set employee onboarding as completed
+      if (allCompleted && employee.onboardingStatus !== "completed") {
+        //mark specific employee as completed
+        employee.onboardingStatus = "completed";
+        // employee.completedDate = new Date();
+        await employee.save();
+      }
     }
 
     return res.send({
